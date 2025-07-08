@@ -1,13 +1,12 @@
 --- a/purpur-server/build.gradle.kts
 +++ b/purpur-server/build.gradle.kts
-@@ -34,9 +_,33 @@
+@@ -34,8 +_,31 @@
              outputDir = rootDirectory.dir("paper-server")
          }
      }
 -    activeFork = purpur
 +    //activeFork = purpur // Pulvinar
      // Purpur end - Rebrand
- 
 +    // Pulvinar start - Rebrand
 +    val pulvinar = forks.register("pulvinar") {
 +        forks = purpur
@@ -31,10 +30,9 @@
 +    }
 +    activeFork = pulvinar
 +    // Pulvinar end - Rebrand
-+
+ 
      spigot {
-         enabled = false
-         buildDataRef = "702e1a0a5072b2c4082371d5228cb30525687efc"
+         enabled = true
 @@ -123,10 +_,14 @@
      main {
          java { srcDir("../paper-server/src/main/java") }
