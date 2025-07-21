@@ -15,7 +15,7 @@ updated=""
 logsuffix=""
 if [ ! -z "$purpur" ]; then
     logsuffix="$logsuffix\n\nPurpur Changes:\n$purpur"
-    updated="Purpur"
+    updated="PurpurMC/Purpur"
 fi
 disclaimer="Upstream has released updates that appear to apply and compile correctly"
 
