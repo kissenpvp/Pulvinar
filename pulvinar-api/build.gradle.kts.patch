@@ -1,5 +1,14 @@
 --- a/purpur-api/build.gradle.kts
 +++ b/purpur-api/build.gradle.kts
+@@ -65,6 +_,8 @@
+     apiAndDocs("net.kyori:adventure-text-serializer-plain")
+     apiAndDocs("net.kyori:adventure-text-logger-slf4j")
+ 
++    api("net.kissenpvp:kissen-api:1.0.0-SNAPSHOT") // Pulvinar
++
+     api("org.apache.maven:maven-resolver-provider:3.9.6") // make API dependency for Paper Plugins
+     implementation("org.apache.maven.resolver:maven-resolver-connector-basic:1.9.18")
+     implementation("org.apache.maven.resolver:maven-resolver-transport-http:1.9.18")
 @@ -101,17 +_,21 @@
          java {
              srcDir(generatedDir)

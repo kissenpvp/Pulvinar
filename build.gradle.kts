@@ -7,6 +7,7 @@ plugins {
 }
 
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
+val kissenMavenPublicUrl = "https://repo.kissenpvp.net/snapshots/"
 
 paperweight {
     upstreams.register("purpur") {
@@ -50,6 +51,7 @@ subprojects {
     repositories {
         mavenCentral()
         maven(paperMavenPublicUrl)
+        maven(kissenMavenPublicUrl)
     }
 
     tasks.withType<AbstractArchiveTask>().configureEach {
