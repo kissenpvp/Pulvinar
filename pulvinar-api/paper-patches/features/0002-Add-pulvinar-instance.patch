@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Mon, 28 Jul 2025 15:55:09 +0200
+Subject: [PATCH] Add pulvinar instance
+
+
+diff --git a/src/main/java/net/kissenpvp/base/Pulvinar.java b/src/main/java/net/kissenpvp/base/Pulvinar.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..19966223a862ad0aaaa592cdf2c18e629c3d753e
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/base/Pulvinar.java
+@@ -0,0 +1,8 @@
++package net.kissenpvp.base;
++
++import net.kissenpvp.api.base.Kissen;
++
++/**
++ * Represents the Pulvinar core which provides access to the kissen functions.
++ */
++public interface Pulvinar extends Kissen {}
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index bb21401d142e2a9385d52afe40c54d793103afe2..ba2f38725571c016eea8f2b644ed7c162447106a 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -71,6 +71,18 @@ import org.jetbrains.annotations.Nullable;
+ public final class Bukkit {
+     private static Server server;
+ 
++    // Pulvinar start - add base instance
++    private static net.kissenpvp.base.Pulvinar pulvinar;
++
++    public static void setPulvinar(@NotNull net.kissenpvp.base.Pulvinar pulvinar) {
++        if (Bukkit.pulvinar != null) {
++            throw new UnsupportedOperationException("Cannot redefine singleton Pulvinar");
++        }
++
++        Bukkit.pulvinar = pulvinar;
++    }
++    // Pulvinar end - add base instance
++
+     /**
+      * Static class cannot be initialized.
+      */

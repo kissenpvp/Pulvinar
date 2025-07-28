@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Mon, 28 Jul 2025 15:55:09 +0200
+Subject: [PATCH] Add pulvinar instance
+
+
+diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..bdb5d1326318c9505905104cc8a9b4f54213abb9
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+@@ -0,0 +1,11 @@
++package net.kissenpvp.base;
++
++import net.kissenpvp.api.base.Kissen;
++
++/**
++ * Allows access to the kissen api
++ */
++public class PulvinarCore extends KissenCore implements Kissen
++{
++
++}
