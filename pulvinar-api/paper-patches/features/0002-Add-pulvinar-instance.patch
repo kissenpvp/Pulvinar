@@ -41,3 +41,42 @@ index bb21401d142e2a9385d52afe40c54d793103afe2..ba2f38725571c016eea8f2b644ed7c16
      /**
       * Static class cannot be initialized.
       */
+diff --git a/src/main/java/org/bukkit/OfflinePlayer.java b/src/main/java/org/bukkit/OfflinePlayer.java
+index c1f19d5c1b819873fce1185b4fbf4c72eda26309..22197254808819bef8542586faf6a23f8b380b67 100644
+--- a/src/main/java/org/bukkit/OfflinePlayer.java
++++ b/src/main/java/org/bukkit/OfflinePlayer.java
+@@ -20,7 +20,7 @@ import org.jspecify.annotations.Nullable;
+  * player needing to be online.
+  */
+ @NullMarked
+-public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable, io.papermc.paper.persistence.PersistentDataViewHolder { // Paper - Add Offline PDC API
++public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable, io.papermc.paper.persistence.PersistentDataViewHolder, net.kissenpvp.api.network.actor.PlayerClient { // Paper - Add Offline PDC API // Pulvinar - Add PlayerClient Actor
+ 
+     /**
+      * Checks if this player is currently online
+diff --git a/src/main/java/org/bukkit/entity/HumanEntity.java b/src/main/java/org/bukkit/entity/HumanEntity.java
+index 90cef1ab811571e0352e2e704b11b0ab6f777883..3595df99b90fd9d8554eba61767ee6405fb9c038 100644
+--- a/src/main/java/org/bukkit/entity/HumanEntity.java
++++ b/src/main/java/org/bukkit/entity/HumanEntity.java
+@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
+  * Represents a human entity, such as an NPC or a player
+  */
+ @NullMarked
+-public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder {
++public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder, net.kissenpvp.api.network.actor.AbstractActor { // Pulvinar - Add abstract actor
+ 
+     // Paper start
+     @Override
+diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
+index 18ab7ed5819510f6ee6de380cdbb0cff2493f58f..9100d5af3882a261f24674a2a4d1bd51c01e97c6 100644
+--- a/src/main/java/org/bukkit/entity/Player.java
++++ b/src/main/java/org/bukkit/entity/Player.java
+@@ -63,7 +63,7 @@ import org.jspecify.annotations.Nullable;
+  * Represents a player, connected or not
+  */
+ @NullMarked
+-public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginMessageRecipient, net.kyori.adventure.identity.Identified, net.kyori.adventure.bossbar.BossBarViewer, com.destroystokyo.paper.network.NetworkClient { // Paper
++public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginMessageRecipient, net.kyori.adventure.identity.Identified, net.kyori.adventure.bossbar.BossBarViewer, com.destroystokyo.paper.network.NetworkClient, net.kissenpvp.api.network.actor.ReachablePlayerClient { // Paper // Pulvinar - Add ReachablePlayerClient actor
+ 
+     // Paper start
+     @Override

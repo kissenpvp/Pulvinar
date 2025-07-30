@@ -6,18 +6,201 @@ Subject: [PATCH] Add pulvinar instance
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..bdb5d1326318c9505905104cc8a9b4f54213abb9
+index 0000000000000000000000000000000000000000..0b691d3cfcae56d9cb1c5af9ef94fa0e2dfbb47d
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,11 @@
+@@ -0,0 +1,26 @@
 +package net.kissenpvp.base;
 +
 +import net.kissenpvp.api.base.Kissen;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
 +
 +/**
 + * Allows access to the kissen api
 + */
 +public class PulvinarCore extends KissenCore implements Kissen
 +{
++    private static final Logger log = LoggerFactory.getLogger(PulvinarCore.class);
++
++    public PulvinarCore()
++    {
++        /*ConnectionProvider provider = new InternalConnectionProvider();
++
++        provider.connection().ifPresent(connection -> {
++            PlayerModule playerModule = new InternalPlayerModule();
++            RankModule rankModule = new InternalRankModule();
++            PunishmentModule punishmentModule = new InternalPunishmentModule();
++        });
++*/
++    }
 +
 +}
+diff --git a/src/main/java/net/kissenpvp/player/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/player/PulvinarPlayerRepository.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..617119a5d2997fd2036b8ed98f29df11c460587f
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/player/PulvinarPlayerRepository.java
+@@ -0,0 +1,26 @@
++package net.kissenpvp.player;
++
++import net.kissenpvp.api.network.actor.PlayerClient;
++import net.kissenpvp.api.network.actor.PlayerRepository;
++import net.kissenpvp.network.actor.InternalPlayerRepository;
++import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
++import org.jetbrains.annotations.NotNull;
++
++import java.sql.Connection;
++import java.sql.ResultSet;
++import java.sql.SQLException;
++import java.util.UUID;
++
++public class PulvinarPlayerRepository extends InternalPlayerRepository implements PlayerRepository
++{
++    public PulvinarPlayerRepository(@NotNull Connection connection) throws NullPointerException
++    {
++        super(connection);
++    }
++
++    @Override
++    protected @NotNull PlayerClient toEntity(@NotNull UUID uuid, @NotNull ResultSet resultSet) throws SQLException, NullPointerException
++    {
++        return null;
++    }
++}
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
+index f967560da343867fdc1c380a42874b0796633777..b54529d0efd4a989407423c6aa2b7e7dca2bb3a4 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
+@@ -762,4 +762,58 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+         }
+     }
+     // Purpur end - OfflinePlayer API
++
++    // Pulvinar start - add player client api
++
++    @Override public @org.jetbrains.annotations.NotNull java.util.UUID linkId()
++    {
++        return getUniqueId(); // TODO - actually load the data
++    }
++
++    @Override public @org.jetbrains.annotations.NotNull Instant lastLogin()
++    {
++        return java.time.Instant.ofEpochMilli(getLastLogin());
++    }
++
++    @Override public @org.jetbrains.annotations.NotNull net.kissenpvp.api.temporal.timespan.DefinedTimeSpan timePlayed()
++    {
++        return null;
++    }
++
++    @Override public @org.jetbrains.annotations.NotNull java.util.UUID id()
++    {
++        return getUniqueId();
++    }
++
++    @Override public int signature()
++    {
++        return java.util.Objects.hash(getUniqueId(), getName());
++    }
++
++    @Override public boolean unsaved()
++    {
++        return false;
++    }
++
++    @Override public @org.jetbrains.annotations.NotNull String username()
++    {
++        String userName = getName();
++        if(java.util.Objects.isNull(userName))
++        {
++            String message = "The username of player {} is unset.";
++            throw new java.lang.NullPointerException(String.format(message, getUniqueId()));
++        }
++        return this.getName();
++    }
++
++    @Override public @org.jetbrains.annotations.NotNull java.util.Locale locale()
++    {
++        return java.util.Locale.ENGLISH;
++    }
++
++    @Override public final boolean isClient()
++    {
++        return true;
++    }
++    // Pulvinar end - add player client api
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
+index b02826fc7390eb1fd7c2a1b597a5f1abf156b1c1..4ca88af53dd3629366ce37e91d72fb8080b8ec4a 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
+@@ -980,4 +980,21 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+     public org.bukkit.entity.Entity copy(Location location) {
+         throw new UnsupportedOperationException("Cannot copy human entities");
+     }
++
++    // Pulvinar start - implement abstract actor
++    @Override public @NotNull String username()
++    {
++        return this.getName();
++    }
++
++    @Override public @NotNull java.util.Locale locale()
++    {
++        return java.util.Locale.ENGLISH;
++    }
++
++    @Override public final boolean isClient()
++    {
++        return true;
++    }
++    // Pulvinar end - implement abstract actor
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+index 54fbe5006c2c240937efb6fc89cf08b72637b9e5..4bc05ce7b0d8454080a2056650b4fdf3b76e0a0c 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+@@ -3616,4 +3616,42 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+     public PlayerGameConnection getConnection() {
+         return this.getHandle().connection.playerGameConnection;
+     }
++
++    // Pulvinar start - add player actor methods
++    @Override public @org.jetbrains.annotations.NotNull net.kyori.adventure.audience.Audience audience()
++    {
++        return this;
++    }
++
++    @Override public @NonNull UUID linkId()
++    {
++        return getUniqueId(); //TODO - implement actual link id
++    }
++
++    @Override public @NonNull Instant lastLogin()
++    {
++        return java.time.Instant.ofEpochMilli(getLastLogin());
++    }
++
++    @Override public @org.jetbrains.annotations.NotNull net.kissenpvp.api.temporal.timespan.DefinedTimeSpan timePlayed()
++    {
++        // TODO - implement online time
++        return new net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan(0L);
++    }
++
++    @Override public @NonNull UUID id()
++    {
++        return getUniqueId();
++    }
++
++    @Override public int signature()
++    {
++        return java.util.Objects.hash(getUniqueId(), getName());
++    }
++
++    @Override public boolean unsaved()
++    {
++        return false;
++    }
++    // Pulvinar end - add player actor methods
+ }
