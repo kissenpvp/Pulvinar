@@ -158,10 +158,10 @@ index b02826fc7390eb1fd7c2a1b597a5f1abf156b1c1..4ca88af53dd3629366ce37e91d72fb80
 +    // Pulvinar end - implement abstract actor
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 54fbe5006c2c240937efb6fc89cf08b72637b9e5..4bc05ce7b0d8454080a2056650b4fdf3b76e0a0c 100644
+index 4e24a177aed7eda0899b4a1a1e308f02a16c5718..afb3df83b717578bdf672df8a1c0b80392ffe341 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -3616,4 +3616,42 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3623,4 +3623,42 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
      public PlayerGameConnection getConnection() {
          return this.getHandle().connection.playerGameConnection;
      }
