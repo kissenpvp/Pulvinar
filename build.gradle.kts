@@ -58,6 +58,7 @@ subprojects {
         isPreserveFileTimestamps = false
         isReproducibleFileOrder = true
     }
+
     tasks.withType<JavaCompile> {
         options.encoding = Charsets.UTF_8.name()
         options.release = 21
@@ -65,12 +66,15 @@ subprojects {
         options.compilerArgs.addAll(listOf("-Xlint:-deprecation", "-Xlint:-removal"))
         options.forkOptions.memoryMaximumSize = "4g"
     }
+
     tasks.withType<Javadoc> {
         options.encoding = Charsets.UTF_8.name()
     }
+
     tasks.withType<ProcessResources> {
         filteringCharset = Charsets.UTF_8.name()
     }
+
     tasks.withType<Test> {
         testLogging {
             showStackTraces = true
