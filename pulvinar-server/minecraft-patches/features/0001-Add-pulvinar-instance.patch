@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Wed, 20 Aug 2025 11:31:51 +0200
+Subject: [PATCH] Add pulvinar instance
+
+
+diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
+index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..a2751f863116f87c858a81c488ef75183f6caa2d 100644
+--- a/net/minecraft/server/Main.java
++++ b/net/minecraft/server/Main.java
+@@ -175,6 +175,13 @@ public class Main {
+ 
+             org.spigotmc.SpigotConfig.disabledAdvancements = spigotConfiguration.getStringList("advancements.disabled"); // Paper - fix SPIGOT-5885, must be set early in init
+ 
++            // Pulvinar start - hook in kissen
++            LOGGER.info("Pulvinar is now going to hook in pulvinar.");
++            java.io.File file = (java.io.File) optionSet.valueOf("pulvinar-settings.yml");
++            net.kissenpvp.base.Pulvinar pulvinar = new net.kissenpvp.base.PulvinarCore(file);
++            org.bukkit.Bukkit.setPulvinar(pulvinar);
++            // Pulvinar end - hook in kissen
++
+             // Paper start - fix SPIGOT-5824
+             File file;
+             File userCacheFile = new File(Services.USERID_CACHE_FILE);

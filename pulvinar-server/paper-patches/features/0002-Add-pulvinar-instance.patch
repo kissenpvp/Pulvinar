@@ -6,66 +6,261 @@ Subject: [PATCH] Add pulvinar instance
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..0b691d3cfcae56d9cb1c5af9ef94fa0e2dfbb47d
+index 0000000000000000000000000000000000000000..154619261bbc68842c76d15021d419bd595893f8
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,26 @@
+@@ -0,0 +1,22 @@
 +package net.kissenpvp.base;
 +
 +import net.kissenpvp.api.base.Kissen;
++import org.jetbrains.annotations.NotNull;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
++
++import java.io.File;
 +
 +/**
 + * Allows access to the kissen api
 + */
-+public class PulvinarCore extends KissenCore implements Kissen
++public class PulvinarCore extends KissenCore implements Pulvinar
 +{
 +    private static final Logger log = LoggerFactory.getLogger(PulvinarCore.class);
 +
-+    public PulvinarCore()
++    public PulvinarCore(@NotNull File optionsFile)
 +    {
-+        /*ConnectionProvider provider = new InternalConnectionProvider();
 +
-+        provider.connection().ifPresent(connection -> {
-+            PlayerModule playerModule = new InternalPlayerModule();
-+            RankModule rankModule = new InternalRankModule();
-+            PunishmentModule punishmentModule = new InternalPunishmentModule();
-+        });
-+*/
 +    }
 +
 +}
-diff --git a/src/main/java/net/kissenpvp/player/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/player/PulvinarPlayerRepository.java
+diff --git a/src/main/java/net/kissenpvp/player/PlayerCache.java b/src/main/java/net/kissenpvp/player/PlayerCache.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..617119a5d2997fd2036b8ed98f29df11c460587f
+index 0000000000000000000000000000000000000000..011cb5a9c44b1a43432e4804f5d2af97db32bf7d
 --- /dev/null
-+++ b/src/main/java/net/kissenpvp/player/PulvinarPlayerRepository.java
-@@ -0,0 +1,26 @@
++++ b/src/main/java/net/kissenpvp/player/PlayerCache.java
+@@ -0,0 +1,100 @@
 +package net.kissenpvp.player;
 +
++import com.destroystokyo.paper.profile.CraftPlayerProfile;
++import com.mojang.authlib.GameProfile;
++import com.mojang.authlib.GameProfileRepository;
++import net.kissenpvp.api.network.actor.PlayerClient;
++import net.kissenpvp.api.network.actor.PlayerRepository;
++import net.minecraft.server.players.GameProfileCache;
++import org.bukkit.Bukkit;
++import org.bukkit.OfflinePlayer;
++import org.bukkit.craftbukkit.CraftServer;
++import org.jetbrains.annotations.Contract;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++import java.util.Objects;
++import java.util.Optional;
++import java.util.UUID;
++import java.util.concurrent.CompletableFuture;
++import java.util.concurrent.Executor;
++import java.util.function.Function;
++
++public class PlayerCache extends GameProfileCache {
++    @Contract(value = "-> new", pure = true)
++    private static @NotNull Function<PlayerClient, Optional<GameProfile>> toProfile()
++    {
++        return playerClient ->
++        {
++            if(Objects.isNull(playerClient))
++            {
++                return Optional.empty();
++            }
++            GameProfile gameProfile = new GameProfile(playerClient.id(), playerClient.username());
++            return Optional.of(gameProfile);
++        };
++    }
++
++    private static final Logger log = LoggerFactory.getLogger(PlayerCache.class);
++
++    private PlayerRepository playerRepository;
++
++    public PlayerCache(@NotNull GameProfileRepository profileRepository) {
++        super(profileRepository, null); // not file based
++    }
++
++    @Override
++    public void add(@NotNull GameProfile gameProfile) {
++        OfflinePlayer player = ((CraftServer) Bukkit.getServer()).getOfflinePlayer(gameProfile);
++        log.info("Add player {} to cache.", gameProfile);
++        playerRepository.save(player);
++    }
++
++    @Override
++    public @Nullable GameProfile getProfileIfCached(@NotNull String name) {
++        if(!playerRepository.cached(name))
++        {
++            return null;
++        }
++        PlayerClient player = playerRepository.findByName(name).join();
++
++        if(Objects.isNull(player))
++        {
++            return null;
++        }
++
++        return new GameProfile(player.id(), player.username());
++    }
++
++    @Override
++    public @NotNull Optional<GameProfile> get(@NotNull String name) {
++        return getAsync(name).join();
++    }
++
++    @Override
++    public @NotNull CompletableFuture<Optional<GameProfile>> getAsync(@NotNull String name) {
++        return playerRepository.findByName(name).thenApply(toProfile());
++    }
++
++    @Override
++    public @NotNull Optional<GameProfile> get(@NotNull UUID uuid) {
++        return playerRepository.find(uuid).thenApply(toProfile()).join();
++    }
++
++    @Override
++    public void setExecutor(@NotNull Executor exectutor) {
++        super.setExecutor(exectutor);
++    }
++
++    @Override
++    public void clearExecutor() {
++        super.clearExecutor();
++    }
++
++    @Override
++    public void save(boolean asyncSave) {
++        super.save(asyncSave);
++    }
++}
+diff --git a/src/main/java/net/kissenpvp/player/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/player/PulvinarPlayerRepository.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..b0b6ae4403013c8abc6101a355ecdbd27932cc4f
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/player/PulvinarPlayerRepository.java
+@@ -0,0 +1,119 @@
++package net.kissenpvp.player;
++
++import com.destroystokyo.paper.profile.PaperGameProfileRepository;
++import com.mojang.authlib.GameProfile;
++import com.mojang.authlib.GameProfileRepository;
++import com.mojang.authlib.ProfileLookupCallback;
 +import net.kissenpvp.api.network.actor.PlayerClient;
 +import net.kissenpvp.api.network.actor.PlayerRepository;
 +import net.kissenpvp.network.actor.InternalPlayerRepository;
-+import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
 +import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.UnmodifiableView;
 +
 +import java.sql.Connection;
 +import java.sql.ResultSet;
 +import java.sql.SQLException;
-+import java.util.UUID;
++import java.util.*;
 +
-+public class PulvinarPlayerRepository extends InternalPlayerRepository implements PlayerRepository
++public class PulvinarPlayerRepository extends InternalPlayerRepository implements PlayerRepository, GameProfileRepository
 +{
-+    public PulvinarPlayerRepository(@NotNull Connection connection) throws NullPointerException
++    private PaperGameProfileRepository parent;
++
++    public PulvinarPlayerRepository(@NotNull Connection connection, @NotNull PaperGameProfileRepository parent) throws NullPointerException
 +    {
 +        super(connection);
++        this.parent = parent;
 +    }
 +
 +    @Override
 +    protected @NotNull PlayerClient toEntity(@NotNull UUID uuid, @NotNull ResultSet resultSet) throws SQLException, NullPointerException
 +    {
 +        return null;
++    }
++
++    @Override
++    public void findProfilesByNames(@NotNull String[] names, @NotNull ProfileLookupCallback callback) {
++
++        // first check for plugin event gameprofiles
++        Set<String> remaining = parent.lookupProfileEvent(names, callback);
++
++        // then check the database
++        String[] remainingArr = remaining.toArray(new String[0]);
++        remainingArr = findByName(remainingArr, callback).toArray(new String[0]);
++
++        // last search the mojang api
++        parent.findProfilesByNameDirectly(remainingArr, callback);
++    }
++
++    @Override
++    public Optional<@NotNull GameProfile> findProfileByName(@NotNull String name) {
++        return findByName(name).or(() -> parent.findProfileByName(name));
++    }
++
++    /**
++     * Searches for a game profile by the specified username in the repository.
++     *
++     * @param name the username of the game profile to search for, must not be null
++     * @return an {@code Optional} containing the corresponding {@code GameProfile} if found,
++     * or an empty {@code Optional} if not found
++     */
++    private @NotNull Optional<GameProfile> findByName(@NotNull String name)
++    {
++        return query("SELECT id FROM %s WHERE username = ?;", (statement) -> {
++
++            GameProfile gameProfile = null;
++
++            statement.setString(1, name);
++            try (ResultSet resultSet = statement.executeQuery())
++            {
++                if(resultSet.next())
++                {
++                    UUID uuid = UUID.fromString(resultSet.getString("id"));
++                    gameProfile = new GameProfile(uuid, name);
++                }
++            }
++
++            statement.close();
++            return Optional.ofNullable(gameProfile);
++        });
++    }
++
++    /**
++     * Finds game profile names that are not in the provided repository by performing a lookup using the
++     * specified array of names. The method interacts with the database to search for profiles and uses
++     * a callback to handle the result for found profiles.
++     *
++     * @param names an array of usernames to search for must not be null
++     * @param profileLookupCallback a callback to handle the lookup results for profiles must not be null
++     * @return an unmodifiable set of usernames that were not found in the database
++     */
++    private @NotNull @UnmodifiableView Set<String> findByName(@NotNull String[] names, @NotNull ProfileLookupCallback profileLookupCallback)
++    {
++        String data = String.join(", ", Collections.nCopies(names.length, "?"));
++        return query("SELECT id, username FROM %s WHERE username IN (" + data + ");", (statement) -> {
++
++            for (int i = 0; i < names.length; i++) {
++                statement.setString(i + 1, names[i]);
++            }
++
++            Set<String> found = new HashSet<>();
++
++            try (ResultSet resultSet = statement.executeQuery()) {
++                while (resultSet.next()) {
++                    UUID uuid = UUID.fromString(resultSet.getString("id"));
++                    String username = resultSet.getString("username");
++
++                    profileLookupCallback.onProfileLookupSucceeded(new GameProfile(uuid, username));
++
++                    found.add(username);
++                }
++            }
++
++            statement.close();
++
++            Set<String> remaining = new HashSet<>(Set.of(names));
++            remaining.removeAll(found);
++            return Collections.unmodifiableSet(remaining);
++        });
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
@@ -131,6 +326,25 @@ index f967560da343867fdc1c380a42874b0796633777..b54529d0efd4a989407423c6aa2b7e7d
 +    }
 +    // Pulvinar end - add player client api
  }
+diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
+index 748bd9650da4a209743b7a5dde584b2e19c5a578..f2fa5a83ec7d362414fd799dc64ae5a415ef7519 100644
+--- a/src/main/java/org/bukkit/craftbukkit/Main.java
++++ b/src/main/java/org/bukkit/craftbukkit/Main.java
+@@ -172,6 +172,14 @@ public class Main {
+                     .describedAs("Yml file");
+                 // Purpur end - Purpur config files
+ 
++                // Pulvinar start - Pulvinar config files
++                this.acceptsAll(asList("purpur", "pulvinar-settings"), "File for pulvinar settings")
++                        .withRequiredArg()
++                        .ofType(File.class)
++                        .defaultsTo(new File("pulvinar.yml"))
++                        .describedAs("Yml file");
++                // Pulvinar end - Pulvinar config files
++
+                 this.accepts("server-name", "Name of the server")
+                         .withRequiredArg()
+                         .ofType(String.class)
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
 index b02826fc7390eb1fd7c2a1b597a5f1abf156b1c1..4ca88af53dd3629366ce37e91d72fb8080b8ec4a 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
