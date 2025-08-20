@@ -4,139 +4,187 @@ Date: Mon, 28 Jul 2025 15:55:09 +0200
 Subject: [PATCH] Add pulvinar instance
 
 
-diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+diff --git a/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java b/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
+index 48e774677edf17d4a99ae9ed23d1b371dab41abb..186320b2701be1c51af00a3420c384a6de2ccb77 100644
+--- a/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
++++ b/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
+@@ -25,6 +25,6 @@ public class PaperAuthenticationService extends YggdrasilAuthenticationService {
+ 
+     @Override
+     public GameProfileRepository createProfileRepository() {
+-        return new PaperGameProfileRepository(this.getProxy(), this.environment);
++        return new PaperGameProfileRepository(this.getProxy(), this.environment, null); // Pulvinar - TODO
+     }
+ }
+diff --git a/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java b/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
+index b2ad0c4d92ed960190e3801fbc6a21dcc53bcb46..1108abd04ed4f757c8a48aef5c44eddd6424e8ea 100644
+--- a/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
++++ b/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
+@@ -11,8 +11,14 @@ import java.net.Proxy;
+ import java.util.Set;
+ 
+ public class PaperGameProfileRepository extends YggdrasilGameProfileRepository {
+-    public PaperGameProfileRepository(Proxy proxy, Environment environment) {
++
++    // Pulvinar start - implement player repository into paper
++    private final net.kissenpvp.api.network.actor.PlayerRepository playerRepository;
++    // Pulvinar end - implement player repository into paper
++
++    public PaperGameProfileRepository(Proxy proxy, Environment environment, net.kissenpvp.api.network.actor.PlayerRepository playerRepository) { // Pulvinar - implement player repository into paper
+         super(proxy, environment);
++        this.playerRepository = playerRepository; // Pulvinar - implement player repository into paper
+     }
+ 
+     @Override
+@@ -37,6 +43,13 @@ public class PaperGameProfileRepository extends YggdrasilGameProfileRepository {
+             }
+         }
+ 
++        // Pulvinar start - implement player repository into paper
++        playerRepository.findAllByName(unfoundNames).thenApply(playerList -> {
++            playerList.forEach(playerClient -> unfoundNames.remove(playerClient.username()));
++            return null;
++        }).join();
++        // Pulvinar end - implement player repository into paper
++
+         // Some things were not found.... Proceed to look up.
+         if (!unfoundNames.isEmpty()) {
+             String[] namesArr = unfoundNames.toArray(new String[unfoundNames.size()]);
+@@ -57,4 +70,21 @@ public class PaperGameProfileRepository extends YggdrasilGameProfileRepository {
+             this.callback.onProfileLookupFailed(profileName, exception);
+         }
+     }
++
++    // Pulvinar start - implement player repository into paper
++    @Override
++    public java.util.Optional<GameProfile> findProfileByName(String name) {
++        net.kissenpvp.api.network.actor.PlayerClient playerClient = playerRepository.findByName(name).join();
++
++        if(java.util.Objects.nonNull(playerClient))
++        {
++            return java.util.Optional.of(new com.mojang.authlib.GameProfile(
++                    playerClient.id(),
++                    playerClient.username()
++            ));
++        }
++
++        return super.findProfileByName(name);
++    }
++    // Pulvinar end - implement player repository into paper
+ }
+diff --git a/src/main/java/net/kissenpvp/base/PulvinarConfig.java b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..154619261bbc68842c76d15021d419bd595893f8
+index 0000000000000000000000000000000000000000..d4e5cf8b862cfd2fb336e409a8b8dcfba83e195c
 --- /dev/null
-+++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,22 @@
++++ b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
+@@ -0,0 +1,65 @@
 +package net.kissenpvp.base;
 +
-+import net.kissenpvp.api.base.Kissen;
++import org.bukkit.command.Command;
++import org.bukkit.configuration.InvalidConfigurationException;
++import org.bukkit.configuration.file.YamlConfiguration;
 +import org.jetbrains.annotations.NotNull;
-+import org.slf4j.Logger;
-+import org.slf4j.LoggerFactory;
 +
 +import java.io.File;
++import java.io.FileNotFoundException;
++import java.io.IOException;
++import java.util.Map;
++
++public class PulvinarConfig {
++
++    private static final String HEADER = """
++            
++            """;
++    private File file;
++    public YamlConfiguration config;
++
++    private Map<String, Command> commands;
++
++    public int version;
++
++    private String databaseUrl;
++    private String databaseUser;
++    private String databasePassword;
++
++    public void init(@NotNull File configFile) throws IOException, InvalidConfigurationException {
++        file = configFile;
++        config = new YamlConfiguration();
++
++        try {
++            config.load(configFile);
++        } catch (FileNotFoundException ignored) {}
++
++        config.options().header(HEADER);
++        config.options().copyDefaults(true);
++
++        version = config.getInt("config-version");
++        config.set("config-version", 1);
++
++        config.addDefault("database.url", "jdbc:mysql://<url>:<port>/<database>");
++        config.addDefault("database.user", "user");
++        config.addDefault("database.password", "password");
++
++        databaseUrl = config.getString("database.url");
++        databaseUser = config.getString("database.user");
++        databasePassword = config.getString("database.password");
++
++        config.save(file);
++    }
++
++    public @NotNull String databaseUrl() {
++        return databaseUrl;
++    }
++
++    public @NotNull String databaseUser() {
++        return databaseUser;
++    }
++
++    public @NotNull String databasePassword() {
++        return databasePassword;
++    }
++}
+diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..ca688610a510a8df8e653f38b4fdaf80d125788d
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+@@ -0,0 +1,37 @@
++package net.kissenpvp.base;
++
++import net.kissenpvp.api.database.ConnectionProvider;
++import net.kissenpvp.database.InternalConnectionProvider;
++import org.bukkit.configuration.InvalidConfigurationException;
++import org.jetbrains.annotations.NotNull;
++
++import java.io.File;
++import java.io.IOException;
++import java.sql.SQLException;
 +
 +/**
 + * Allows access to the kissen api
 + */
 +public class PulvinarCore extends KissenCore implements Pulvinar
 +{
-+    private static final Logger log = LoggerFactory.getLogger(PulvinarCore.class);
++    private PulvinarConfig config;
 +
 +    public PulvinarCore(@NotNull File optionsFile)
 +    {
-+
-+    }
-+
-+}
-diff --git a/src/main/java/net/kissenpvp/player/PlayerCache.java b/src/main/java/net/kissenpvp/player/PlayerCache.java
-new file mode 100644
-index 0000000000000000000000000000000000000000..011cb5a9c44b1a43432e4804f5d2af97db32bf7d
---- /dev/null
-+++ b/src/main/java/net/kissenpvp/player/PlayerCache.java
-@@ -0,0 +1,100 @@
-+package net.kissenpvp.player;
-+
-+import com.destroystokyo.paper.profile.CraftPlayerProfile;
-+import com.mojang.authlib.GameProfile;
-+import com.mojang.authlib.GameProfileRepository;
-+import net.kissenpvp.api.network.actor.PlayerClient;
-+import net.kissenpvp.api.network.actor.PlayerRepository;
-+import net.minecraft.server.players.GameProfileCache;
-+import org.bukkit.Bukkit;
-+import org.bukkit.OfflinePlayer;
-+import org.bukkit.craftbukkit.CraftServer;
-+import org.jetbrains.annotations.Contract;
-+import org.jetbrains.annotations.NotNull;
-+import org.jetbrains.annotations.Nullable;
-+import org.slf4j.Logger;
-+import org.slf4j.LoggerFactory;
-+
-+import java.util.Objects;
-+import java.util.Optional;
-+import java.util.UUID;
-+import java.util.concurrent.CompletableFuture;
-+import java.util.concurrent.Executor;
-+import java.util.function.Function;
-+
-+public class PlayerCache extends GameProfileCache {
-+    @Contract(value = "-> new", pure = true)
-+    private static @NotNull Function<PlayerClient, Optional<GameProfile>> toProfile()
-+    {
-+        return playerClient ->
-+        {
-+            if(Objects.isNull(playerClient))
-+            {
-+                return Optional.empty();
-+            }
-+            GameProfile gameProfile = new GameProfile(playerClient.id(), playerClient.username());
-+            return Optional.of(gameProfile);
-+        };
-+    }
-+
-+    private static final Logger log = LoggerFactory.getLogger(PlayerCache.class);
-+
-+    private PlayerRepository playerRepository;
-+
-+    public PlayerCache(@NotNull GameProfileRepository profileRepository) {
-+        super(profileRepository, null); // not file based
-+    }
-+
-+    @Override
-+    public void add(@NotNull GameProfile gameProfile) {
-+        OfflinePlayer player = ((CraftServer) Bukkit.getServer()).getOfflinePlayer(gameProfile);
-+        log.info("Add player {} to cache.", gameProfile);
-+        playerRepository.save(player);
-+    }
-+
-+    @Override
-+    public @Nullable GameProfile getProfileIfCached(@NotNull String name) {
-+        if(!playerRepository.cached(name))
-+        {
-+            return null;
-+        }
-+        PlayerClient player = playerRepository.findByName(name).join();
-+
-+        if(Objects.isNull(player))
-+        {
-+            return null;
++        config = new PulvinarConfig();
++        try {
++            config.init(optionsFile);
++        } catch (IOException | InvalidConfigurationException e) {
++            throw new RuntimeException(e);
 +        }
 +
-+        return new GameProfile(player.id(), player.username());
++        ConnectionProvider provider = new InternalConnectionProvider();
++        try {
++            provider.connect(config.databaseUrl(), config.databaseUser(), config.databaseUrl());
++        } catch (SQLException e) {
++            throw new RuntimeException(e);
++        }
++
 +    }
 +
-+    @Override
-+    public @NotNull Optional<GameProfile> get(@NotNull String name) {
-+        return getAsync(name).join();
-+    }
-+
-+    @Override
-+    public @NotNull CompletableFuture<Optional<GameProfile>> getAsync(@NotNull String name) {
-+        return playerRepository.findByName(name).thenApply(toProfile());
-+    }
-+
-+    @Override
-+    public @NotNull Optional<GameProfile> get(@NotNull UUID uuid) {
-+        return playerRepository.find(uuid).thenApply(toProfile()).join();
-+    }
-+
-+    @Override
-+    public void setExecutor(@NotNull Executor exectutor) {
-+        super.setExecutor(exectutor);
-+    }
-+
-+    @Override
-+    public void clearExecutor() {
-+        super.clearExecutor();
-+    }
-+
-+    @Override
-+    public void save(boolean asyncSave) {
-+        super.save(asyncSave);
-+    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 index f967560da343867fdc1c380a42874b0796633777..b54529d0efd4a989407423c6aa2b7e7dca2bb3a4 100644

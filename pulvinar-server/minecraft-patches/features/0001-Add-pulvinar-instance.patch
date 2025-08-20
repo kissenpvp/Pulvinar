@@ -5,7 +5,7 @@ Subject: [PATCH] Add pulvinar instance
 
 
 diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
-index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..a2751f863116f87c858a81c488ef75183f6caa2d 100644
+index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..c067fc09a86190da797eeafa858ecb632975fc0b 100644
 --- a/net/minecraft/server/Main.java
 +++ b/net/minecraft/server/Main.java
 @@ -175,6 +175,13 @@ public class Main {
@@ -14,11 +14,39 @@ index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..a2751f863116f87c858a81c488ef7518
  
 +            // Pulvinar start - hook in kissen
 +            LOGGER.info("Pulvinar is now going to hook in pulvinar.");
-+            java.io.File file = (java.io.File) optionSet.valueOf("pulvinar-settings.yml");
-+            net.kissenpvp.base.Pulvinar pulvinar = new net.kissenpvp.base.PulvinarCore(file);
++            java.io.File pulvinarSettings = (java.io.File) optionSet.valueOf("pulvinar-settings");
++            net.kissenpvp.base.Pulvinar pulvinar = new net.kissenpvp.base.PulvinarCore(pulvinarSettings);
 +            org.bukkit.Bukkit.setPulvinar(pulvinar);
 +            // Pulvinar end - hook in kissen
 +
              // Paper start - fix SPIGOT-5824
              File file;
              File userCacheFile = new File(Services.USERID_CACHE_FILE);
+diff --git a/net/minecraft/server/players/GameProfileCache.java b/net/minecraft/server/players/GameProfileCache.java
+index 066f84df5c31242ab542932f1e243369d0e766e2..81a7dbd7b05ab2ae3c24ec33e8171ee11fb69780 100644
+--- a/net/minecraft/server/players/GameProfileCache.java
++++ b/net/minecraft/server/players/GameProfileCache.java
+@@ -317,7 +317,7 @@ public class GameProfileCache {
+         }
+     }
+ 
+-    static class GameProfileInfo {
++    protected static class GameProfileInfo { // Pulvinar - allow protected access
+         private final GameProfile profile;
+         final Date expirationDate;
+         private volatile long lastAccess;
+@@ -343,4 +343,14 @@ public class GameProfileCache {
+             return this.lastAccess;
+         }
+     }
++
++    // Pulvinar start - allow protected access to the profile repository and executor
++    protected @Nullable Executor getExecutor() {
++        return this.executor;
++    }
++
++    protected GameProfileRepository getRepository() {
++        return this.profileRepository;
++    }
++    // Pulvinar end - allow protected access to the profile repository and executor
+ }
