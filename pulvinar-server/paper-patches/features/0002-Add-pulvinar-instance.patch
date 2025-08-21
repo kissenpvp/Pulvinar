@@ -74,13 +74,12 @@ index b2ad0c4d92ed960190e3801fbc6a21dcc53bcb46..1108abd04ed4f757c8a48aef5c44eddd
  }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarConfig.java b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d4e5cf8b862cfd2fb336e409a8b8dcfba83e195c
+index 0000000000000000000000000000000000000000..29b557a6cf9d57602bc622fbec0f90271fbfc80a
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,105 @@
 +package net.kissenpvp.base;
 +
-+import org.bukkit.command.Command;
 +import org.bukkit.configuration.InvalidConfigurationException;
 +import org.bukkit.configuration.file.YamlConfiguration;
 +import org.jetbrains.annotations.NotNull;
@@ -88,20 +87,27 @@ index 0000000000000000000000000000000000000000..d4e5cf8b862cfd2fb336e409a8b8dcfb
 +import java.io.File;
 +import java.io.FileNotFoundException;
 +import java.io.IOException;
-+import java.util.Map;
++import java.util.List;
++import java.util.Objects;
 +
 +public class PulvinarConfig {
 +
-+    private static final String HEADER = """
-+            
-+            """;
++    private static final List<String> HEADER = List.of(
++            "This is the configuration file for the pulvinar server.",
++            "It is advised to read the documentation to prevent unexpected behavior.",
++            "",
++            "The documentation can be found at https://docs.pulvinar.org/",
++            "If you have any questions or found any bugs, please report them at https://github.com/kissenpvp/pulvinar/issues",
++            "You are welcomed to also join our discord server at https://discord.pulvinar.org",
++            "",
++            "Thank you for using pulvinar!"
++    );
 +    private File file;
-+    public YamlConfiguration config;
++    private YamlConfiguration config;
 +
-+    private Map<String, Command> commands;
++    private int version;
 +
-+    public int version;
-+
++    private boolean databaseConfigured;
 +    private String databaseUrl;
 +    private String databaseUser;
 +    private String databasePassword;
@@ -114,21 +120,32 @@ index 0000000000000000000000000000000000000000..d4e5cf8b862cfd2fb336e409a8b8dcfb
 +            config.load(configFile);
 +        } catch (FileNotFoundException ignored) {}
 +
-+        config.options().header(HEADER);
++        config.options().setHeader(HEADER);
 +        config.options().copyDefaults(true);
 +
 +        version = config.getInt("config-version");
 +        config.set("config-version", 1);
 +
++
++        config.addDefault("database.configured", false);
 +        config.addDefault("database.url", "jdbc:mysql://<url>:<port>/<database>");
 +        config.addDefault("database.user", "user");
 +        config.addDefault("database.password", "password");
 +
++        databaseConfigured = config.getBoolean("database.configured");
 +        databaseUrl = config.getString("database.url");
 +        databaseUser = config.getString("database.user");
 +        databasePassword = config.getString("database.password");
 +
 +        config.save(file);
++    }
++
++    public int version() {
++        return version;
++    }
++
++    public boolean databaseConfigured() {
++        return databaseConfigured;
 +    }
 +
 +    public @NotNull String databaseUrl() {
@@ -142,19 +159,44 @@ index 0000000000000000000000000000000000000000..d4e5cf8b862cfd2fb336e409a8b8dcfb
 +    public @NotNull String databasePassword() {
 +        return databasePassword;
 +    }
++
++    public void databaseConfigured(boolean configured) throws IOException {
++        databaseConfigured = configured;
++        config.save(file);
++    }
++
++    public void databaseUrl(@NotNull String url) throws IOException, NullPointerException {
++        Objects.requireNonNull(url, "url cannot be null");
++        databaseUrl = url;
++        config.save(file);
++    }
++
++    public void databaseUser(@NotNull String user) throws IOException, NullPointerException {
++        Objects.requireNonNull(user, "user cannot be null");
++        databaseUser = user;
++        config.save(file);
++    }
++
++    public void databasePassword(@NotNull String password) throws IOException, NullPointerException {
++        Objects.requireNonNull(password, "password cannot be null");
++        databasePassword = password;
++        config.save(file);
++    }
 +}
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..ca688610a510a8df8e653f38b4fdaf80d125788d
+index 0000000000000000000000000000000000000000..b823f362990741f2ad1b700d9d16bd1fb5940322
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,50 @@
 +package net.kissenpvp.base;
 +
 +import net.kissenpvp.api.database.ConnectionProvider;
 +import net.kissenpvp.database.InternalConnectionProvider;
 +import org.bukkit.configuration.InvalidConfigurationException;
 +import org.jetbrains.annotations.NotNull;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
 +
 +import java.io.File;
 +import java.io.IOException;
@@ -165,6 +207,7 @@ index 0000000000000000000000000000000000000000..ca688610a510a8df8e653f38b4fdaf80
 + */
 +public class PulvinarCore extends KissenCore implements Pulvinar
 +{
++    private static final Logger log = LoggerFactory.getLogger(PulvinarCore.class);
 +    private PulvinarConfig config;
 +
 +    public PulvinarCore(@NotNull File optionsFile)
@@ -176,6 +219,16 @@ index 0000000000000000000000000000000000000000..ca688610a510a8df8e653f38b4fdaf80
 +            throw new RuntimeException(e);
 +        }
 +
++        if(!config.databaseConfigured())
++        {
++            log.warn("*".repeat(50));
++            log.warn("The database has not yet been configured.");
++            log.warn("Please be sure to set \"database.configured\" to \"true\" after configuring.");
++            log.warn("If you need assistance with setting up the database see https://docs.pulvinar.org/TODO");
++            log.warn("*".repeat(50));
++
++            throw new IllegalStateException("Could not connect to database, please check your configuration.");
++        }
 +        ConnectionProvider provider = new InternalConnectionProvider();
 +        try {
 +            provider.connect(config.databaseUrl(), config.databaseUser(), config.databaseUrl());
