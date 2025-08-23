@@ -185,14 +185,26 @@ index 0000000000000000000000000000000000000000..29b557a6cf9d57602bc622fbec0f9027
 +}
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..c3b4baa0027c238e0dbd111b09768e7f2207c760
+index 0000000000000000000000000000000000000000..d10572b3660d70c2c75b6ebfda81feef39afe534
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,81 @@
 +package net.kissenpvp.base;
 +
 +import net.kissenpvp.api.database.ConnectionProvider;
++import net.kissenpvp.api.network.actor.PlayerModule;
++import net.kissenpvp.api.network.actor.rank.RankModule;
++import net.kissenpvp.api.punishment.PunishmentModule;
 +import net.kissenpvp.database.InternalConnectionProvider;
++import net.kissenpvp.network.actor.InternalPlayerModule;
++import net.kissenpvp.network.actor.PulvinarPlayerRepository;
++import net.kissenpvp.network.actor.rank.InternalRankModule;
++import net.kissenpvp.network.actor.rank.InternalRankSubscription;
++import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
++import net.kissenpvp.network.actor.rank.repository.InternalRankSubscriptionRepository;
++import net.kissenpvp.punishment.InternalPunishmentModule;
++import net.kissenpvp.punishment.repository.PunishmentRepository;
++import net.kissenpvp.punishment.repository.PunishmentSubscriptionRepository;
 +import org.bukkit.configuration.InvalidConfigurationException;
 +import org.jetbrains.annotations.NotNull;
 +import org.slf4j.Logger;
@@ -227,7 +239,7 @@ index 0000000000000000000000000000000000000000..c3b4baa0027c238e0dbd111b09768e7f
 +        }
 +
 +        ConnectionProvider provider = new InternalConnectionProvider();
-+        provider.connect(config.databaseUrl(), config.databaseUser(), config.databaseUrl());
++        provider.connect(config.databaseUrl(), config.databaseUser(), config.databasePassword());
 +
 +        if(provider.connection().isEmpty())
 +        {
@@ -236,11 +248,118 @@ index 0000000000000000000000000000000000000000..c3b4baa0027c238e0dbd111b09768e7f
 +
 +        Connection connection = provider.connection().get();
 +
++        PunishmentRepository pRepository = new PunishmentRepository(connection);
++        PunishmentSubscriptionRepository psRepository = new PunishmentSubscriptionRepository(connection);
++        PunishmentModule punishmentModule = new InternalPunishmentModule(pRepository, psRepository);
++        log.debug("The punishment module has been initialized.");
 +
++        InternalRankRepository rRepository = new InternalRankRepository(connection);
++        InternalRankSubscriptionRepository rsRepository = new InternalRankSubscriptionRepository(connection);
++        RankModule rankModule = new InternalRankModule(rRepository, rsRepository);
++        log.debug("The rank module has been initialized.");
++
++        PulvinarPlayerRepository playerRepository = new PulvinarPlayerRepository(connection);
++        PlayerModule playerModule = new InternalPlayerModule(playerRepository);
++        log.debug("The player module has been initialized.");
++
++        log.debug("Proceeding to populate core instance...");
++        startCore(punishmentModule, rankModule, playerModule);
 +    }
 +
 +    public @NotNull PulvinarConfig config() {
 +        return config;
++    }
++}
+diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..7fa32b870ff3f4ebd2ca0fdd1123bf4f49adf464
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
+@@ -0,0 +1,86 @@
++package net.kissenpvp.network.actor;
++
++import net.kissenpvp.api.network.actor.PlayerClient;
++import org.bukkit.Bukkit;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++import org.jetbrains.annotations.UnmodifiableView;
++
++import java.sql.Connection;
++import java.sql.ResultSet;
++import java.sql.SQLException;
++import java.util.*;
++import java.util.concurrent.CompletableFuture;
++
++public class PulvinarPlayerRepository extends InternalPlayerRepository {
++
++    public PulvinarPlayerRepository(@NotNull Connection connection) throws NullPointerException {
++        super(connection);
++    }
++
++    @Override
++    public @NotNull CompletableFuture<@Nullable PlayerClient> findByName(@NotNull String name, boolean utilizeCache) throws NullPointerException {
++        String sql = "SELECT * FROM %s WHERE username = ?;";
++        return CompletableFuture.supplyAsync(() -> query(sql, (statement) ->
++        {
++            statement.setString(1, name);
++
++            try(ResultSet resultSet = statement.executeQuery())
++            {
++                if(!resultSet.next())
++                {
++                    return null;
++                }
++
++                return toEntity(resultSet);
++            }
++        }));
++    }
++
++    @Override
++    public @NotNull CompletableFuture<@UnmodifiableView Collection<PlayerClient>> findAllByName(@NotNull Iterable<String> iterable, boolean utilizeCache) throws NullPointerException {
++
++        int size = 0;
++        for (Object ignored : iterable) { size++; }
++
++        if(size == 0)
++        {
++            return CompletableFuture.completedFuture(Collections.emptyList());
++        }
++
++        String dynamicPlaceholders = String.join(", ", Collections.nCopies(size, "?"));
++        String sql = "SELECT * FROM %s WHERE username IN (" + dynamicPlaceholders + ");";
++
++        return CompletableFuture.supplyAsync(() -> query(sql, (statement) ->
++        {
++            int current = 0;
++            for (String xx : iterable) {
++                statement.setString(current + 1, xx);
++                current++;
++            }
++
++            List<PlayerClient> clients = new ArrayList<>();
++            try(ResultSet resultSet = statement.executeQuery())
++            {
++                while(resultSet.next())
++                {
++                    clients.add(toEntity(resultSet));
++                }
++            }
++
++            return Collections.unmodifiableList(clients);
++        }));
++    }
++
++    @Override
++    protected @NotNull PlayerClient toCachedEntity(@NotNull UUID uuid, @NotNull ResultSet resultSet) throws SQLException, NullPointerException {
++        PlayerClient playerClient = Bukkit.getOfflinePlayer(uuid);
++        // TODO: Set data if necessary
++        return playerClient; // will automatically adapt reachable player if online
++    }
++
++    @Override
++    protected @NotNull PlayerClient toCachedEntity(@NotNull ResultSet resultSet) throws SQLException, NullPointerException {
++        return toCachedEntity(UUID.fromString(resultSet.getString("id")), resultSet);
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
