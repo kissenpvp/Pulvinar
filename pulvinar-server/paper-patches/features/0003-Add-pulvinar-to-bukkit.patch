@@ -1,0 +1,124 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Thu, 28 Aug 2025 19:05:59 +0200
+Subject: [PATCH] Add pulvinar to bukkit
+
+
+diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
+index 9cd8f429b25647168d3141d78afe67f5f28068c4..b8565bfd6520990fa0f9a679f84f320311b5286e 100644
+--- a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
++++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
+@@ -1,28 +1,68 @@
+ package net.kissenpvp.network.actor;
+ 
+ import com.destroystokyo.paper.profile.PaperGameProfileRepository;
+-import com.google.common.collect.Lists;
+ import com.mojang.authlib.GameProfile;
+ import com.mojang.authlib.GameProfileRepository;
+-import net.kissenpvp.api.network.actor.PlayerClient;
+-import net.minecraft.Util;
+ import net.minecraft.server.players.GameProfileCache;
+-import org.jetbrains.annotations.Contract;
++import org.bukkit.Bukkit;
++import org.bukkit.OfflinePlayer;
+ import org.jetbrains.annotations.NotNull;
+-import org.jetbrains.annotations.Nullable;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
+ 
+-import java.time.Duration;
+-import java.time.Instant;
+-import java.time.temporal.Temporal;
++import java.io.File;
+ import java.util.*;
+-import java.util.concurrent.CompletableFuture;
+-import java.util.function.BiConsumer;
+ 
+ public class PulvinarProfileCache extends GameProfileCache
+ {
+-    public PulvinarProfileCache(@NotNull GameProfileRepository gameProfileRepository)
++    private static final Logger log = LoggerFactory.getLogger(PulvinarProfileCache.class);
++
++    /**
++     * Creates a new {@code PulvinarProfileCache} that manages player profile caching
++     * through the specified {@link GameProfileRepository} without using a cache file.
++     * <p>
++     * This constructor requires that the given repository is an instance of
++     * {@link PaperGameProfileRepository} backed by a {@link PulvinarPlayerRepository}.
++     * In such cases, profiles are stored directly in the database, and no file-based
++     * cache is used.
++     *
++     * @param gameProfileRepository the repository for managing game profiles; must not be {@code null}
++     * @throws IllegalArgumentException if the repository is not a {@code PaperGameProfileRepository}
++     *                                  backed by a {@code PulvinarPlayerRepository}
++     */
++    public PulvinarProfileCache(@NotNull GameProfileRepository gameProfileRepository) {
++        this(gameProfileRepository, null);
++        if (!(gameProfileRepository instanceof PaperGameProfileRepository paper) ||
++            !(paper.playerRepository() instanceof PulvinarPlayerRepository)) {
++            throw new IllegalArgumentException(
++                    "GameProfileRepository must not be an instance of PaperGameProfileRepository when not using a file."
++            );
++        }
++    }
++
++    /**
++     * Creates a new {@code PulvinarProfileCache} that manages player profile caching
++     * through the specified {@link GameProfileRepository}, optionally using a cache file.
++     * <p>
++     * If a {@code file} is provided, profiles may be cached to disk as well as
++     * retrieved from the repository. If {@code file} is {@code null}, database-backed
++     * persistence is expected, in which case the repository must fulfill the same
++     * requirements enforced by the single-argument constructor.
++     *
++     * @param gameProfileRepository the repository for managing game profiles; must not be {@code null}
++     * @param file                  the cache file to use for storing profile data locally, or {@code null}
++     */
++    public PulvinarProfileCache(@NotNull GameProfileRepository gameProfileRepository, File file) {
++        super(gameProfileRepository, file);
++    }
++
++    @Override public void add(@NotNull GameProfile gameProfile)
+     {
+-        super(gameProfileRepository, null);
++        if(getRepository() instanceof PaperGameProfileRepository paper && paper.playerRepository() instanceof PulvinarPlayerRepository playerRepository)
++        {
++        }
++
++        super.add(gameProfile);
+     }
+ 
+     @SuppressWarnings("ClassEscapesDefinedScope") @Override public @NotNull List<GameProfileInfo> load()
+@@ -40,11 +80,18 @@ public class PulvinarProfileCache extends GameProfileCache
+             }).toList();
+         }
+ 
++
+         return super.load();
+     }
+ 
+     @Override public void save(boolean asyncSave)
+     {
+-        // this can be skipped, profiles are automatically saved when they are updated
++        if(getRepository() instanceof PaperGameProfileRepository paper && paper.playerRepository() instanceof PulvinarPlayerRepository)
++        {
++            // this can be skipped, profiles are automatically saved when they are updated
++            return;
++        }
++
++        super.save(asyncSave);
+     }
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
+index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..6c02777b5a5df11a7a76cfc609a1f6958a386992 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
+@@ -777,7 +777,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+ 
+     @Override public @org.jetbrains.annotations.NotNull net.kissenpvp.api.temporal.timespan.DefinedTimeSpan timePlayed()
+     {
+-        return null;
++        return new net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan(0L);
+     }
+ 
+     @Override public @org.jetbrains.annotations.NotNull java.util.UUID id()
