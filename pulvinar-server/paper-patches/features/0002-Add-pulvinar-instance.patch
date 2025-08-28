@@ -5,15 +5,21 @@ Subject: [PATCH] Add pulvinar instance
 
 
 diff --git a/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java b/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
-index 48e774677edf17d4a99ae9ed23d1b371dab41abb..186320b2701be1c51af00a3420c384a6de2ccb77 100644
+index 48e774677edf17d4a99ae9ed23d1b371dab41abb..c36bbf2585507f12d7b7b91cae19d50c4213b4c7 100644
 --- a/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
 +++ b/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
-@@ -25,6 +25,6 @@ public class PaperAuthenticationService extends YggdrasilAuthenticationService {
+@@ -25,6 +25,12 @@ public class PaperAuthenticationService extends YggdrasilAuthenticationService {
  
      @Override
      public GameProfileRepository createProfileRepository() {
 -        return new PaperGameProfileRepository(this.getProxy(), this.environment);
-+        return new PaperGameProfileRepository(this.getProxy(), this.environment, null); // Pulvinar - TODO
++        // Pulvinar start - integrate player repository into paper
++        return new PaperGameProfileRepository(
++                this.getProxy(),
++                this.environment,
++                org.bukkit.Bukkit.getPulvinar().playerModule().playerRepository()
++        );
++        // Pulvinar end - integrate player repository into paper
      }
  }
 diff --git a/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java b/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
@@ -201,10 +207,10 @@ index 0000000000000000000000000000000000000000..29b557a6cf9d57602bc622fbec0f9027
 +}
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..94d4cf225d296403af8c0e6840ecad37ec3a9c59
+index 0000000000000000000000000000000000000000..c42169f7ac76f2ebc2c0d48fba93183df0caf19a
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,80 @@
+@@ -0,0 +1,81 @@
 +package net.kissenpvp.base;
 +
 +import net.kissenpvp.api.database.ConnectionProvider;
@@ -279,6 +285,7 @@ index 0000000000000000000000000000000000000000..94d4cf225d296403af8c0e6840ecad37
 +
 +        log.debug("Proceeding to populate core instance...");
 +        startCore(punishmentModule, rankModule, playerModule);
++
 +    }
 +
 +    public @NotNull PulvinarConfig config() {
@@ -287,12 +294,13 @@ index 0000000000000000000000000000000000000000..94d4cf225d296403af8c0e6840ecad37
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..7fa32b870ff3f4ebd2ca0fdd1123bf4f49adf464
+index 0000000000000000000000000000000000000000..196774df5591be3691c89340bba0fe7a0fa91b10
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,108 @@
 +package net.kissenpvp.network.actor;
 +
++import com.mojang.authlib.GameProfile;
 +import net.kissenpvp.api.network.actor.PlayerClient;
 +import org.bukkit.Bukkit;
 +import org.jetbrains.annotations.NotNull;
@@ -309,6 +317,27 @@ index 0000000000000000000000000000000000000000..7fa32b870ff3f4ebd2ca0fdd1123bf4f
 +
 +    public PulvinarPlayerRepository(@NotNull Connection connection) throws NullPointerException {
 +        super(connection);
++    }
++
++    public @NotNull CompletableFuture<@NotNull @UnmodifiableView Collection<GameProfile>> findAllProfiles()
++    {
++        return CompletableFuture.supplyAsync(() -> query("SELECT id, username FROM %s;", (statement) ->
++        {
++            Collection<GameProfile> clients = new ArrayList<>();
++
++            try(ResultSet resultSet = statement.executeQuery())
++            {
++                while(resultSet.next())
++                {
++                    clients.add(new GameProfile(
++                            UUID.fromString(resultSet.getString("id")),
++                            resultSet.getString("username"))
++                    );
++                }
++            }
++
++            return Collections.unmodifiableCollection(clients);
++        }));
 +    }
 +
 +    @Override
@@ -379,85 +408,58 @@ index 0000000000000000000000000000000000000000..7fa32b870ff3f4ebd2ca0fdd1123bf4f
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..5d4ce2328c0053d1486d6eaec0c04930ad78a867
+index 0000000000000000000000000000000000000000..9cd8f429b25647168d3141d78afe67f5f28068c4
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
-@@ -0,0 +1,77 @@
+@@ -0,0 +1,50 @@
 +package net.kissenpvp.network.actor;
 +
 +import com.destroystokyo.paper.profile.PaperGameProfileRepository;
++import com.google.common.collect.Lists;
 +import com.mojang.authlib.GameProfile;
 +import com.mojang.authlib.GameProfileRepository;
++import net.kissenpvp.api.network.actor.PlayerClient;
++import net.minecraft.Util;
 +import net.minecraft.server.players.GameProfileCache;
++import org.jetbrains.annotations.Contract;
 +import org.jetbrains.annotations.NotNull;
 +import org.jetbrains.annotations.Nullable;
 +
-+import java.io.File;
-+import java.util.List;
-+import java.util.Objects;
-+import java.util.Optional;
-+import java.util.UUID;
++import java.time.Duration;
++import java.time.Instant;
++import java.time.temporal.Temporal;
++import java.util.*;
 +import java.util.concurrent.CompletableFuture;
-+import java.util.concurrent.Executor;
++import java.util.function.BiConsumer;
 +
-+public class PulvinarProfileCache extends GameProfileCache {
++public class PulvinarProfileCache extends GameProfileCache
++{
++    public PulvinarProfileCache(@NotNull GameProfileRepository gameProfileRepository)
++    {
++        super(gameProfileRepository, null);
++    }
 +
-+    public PulvinarProfileCache(@NotNull PaperGameProfileRepository profileRepository) {
-+        super(profileRepository, null);
-+
-+        if(!profileRepository.pulvinarHooked())
++    @SuppressWarnings("ClassEscapesDefinedScope") @Override public @NotNull List<GameProfileInfo> load()
++    {
++        if(getRepository() instanceof PaperGameProfileRepository paper && paper.playerRepository() instanceof PulvinarPlayerRepository playerRepository)
 +        {
-+            throw new UnsupportedOperationException(new IllegalStateException("Cannot use PulvinarProfileCache without a PulvinarPlayerRepository!"));
-+        }
-+    }
-+
-+    @Override
-+    public void add(GameProfile gameProfile) {
-+        // logic delegated to pulvinar repository
-+    }
-+
-+    @Override
-+    public @Nullable GameProfile getProfileIfCached(@NotNull String name) {
-+        return get(name).orElse(null);
-+    }
-+
-+    @Override
-+    public @NotNull Optional<GameProfile> get(@NotNull String name) {
-+        Objects.requireNonNull(name, "Name must not be null.");
-+        try { stateLock.lock();
-+
-+            if(getRepository().playerRepository().cached(name))
++            return playerRepository.findAllProfiles().join().stream().map(gameProfile ->
 +            {
-+                return Optional.empty();
-+            }
-+            return getRepository().findProfileByName(name);
++                Calendar instance = Calendar.getInstance();
++                instance.setTime(new Date());
++                instance.add(Calendar.MONTH, 1);
++                Date time = instance.getTime(); //TODO maybe completely remove this
 +
-+        } finally { stateLock.unlock(); }
-+    }
++                return new GameProfileInfo(gameProfile, time);
++            }).toList();
++        }
 +
-+    @Override
-+    public CompletableFuture<Optional<GameProfile>> getAsync(String name) {
-+        return super.getAsync(name);
-+    }
-+
-+    @Override
-+    public Optional<GameProfile> get(UUID uuid) {
-+        return super.get(uuid);
-+    }
-+
-+    @Override
-+    public List<GameProfileInfo> load() {
 +        return super.load();
 +    }
 +
-+    @Override
-+    public void save(boolean asyncSave) {
-+        super.save(asyncSave);
-+    }
-+
-+    @Override
-+    protected PaperGameProfileRepository getRepository() {
-+        return (PaperGameProfileRepository) super.getRepository();
++    @Override public void save(boolean asyncSave)
++    {
++        // this can be skipped, profiles are automatically saved when they are updated
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java

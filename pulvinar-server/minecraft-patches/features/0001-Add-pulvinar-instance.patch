@@ -22,11 +22,24 @@ index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..c067fc09a86190da797eeafa858ecb63
              // Paper start - fix SPIGOT-5824
              File file;
              File userCacheFile = new File(Services.USERID_CACHE_FILE);
+diff --git a/net/minecraft/server/Services.java b/net/minecraft/server/Services.java
+index 015e3ff8d856a7722def4448d8c68792cc3a32a2..6ab9257e581fdd10872c8be2fd5317d9606b0a78 100644
+--- a/net/minecraft/server/Services.java
++++ b/net/minecraft/server/Services.java
+@@ -29,7 +29,7 @@ public record Services(
+     public static Services create(YggdrasilAuthenticationService authenticationService, File profileRepository, File userCacheFile, joptsimple.OptionSet optionSet) throws Exception { // Paper - add optionset to load paper config files; add userCacheFile parameter
+         MinecraftSessionService minecraftSessionService = authenticationService.createMinecraftSessionService();
+         GameProfileRepository gameProfileRepository = authenticationService.createProfileRepository();
+-        GameProfileCache gameProfileCache = new GameProfileCache(gameProfileRepository, userCacheFile); // Paper - use specified user cache file
++        GameProfileCache gameProfileCache = new net.kissenpvp.network.actor.PulvinarProfileCache(gameProfileRepository); // new GameProfileCache(gameProfileRepository, userCacheFile); // Paper - use specified user cache file // Pulvinar - delegate caching to database
+         // Paper start - load paper config files from cli options
+         final java.nio.file.Path legacyConfigPath = ((File) optionSet.valueOf("paper-settings")).toPath();
+         final java.nio.file.Path configDirPath = ((File) optionSet.valueOf("paper-settings-directory")).toPath();
 diff --git a/net/minecraft/server/players/GameProfileCache.java b/net/minecraft/server/players/GameProfileCache.java
-index 066f84df5c31242ab542932f1e243369d0e766e2..81a7dbd7b05ab2ae3c24ec33e8171ee11fb69780 100644
+index 066f84df5c31242ab542932f1e243369d0e766e2..a34b21bccb123525806f1ff6f7230d93da2a5b2b 100644
 --- a/net/minecraft/server/players/GameProfileCache.java
 +++ b/net/minecraft/server/players/GameProfileCache.java
-@@ -317,7 +317,7 @@ public class GameProfileCache {
+@@ -317,12 +317,12 @@ public class GameProfileCache {
          }
      }
  
@@ -35,12 +48,23 @@ index 066f84df5c31242ab542932f1e243369d0e766e2..81a7dbd7b05ab2ae3c24ec33e8171ee1
          private final GameProfile profile;
          final Date expirationDate;
          private volatile long lastAccess;
-@@ -343,4 +343,14 @@ public class GameProfileCache {
+ 
+-        GameProfileInfo(GameProfile profile, Date expirationDate) {
++        public GameProfileInfo(GameProfile profile, Date expirationDate) {  // Pulvinar - allow public access
+             this.profile = profile;
+             this.expirationDate = expirationDate;
+         }
+@@ -343,4 +343,19 @@ public class GameProfileCache {
              return this.lastAccess;
          }
      }
 +
 +    // Pulvinar start - allow protected access to the profile repository and executor
++    protected Map<String, CompletableFuture<Optional<GameProfile>>> getRequests()
++    {
++        return requests;
++    }
++
 +    protected @Nullable Executor getExecutor() {
 +        return this.executor;
 +    }
