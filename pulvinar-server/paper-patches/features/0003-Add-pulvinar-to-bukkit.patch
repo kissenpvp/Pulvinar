@@ -4,11 +4,77 @@ Date: Thu, 28 Aug 2025 19:05:59 +0200
 Subject: [PATCH] Add pulvinar to bukkit
 
 
+diff --git a/src/main/java/net/kissenpvp/network/actor/PlayerMock.java b/src/main/java/net/kissenpvp/network/actor/PlayerMock.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..673bb162242a6a92bf7594bf82667702562e2376
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/PlayerMock.java
+@@ -0,0 +1,60 @@
++package net.kissenpvp.network.actor;
++
++import com.mojang.authlib.GameProfile;
++import net.kissenpvp.api.temporal.timespan.DefinedTimeSpan;
++import net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan;
++import org.jetbrains.annotations.NotNull;
++
++import java.time.Instant;
++import java.util.Locale;
++import java.util.Objects;
++import java.util.UUID;
++
++public class PlayerMock extends InternalPlayerClient
++{
++    private final UUID id;
++    private final String username;
++
++    public static @NotNull PlayerMock of(@NotNull GameProfile gameProfile)
++    {
++        Objects.requireNonNull(gameProfile, "GameProfile cannot be null");
++        return new PlayerMock(gameProfile.getId(), gameProfile.getName());
++    }
++
++    private PlayerMock(@NotNull UUID id, @NotNull String username)
++    {
++        super(id);
++        this.id = id;
++        this.username = username;
++    }
++
++    @Override public @NotNull UUID getUniqueId()
++    {
++        return id;
++    }
++
++    @Override public long getLastLogin()
++    {
++        return Instant.now().getEpochSecond();
++    }
++
++    @Override public @NotNull DefinedTimeSpan timePlayed()
++    {
++        return new InternalDefinedTimeSpan(0L);
++    }
++
++    @Override public @NotNull String username()
++    {
++        return username;
++    }
++
++    @Override public @NotNull Locale locale()
++    {
++        return Locale.US;
++    }
++
++    @Override public boolean isOp()
++    {
++        return false;
++    }
++}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
-index 9cd8f429b25647168d3141d78afe67f5f28068c4..b8565bfd6520990fa0f9a679f84f320311b5286e 100644
+index 9cd8f429b25647168d3141d78afe67f5f28068c4..642cdfef915e44926c1cf2763c2ca53f36e1aa53 100644
 --- a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
-@@ -1,28 +1,68 @@
+@@ -1,28 +1,67 @@
  package net.kissenpvp.network.actor;
  
  import com.destroystokyo.paper.profile.PaperGameProfileRepository;
@@ -19,8 +85,6 @@ index 9cd8f429b25647168d3141d78afe67f5f28068c4..b8565bfd6520990fa0f9a679f84f3203
 -import net.minecraft.Util;
  import net.minecraft.server.players.GameProfileCache;
 -import org.jetbrains.annotations.Contract;
-+import org.bukkit.Bukkit;
-+import org.bukkit.OfflinePlayer;
  import org.jetbrains.annotations.NotNull;
 -import org.jetbrains.annotations.Nullable;
 +import org.slf4j.Logger;
@@ -83,13 +147,14 @@ index 9cd8f429b25647168d3141d78afe67f5f28068c4..b8565bfd6520990fa0f9a679f84f3203
 -        super(gameProfileRepository, null);
 +        if(getRepository() instanceof PaperGameProfileRepository paper && paper.playerRepository() instanceof PulvinarPlayerRepository playerRepository)
 +        {
++            playerRepository.save(PlayerMock.of(gameProfile));
 +        }
 +
 +        super.add(gameProfile);
      }
  
      @SuppressWarnings("ClassEscapesDefinedScope") @Override public @NotNull List<GameProfileInfo> load()
-@@ -40,11 +80,18 @@ public class PulvinarProfileCache extends GameProfileCache
+@@ -40,11 +79,18 @@ public class PulvinarProfileCache extends GameProfileCache
              }).toList();
          }
  
