@@ -71,10 +71,10 @@ index 0000000000000000000000000000000000000000..673bb162242a6a92bf7594bf82667702
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
-index 9cd8f429b25647168d3141d78afe67f5f28068c4..642cdfef915e44926c1cf2763c2ca53f36e1aa53 100644
+index 9cd8f429b25647168d3141d78afe67f5f28068c4..aa3423fc8f25ae43e66cc39b19be7ccc0423b77f 100644
 --- a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
-@@ -1,28 +1,67 @@
+@@ -1,28 +1,71 @@
  package net.kissenpvp.network.actor;
  
  import com.destroystokyo.paper.profile.PaperGameProfileRepository;
@@ -145,16 +145,20 @@ index 9cd8f429b25647168d3141d78afe67f5f28068c4..642cdfef915e44926c1cf2763c2ca53f
 +    @Override public void add(@NotNull GameProfile gameProfile)
      {
 -        super(gameProfileRepository, null);
-+        if(getRepository() instanceof PaperGameProfileRepository paper && paper.playerRepository() instanceof PulvinarPlayerRepository playerRepository)
-+        {
-+            playerRepository.save(PlayerMock.of(gameProfile));
++        if(
++                getRepository() instanceof PaperGameProfileRepository paper &&
++                paper.playerRepository() instanceof PulvinarPlayerRepository playerRepository &&
++                get(gameProfile.getId()).isEmpty()
++        ) {
++            log.info("Profile {} has not been cached yet, saving to database...", gameProfile.getName());
++            playerRepository.save(PlayerMock.of(gameProfile)).join();
 +        }
 +
 +        super.add(gameProfile);
      }
  
      @SuppressWarnings("ClassEscapesDefinedScope") @Override public @NotNull List<GameProfileInfo> load()
-@@ -40,11 +79,18 @@ public class PulvinarProfileCache extends GameProfileCache
+@@ -40,11 +83,18 @@ public class PulvinarProfileCache extends GameProfileCache
              }).toList();
          }
  
