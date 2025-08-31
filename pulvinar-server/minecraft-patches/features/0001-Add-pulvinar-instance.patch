@@ -74,3 +74,87 @@ index 066f84df5c31242ab542932f1e243369d0e766e2..a34b21bccb123525806f1ff6f7230d93
 +    }
 +    // Pulvinar end - allow protected access to the profile repository and executor
  }
+diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
+index db56578bff06574337463c2421537f43d1a19189..b9820f72b08d6fad9739bdd9cdecc5d0c3e64277 100644
+--- a/net/minecraft/server/players/PlayerList.java
++++ b/net/minecraft/server/players/PlayerList.java
+@@ -115,7 +115,7 @@ public abstract class PlayerList {
+     private final Map<UUID, ServerPlayer> playersByUUID = Maps.newHashMap();
+     private final UserBanList bans = new UserBanList(USERBANLIST_FILE);
+     private final IpBanList ipBans = new IpBanList(IPBANLIST_FILE);
+-    private final ServerOpList ops = new ServerOpList(OPLIST_FILE);
++    private final ServerOpList ops = new net.kissenpvp.network.actor.operator.PulvinarOperatorList(org.bukkit.Bukkit.getPulvinar().playerModule().operatorRepository()); // new ServerOpList(OPLIST_FILE); // Pulvinar - migrate operator data to database
+     private final UserWhiteList whitelist = new UserWhiteList(WHITELIST_FILE);
+     // CraftBukkit start
+     // private final Map<UUID, ServerStatsCounter> stats = Maps.newHashMap();
+diff --git a/net/minecraft/server/players/ServerOpListEntry.java b/net/minecraft/server/players/ServerOpListEntry.java
+index aa2663be118b628257e16e3da309e8a3b4f9ad71..f01f19d97161ad109aaa06c9d52e7fe23f6b83c3 100644
+--- a/net/minecraft/server/players/ServerOpListEntry.java
++++ b/net/minecraft/server/players/ServerOpListEntry.java
+@@ -2,10 +2,12 @@ package net.minecraft.server.players;
+ 
+ import com.google.gson.JsonObject;
+ import com.mojang.authlib.GameProfile;
++import org.jetbrains.annotations.NotNull;
++
+ import java.util.UUID;
+ import javax.annotation.Nullable;
+ 
+-public class ServerOpListEntry extends StoredUserEntry<GameProfile> {
++public class ServerOpListEntry extends StoredUserEntry<GameProfile> implements net.kissenpvp.api.network.actor.OperatorInfo { // Pulvinar start - migrate operator data to database
+     private final int level;
+     private final boolean bypassesPlayerLimit;
+ 
+@@ -56,4 +58,36 @@ public class ServerOpListEntry extends StoredUserEntry<GameProfile> {
+             return null;
+         }
+     }
++
++    // Pulvinar start - migrate operator data to database
++    @Override public UUID id()
++    {
++        if(java.util.Objects.isNull(getUser()))
++        {
++            throw new java.lang.IllegalStateException("User is null");
++        }
++
++        return getUser().getId();
++    }
++
++    @Override public String name()
++    {
++        if(java.util.Objects.isNull(getUser()))
++        {
++            throw new java.lang.IllegalStateException("User is null");
++        }
++
++        return getUser().getName();
++    }
++
++    @Override public int signature()
++    {
++        return java.util.Objects.hash(id(), level, bypassesPlayerLimit);
++    }
++
++    @Override public boolean unsaved()
++    {
++        return false;
++    }
++    // Pulvinar end - migrate operator data to database
+ }
+diff --git a/net/minecraft/server/players/StoredUserList.java b/net/minecraft/server/players/StoredUserList.java
+index d445e8f126f077d8419c52fa5436ea963a1a42a4..a0c9255e1cce64c733cc70d4a523912f7cab05d0 100644
+--- a/net/minecraft/server/players/StoredUserList.java
++++ b/net/minecraft/server/players/StoredUserList.java
+@@ -132,4 +132,11 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
+             // Spigot end
+         }
+     }
++
++    // Pulvinar start - allow protected access to map
++    protected Map<String, V> getMap()
++    {
++        return map;
++    }
++    // Pulvinar end - allow protected access to map
+ }

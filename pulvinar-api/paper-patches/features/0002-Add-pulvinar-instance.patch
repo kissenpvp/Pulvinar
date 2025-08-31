@@ -19,16 +19,17 @@ index 0000000000000000000000000000000000000000..19966223a862ad0aaaa592cdf2c18e62
 + */
 +public interface Pulvinar extends Kissen {}
 diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
-index bb21401d142e2a9385d52afe40c54d793103afe2..92173c2b352494540647800dca7a50885392059a 100644
+index bb21401d142e2a9385d52afe40c54d793103afe2..a6678eb8c21d9c6a750c401288e51bbb337f98b4 100644
 --- a/src/main/java/org/bukkit/Bukkit.java
 +++ b/src/main/java/org/bukkit/Bukkit.java
-@@ -71,6 +71,22 @@ import org.jetbrains.annotations.Nullable;
+@@ -71,6 +71,23 @@ import org.jetbrains.annotations.Nullable;
  public final class Bukkit {
      private static Server server;
  
 +    // Pulvinar start - add base instance
 +    private static net.kissenpvp.base.Pulvinar pulvinar;
 +
++    @NotNull
 +    public static net.kissenpvp.base.Pulvinar getPulvinar() {
 +        return pulvinar;
 +    }

@@ -4,6 +4,90 @@ Date: Thu, 28 Aug 2025 19:05:59 +0200
 Subject: [PATCH] Add pulvinar to bukkit
 
 
+diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..bc7538ec63f09171e5bc720855e87d9c1243aea9 100644
+--- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
++++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+@@ -7,12 +7,13 @@ import net.kissenpvp.api.punishment.PunishmentModule;
+ import net.kissenpvp.database.InternalConnectionProvider;
+ import net.kissenpvp.network.actor.InternalPlayerModule;
+ import net.kissenpvp.network.actor.PulvinarPlayerRepository;
++import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
+ import net.kissenpvp.network.actor.rank.InternalRankModule;
+ import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
+ import net.kissenpvp.network.actor.rank.repository.InternalRankSubscriptionRepository;
+ import net.kissenpvp.punishment.InternalPunishmentModule;
+-import net.kissenpvp.punishment.repository.PunishmentRepository;
+-import net.kissenpvp.punishment.repository.PunishmentSubscriptionRepository;
++import net.kissenpvp.punishment.repository.InternalPunishmentRepository;
++import net.kissenpvp.punishment.repository.InternalPunishmentSubscriptionRepository;
+ import org.bukkit.configuration.InvalidConfigurationException;
+ import org.jetbrains.annotations.NotNull;
+ import org.slf4j.Logger;
+@@ -56,8 +57,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+ 
+         Connection connection = provider.connection().get();
+ 
+-        PunishmentRepository pRepository = new PunishmentRepository(connection);
+-        PunishmentSubscriptionRepository psRepository = new PunishmentSubscriptionRepository(connection);
++        InternalPunishmentRepository pRepository = new InternalPunishmentRepository(connection);
++        InternalPunishmentSubscriptionRepository psRepository = new InternalPunishmentSubscriptionRepository(connection);
+         PunishmentModule punishmentModule = new InternalPunishmentModule(pRepository, psRepository);
+         log.debug("The punishment module has been initialized.");
+ 
+@@ -66,8 +67,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+         RankModule rankModule = new InternalRankModule(rRepository, rsRepository);
+         log.debug("The rank module has been initialized.");
+ 
++        PulvinarOperatorRepository operatorRepository = new PulvinarOperatorRepository(connection);
+         PulvinarPlayerRepository playerRepository = new PulvinarPlayerRepository(connection);
+-        PlayerModule playerModule = new InternalPlayerModule(playerRepository);
++        PlayerModule playerModule = new InternalPlayerModule(playerRepository, operatorRepository);
+         log.debug("The player module has been initialized.");
+ 
+         log.debug("Proceeding to populate core instance...");
+diff --git a/src/main/java/net/kissenpvp/network/actor/ActorData.java b/src/main/java/net/kissenpvp/network/actor/ActorData.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..93dbaf15c61ffecb062827110bb70cc836839678
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/ActorData.java
+@@ -0,0 +1,36 @@
++package net.kissenpvp.network.actor;
++
++import net.kissenpvp.api.network.actor.rank.Rank;
++import net.kissenpvp.api.temporal.timespan.DefinedTimeSpan;
++import net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.UnmodifiableView;
++
++import java.time.Duration;
++import java.time.Instant;
++import java.time.temporal.ChronoUnit;
++import java.util.Collections;
++import java.util.List;
++
++public class ActorData
++{
++    private final List<Rank> ranks;
++    private final DefinedTimeSpan definedTimeSpan;
++
++    public ActorData(@NotNull List<Rank> ranks, @NotNull DefinedTimeSpan definedTimeSpan)
++    {
++        this.ranks = ranks;
++        this.definedTimeSpan = definedTimeSpan;
++    }
++
++    public @NotNull @UnmodifiableView List<Rank> ranks()
++    {
++        return Collections.unmodifiableList(ranks);
++    }
++
++    public @NotNull DefinedTimeSpan calculateTimePlayed(@NotNull Instant lastJoin)
++    {
++        Duration totalTimePlayed = Duration.between(lastJoin, Instant.now()).plus(Duration.from(definedTimeSpan));
++        return new InternalDefinedTimeSpan(totalTimePlayed.get(ChronoUnit.MILLIS));
++    }
++}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PlayerMock.java b/src/main/java/net/kissenpvp/network/actor/PlayerMock.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..673bb162242a6a92bf7594bf82667702562e2376
@@ -70,11 +154,81 @@ index 0000000000000000000000000000000000000000..673bb162242a6a92bf7594bf82667702
 +        return false;
 +    }
 +}
+diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
+index 196774df5591be3691c89340bba0fe7a0fa91b10..e665654b0bef25c1aa66ac18937c931d9d9eb101 100644
+--- a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
++++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
+@@ -21,28 +21,34 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
+ 
+     public @NotNull CompletableFuture<@NotNull @UnmodifiableView Collection<GameProfile>> findAllProfiles()
+     {
+-        return CompletableFuture.supplyAsync(() -> query("SELECT id, username FROM %s;", (statement) ->
+-        {
+-            Collection<GameProfile> clients = new ArrayList<>();
+-
+-            try(ResultSet resultSet = statement.executeQuery())
++        return CompletableFuture.supplyAsync(() -> {
++            Collection<GameProfile> profiles =  query("SELECT id, username FROM " + table() + ";", (statement) ->
+             {
+-                while(resultSet.next())
++                Collection<GameProfile> clients = new ArrayList<>();
++
++                try(ResultSet resultSet = statement.executeQuery())
+                 {
+-                    clients.add(new GameProfile(
+-                            UUID.fromString(resultSet.getString("id")),
+-                            resultSet.getString("username"))
+-                    );
++                    while(resultSet.next())
++                    {
++                        clients.add(new GameProfile(
++                                UUID.fromString(resultSet.getString("id")),
++                                resultSet.getString("username"))
++                        );
++                    }
+                 }
+-            }
+ 
+-            return Collections.unmodifiableCollection(clients);
+-        }));
++                return Collections.unmodifiableCollection(clients);
++            });
++
++            assert profiles != null;
++            return profiles;
++        });
+     }
+ 
+     @Override
+     public @NotNull CompletableFuture<@Nullable PlayerClient> findByName(@NotNull String name, boolean utilizeCache) throws NullPointerException {
+-        String sql = "SELECT * FROM %s WHERE username = ?;";
++        //TODO: utilize cache
++        String sql = "SELECT * FROM " + table() + " WHERE username = ?;";
+         return CompletableFuture.supplyAsync(() -> query(sql, (statement) ->
+         {
+             statement.setString(1, name);
+@@ -62,6 +68,7 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
+     @Override
+     public @NotNull CompletableFuture<@UnmodifiableView Collection<PlayerClient>> findAllByName(@NotNull Iterable<String> iterable, boolean utilizeCache) throws NullPointerException {
+ 
++        //TODO: utilize cache
+         int size = 0;
+         for (Object ignored : iterable) { size++; }
+ 
+@@ -71,7 +78,7 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
+         }
+ 
+         String dynamicPlaceholders = String.join(", ", Collections.nCopies(size, "?"));
+-        String sql = "SELECT * FROM %s WHERE username IN (" + dynamicPlaceholders + ");";
++        String sql = "SELECT * FROM " + table() + " WHERE username IN (" + dynamicPlaceholders + ");";
+ 
+         return CompletableFuture.supplyAsync(() -> query(sql, (statement) ->
+         {
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
-index 9cd8f429b25647168d3141d78afe67f5f28068c4..aa3423fc8f25ae43e66cc39b19be7ccc0423b77f 100644
+index 9cd8f429b25647168d3141d78afe67f5f28068c4..12cb65a641418cfbc3373c733365c2df0f27a2ac 100644
 --- a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
-@@ -1,28 +1,71 @@
+@@ -1,28 +1,65 @@
  package net.kissenpvp.network.actor;
  
  import com.destroystokyo.paper.profile.PaperGameProfileRepository;
@@ -118,12 +272,6 @@ index 9cd8f429b25647168d3141d78afe67f5f28068c4..aa3423fc8f25ae43e66cc39b19be7ccc
 +     */
 +    public PulvinarProfileCache(@NotNull GameProfileRepository gameProfileRepository) {
 +        this(gameProfileRepository, null);
-+        if (!(gameProfileRepository instanceof PaperGameProfileRepository paper) ||
-+            !(paper.playerRepository() instanceof PulvinarPlayerRepository)) {
-+            throw new IllegalArgumentException(
-+                    "GameProfileRepository must not be an instance of PaperGameProfileRepository when not using a file."
-+            );
-+        }
 +    }
 +
 +    /**
@@ -158,7 +306,7 @@ index 9cd8f429b25647168d3141d78afe67f5f28068c4..aa3423fc8f25ae43e66cc39b19be7ccc
      }
  
      @SuppressWarnings("ClassEscapesDefinedScope") @Override public @NotNull List<GameProfileInfo> load()
-@@ -40,11 +83,18 @@ public class PulvinarProfileCache extends GameProfileCache
+@@ -40,11 +77,18 @@ public class PulvinarProfileCache extends GameProfileCache
              }).toList();
          }
  
@@ -178,6 +326,107 @@ index 9cd8f429b25647168d3141d78afe67f5f28068c4..aa3423fc8f25ae43e66cc39b19be7ccc
 +        super.save(asyncSave);
      }
  }
+diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..a93ef85f7513f0a0eaba084c186a5e472a2f4345
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
+@@ -0,0 +1,59 @@
++package net.kissenpvp.network.actor.operator;
++
++import net.kissenpvp.api.database.Repository;
++import net.kissenpvp.api.network.actor.OperatorInfo;
++import net.minecraft.server.players.ServerOpList;
++import net.minecraft.server.players.ServerOpListEntry;
++import org.jetbrains.annotations.NotNull;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++import java.io.IOException;
++import java.util.Collection;
++import java.util.Objects;
++import java.util.UUID;
++
++public class PulvinarOperatorList extends ServerOpList
++{
++    private static final Logger log = LoggerFactory.getLogger(PulvinarOperatorList.class);
++    private final Repository<UUID, OperatorInfo> repository;
++
++    public PulvinarOperatorList(@NotNull Repository<UUID, OperatorInfo> repository)
++    {
++        super(null);
++        this.repository = repository;
++    }
++
++    @Override public void add(@NotNull ServerOpListEntry entry)
++    {
++        if(Objects.isNull(entry.getUser()))
++        {
++            log.warn("Discarding adding operator entry {} due to missing user.", entry);
++            return;
++        }
++
++        this.getMap().put(this.getKeyForUser(entry.getUser()), entry);
++        repository.save(entry).join();
++    }
++
++    @Override public void load() throws IOException
++    {
++        Collection<OperatorInfo> operators = repository.findAll().join();
++
++        for(OperatorInfo operator : operators)
++        {
++            ServerOpListEntry entry = (ServerOpListEntry) operator;
++            if(Objects.isNull(entry.getUser()))
++            {
++                log.warn("Discarding operator entry {} due to missing user.", operator);
++                continue;
++            }
++            this.getMap().put(this.getKeyForUser(entry.getUser()), entry);
++        }
++    }
++
++    @Override public void save() throws IOException
++    {
++        // skip saving
++    }
++}
+diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..ccfd98fb5df73e91b372443e9c0c86c74463a0a2
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
+@@ -0,0 +1,30 @@
++package net.kissenpvp.network.actor.operator;
++
++import com.mojang.authlib.GameProfile;
++import net.kissenpvp.api.network.actor.OperatorInfo;
++import net.kissenpvp.network.actor.InternalOperatorRepository;
++import net.minecraft.server.players.ServerOpListEntry;
++import org.jetbrains.annotations.NotNull;
++
++import java.sql.Connection;
++import java.sql.ResultSet;
++import java.sql.SQLException;
++import java.util.UUID;
++
++public class PulvinarOperatorRepository extends InternalOperatorRepository
++{
++    public PulvinarOperatorRepository(@NotNull Connection connection) throws NullPointerException
++    {
++        super(connection);
++    }
++
++    @Override
++    protected @NotNull OperatorInfo toEntity(@NotNull UUID uuid, @NotNull ResultSet resultSet) throws SQLException, NullPointerException
++    {
++        GameProfile profile = new GameProfile(uuid, resultSet.getString("username"));
++        int level = resultSet.getInt("operator_level");
++        boolean canBypass = resultSet.getBoolean("can_bypass_player_limit");
++
++        return new ServerOpListEntry(profile, level, canBypass);
++    }
++}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..6c02777b5a5df11a7a76cfc609a1f6958a386992 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
