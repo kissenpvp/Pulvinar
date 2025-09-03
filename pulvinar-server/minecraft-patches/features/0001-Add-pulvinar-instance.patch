@@ -75,7 +75,7 @@ index 066f84df5c31242ab542932f1e243369d0e766e2..a34b21bccb123525806f1ff6f7230d93
 +    // Pulvinar end - allow protected access to the profile repository and executor
  }
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index db56578bff06574337463c2421537f43d1a19189..b9820f72b08d6fad9739bdd9cdecc5d0c3e64277 100644
+index db56578bff06574337463c2421537f43d1a19189..9074f25a3173e15a0a1de03e764c1c72381dcf60 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
 @@ -115,7 +115,7 @@ public abstract class PlayerList {
@@ -83,7 +83,7 @@ index db56578bff06574337463c2421537f43d1a19189..b9820f72b08d6fad9739bdd9cdecc5d0
      private final UserBanList bans = new UserBanList(USERBANLIST_FILE);
      private final IpBanList ipBans = new IpBanList(IPBANLIST_FILE);
 -    private final ServerOpList ops = new ServerOpList(OPLIST_FILE);
-+    private final ServerOpList ops = new net.kissenpvp.network.actor.operator.PulvinarOperatorList(org.bukkit.Bukkit.getPulvinar().playerModule().operatorRepository()); // new ServerOpList(OPLIST_FILE); // Pulvinar - migrate operator data to database
++    private final ServerOpList ops = new net.kissenpvp.network.actor.operator.PulvinarOperatorList(((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).operatorRepository()); // new ServerOpList(OPLIST_FILE); // Pulvinar - migrate operator data to database
      private final UserWhiteList whitelist = new UserWhiteList(WHITELIST_FILE);
      // CraftBukkit start
      // private final Map<UUID, ServerStatsCounter> stats = Maps.newHashMap();

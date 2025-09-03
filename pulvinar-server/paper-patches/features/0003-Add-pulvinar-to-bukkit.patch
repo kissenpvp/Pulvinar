@@ -4,19 +4,38 @@ Date: Thu, 28 Aug 2025 19:05:59 +0200
 Subject: [PATCH] Add pulvinar to bukkit
 
 
+diff --git a/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java b/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
+index c36bbf2585507f12d7b7b91cae19d50c4213b4c7..f2d30ce7d9b94088ae9834e07cbdf5d6b691feea 100644
+--- a/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
++++ b/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
+@@ -29,7 +29,7 @@ public class PaperAuthenticationService extends YggdrasilAuthenticationService {
+         return new PaperGameProfileRepository(
+                 this.getProxy(),
+                 this.environment,
+-                org.bukkit.Bukkit.getPulvinar().playerModule().playerRepository()
++                ((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).playerRepository()
+         );
+         // Pulvinar end - integrate player repository into paper
+     }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..bc7538ec63f09171e5bc720855e87d9c1243aea9 100644
+index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..bf7e81c079e0a2d14e6d119f65cca797f21baf13 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -7,12 +7,13 @@ import net.kissenpvp.api.punishment.PunishmentModule;
+@@ -1,18 +1,13 @@
+ package net.kissenpvp.base;
+ 
+ import net.kissenpvp.api.database.ConnectionProvider;
+-import net.kissenpvp.api.network.actor.PlayerModule;
+-import net.kissenpvp.api.network.actor.rank.RankModule;
+-import net.kissenpvp.api.punishment.PunishmentModule;
  import net.kissenpvp.database.InternalConnectionProvider;
- import net.kissenpvp.network.actor.InternalPlayerModule;
+-import net.kissenpvp.network.actor.InternalPlayerModule;
  import net.kissenpvp.network.actor.PulvinarPlayerRepository;
+-import net.kissenpvp.network.actor.rank.InternalRankModule;
 +import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
- import net.kissenpvp.network.actor.rank.InternalRankModule;
  import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
  import net.kissenpvp.network.actor.rank.repository.InternalRankSubscriptionRepository;
- import net.kissenpvp.punishment.InternalPunishmentModule;
+-import net.kissenpvp.punishment.InternalPunishmentModule;
 -import net.kissenpvp.punishment.repository.PunishmentRepository;
 -import net.kissenpvp.punishment.repository.PunishmentSubscriptionRepository;
 +import net.kissenpvp.punishment.repository.InternalPunishmentRepository;
@@ -24,28 +43,49 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..bc7538ec63f09171e5bc720855e87d9c
  import org.bukkit.configuration.InvalidConfigurationException;
  import org.jetbrains.annotations.NotNull;
  import org.slf4j.Logger;
-@@ -56,8 +57,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -29,7 +24,7 @@ import java.sql.SQLException;
+ public class PulvinarCore extends KissenCore implements Pulvinar
+ {
+     private static final Logger log = LoggerFactory.getLogger(PulvinarCore.class);
+-    private PulvinarConfig config;
++    private final PulvinarConfig config;
+ 
+     public PulvinarCore(@NotNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
+         config = new PulvinarConfig();
+@@ -56,23 +51,20 @@ public class PulvinarCore extends KissenCore implements Pulvinar
  
          Connection connection = provider.connection().get();
  
 -        PunishmentRepository pRepository = new PunishmentRepository(connection);
 -        PunishmentSubscriptionRepository psRepository = new PunishmentSubscriptionRepository(connection);
-+        InternalPunishmentRepository pRepository = new InternalPunishmentRepository(connection);
-+        InternalPunishmentSubscriptionRepository psRepository = new InternalPunishmentSubscriptionRepository(connection);
-         PunishmentModule punishmentModule = new InternalPunishmentModule(pRepository, psRepository);
-         log.debug("The punishment module has been initialized.");
+-        PunishmentModule punishmentModule = new InternalPunishmentModule(pRepository, psRepository);
+-        log.debug("The punishment module has been initialized.");
++        InternalRepositoryHolder.RepositoryHolderBuilder builder = InternalRepositoryHolder.builder();
  
-@@ -66,8 +67,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
-         RankModule rankModule = new InternalRankModule(rRepository, rsRepository);
-         log.debug("The rank module has been initialized.");
+-        InternalRankRepository rRepository = new InternalRankRepository(connection);
+-        InternalRankSubscriptionRepository rsRepository = new InternalRankSubscriptionRepository(connection);
+-        RankModule rankModule = new InternalRankModule(rRepository, rsRepository);
+-        log.debug("The rank module has been initialized.");
++        builder.punishmentRepository(new InternalPunishmentRepository(connection));
++        builder.punishmentSubscriptionRepository(new InternalPunishmentSubscriptionRepository(connection));
  
-+        PulvinarOperatorRepository operatorRepository = new PulvinarOperatorRepository(connection);
-         PulvinarPlayerRepository playerRepository = new PulvinarPlayerRepository(connection);
+-        PulvinarPlayerRepository playerRepository = new PulvinarPlayerRepository(connection);
 -        PlayerModule playerModule = new InternalPlayerModule(playerRepository);
-+        PlayerModule playerModule = new InternalPlayerModule(playerRepository, operatorRepository);
-         log.debug("The player module has been initialized.");
+-        log.debug("The player module has been initialized.");
++        builder.rankRepository(new InternalRankRepository(connection));
++        builder.rankSubscriptionRepository(new InternalRankSubscriptionRepository(connection));
  
-         log.debug("Proceeding to populate core instance...");
+-        log.debug("Proceeding to populate core instance...");
+-        startCore(punishmentModule, rankModule, playerModule);
++        builder.playerRepository(new PulvinarPlayerRepository(connection));
++        builder.operatorRepository(new PulvinarOperatorRepository(connection));
+ 
++        log.debug("Proceeding to populate core instance...");
++        databaseModule(builder.build());
++        init();
+     }
+ 
+     public @NotNull PulvinarConfig config() {
 diff --git a/src/main/java/net/kissenpvp/network/actor/ActorData.java b/src/main/java/net/kissenpvp/network/actor/ActorData.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..93dbaf15c61ffecb062827110bb70cc836839678
@@ -90,16 +130,20 @@ index 0000000000000000000000000000000000000000..93dbaf15c61ffecb062827110bb70cc8
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PlayerMock.java b/src/main/java/net/kissenpvp/network/actor/PlayerMock.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..673bb162242a6a92bf7594bf82667702562e2376
+index 0000000000000000000000000000000000000000..7b3b910058528d4a4b183f9fb8a58d3ceca74a42
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PlayerMock.java
-@@ -0,0 +1,60 @@
+@@ -0,0 +1,75 @@
 +package net.kissenpvp.network.actor;
 +
 +import com.mojang.authlib.GameProfile;
++import net.kissenpvp.api.punishment.Punishment;
++import net.kissenpvp.api.punishment.PunishmentSubscription;
 +import net.kissenpvp.api.temporal.timespan.DefinedTimeSpan;
 +import net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan;
++import net.kyori.adventure.text.Component;
 +import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
 +
 +import java.time.Instant;
 +import java.util.Locale;
@@ -137,6 +181,17 @@ index 0000000000000000000000000000000000000000..673bb162242a6a92bf7594bf82667702
 +    @Override public @NotNull DefinedTimeSpan timePlayed()
 +    {
 +        return new InternalDefinedTimeSpan(0L);
++    }
++
++    @Override public @NotNull PunishmentSubscription punish(@NotNull Punishment punishment) throws NullPointerException
++    {
++        return punish(punishment, null);
++    }
++
++    @Override
++    public @NotNull PunishmentSubscription punish(@NotNull Punishment punishment, @Nullable Component component) throws NullPointerException
++    {
++        throw new UnsupportedOperationException("Cannot punish a player mock.");
 +    }
 +
 +    @Override public @NotNull String username()
@@ -428,10 +483,30 @@ index 0000000000000000000000000000000000000000..ccfd98fb5df73e91b372443e9c0c86c7
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..6c02777b5a5df11a7a76cfc609a1f6958a386992 100644
+index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..a4a74f77b9a518cb7df364331e77744c9cf94061 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-@@ -777,7 +777,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+@@ -8,6 +8,10 @@ import java.util.Date;
+ import java.util.LinkedHashMap;
+ import java.util.Map;
+ import java.util.UUID;
++
++import net.kissenpvp.api.punishment.Punishment;
++import net.kissenpvp.api.punishment.PunishmentSubscription;
++import net.kyori.adventure.text.Component;
+ import net.minecraft.core.GlobalPos;
+ import net.minecraft.nbt.CompoundTag;
+ import net.minecraft.network.protocol.game.ClientboundTagQueryPacket;
+@@ -35,6 +39,8 @@ import org.bukkit.configuration.serialization.SerializableAs;
+ import org.bukkit.craftbukkit.util.CraftLocation;
+ import org.bukkit.entity.EntityType;
+ import org.bukkit.entity.Player;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
+ 
+ @SerializableAs("Player")
+ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializable {
+@@ -777,7 +783,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
  
      @Override public @org.jetbrains.annotations.NotNull net.kissenpvp.api.temporal.timespan.DefinedTimeSpan timePlayed()
      {
@@ -440,3 +515,43 @@ index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..6c02777b5a5df11a7a76cfc609a1f695
      }
  
      @Override public @org.jetbrains.annotations.NotNull java.util.UUID id()
+@@ -795,6 +801,17 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+         return false;
+     }
+ 
++    @Override public @NotNull PunishmentSubscription punish(@NotNull Punishment punishment) throws NullPointerException
++    {
++        return punish(punishment, null);
++    }
++
++    @Override
++    public @NotNull PunishmentSubscription punish(@NotNull Punishment punishment, @Nullable Component component) throws NullPointerException
++    {
++        return null;
++    }
++
+     @Override public @org.jetbrains.annotations.NotNull String username()
+     {
+         String userName = getName();
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+index afb3df83b717578bdf672df8a1c0b80392ffe341..78203d7a63c18e39b2ab3707f2b29a49ea1e57af 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+@@ -3646,6 +3646,17 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+         return new net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan(0L);
+     }
+ 
++    @Override public @org.jetbrains.annotations.NotNull net.kissenpvp.api.punishment.PunishmentSubscription punish(@org.jetbrains.annotations.NotNull net.kissenpvp.api.punishment.Punishment punishment) throws NullPointerException
++    {
++        return punish(punishment, null);
++    }
++
++    @Override
++    public @org.jetbrains.annotations.NotNull net.kissenpvp.api.punishment.PunishmentSubscription punish(@org.jetbrains.annotations.NotNull net.kissenpvp.api.punishment.Punishment punishment, @org.jetbrains.annotations.Nullable net.kyori.adventure.text.Component component) throws NullPointerException
++    {
++        return null;
++    }
++
+     @Override public @NonNull UUID id()
+     {
+         return getUniqueId();
