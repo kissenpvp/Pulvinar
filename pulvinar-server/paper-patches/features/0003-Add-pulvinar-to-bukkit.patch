@@ -383,7 +383,7 @@ index 9cd8f429b25647168d3141d78afe67f5f28068c4..12cb65a641418cfbc3373c733365c2df
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..a93ef85f7513f0a0eaba084c186a5e472a2f4345
+index 0000000000000000000000000000000000000000..d10c52ddf1401b7c5213856daef0bd2e9b5ea34f
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
 @@ -0,0 +1,59 @@
@@ -421,7 +421,7 @@ index 0000000000000000000000000000000000000000..a93ef85f7513f0a0eaba084c186a5e47
 +            return;
 +        }
 +
-+        this.getMap().put(this.getKeyForUser(entry.getUser()), entry);
++        getMap().put(getKeyForUser(entry.getUser()), entry);
 +        repository.save(entry).join();
 +    }
 +
@@ -437,18 +437,18 @@ index 0000000000000000000000000000000000000000..a93ef85f7513f0a0eaba084c186a5e47
 +                log.warn("Discarding operator entry {} due to missing user.", operator);
 +                continue;
 +            }
-+            this.getMap().put(this.getKeyForUser(entry.getUser()), entry);
++            getMap().put(getKeyForUser(entry.getUser()), entry);
 +        }
 +    }
 +
 +    @Override public void save() throws IOException
 +    {
-+        // skip saving
++        // saving is handled by the repository
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..ccfd98fb5df73e91b372443e9c0c86c74463a0a2
+index 0000000000000000000000000000000000000000..e11e808f58ab9b94c138984b34b125a3bd94d065
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
 @@ -0,0 +1,30 @@
@@ -473,13 +473,139 @@ index 0000000000000000000000000000000000000000..ccfd98fb5df73e91b372443e9c0c86c7
 +    }
 +
 +    @Override
-+    protected @NotNull OperatorInfo toEntity(@NotNull UUID uuid, @NotNull ResultSet resultSet) throws SQLException, NullPointerException
++    public @NotNull OperatorInfo toEntity(@NotNull UUID uuid, @NotNull ResultSet resultSet) throws SQLException, NullPointerException
 +    {
 +        GameProfile profile = new GameProfile(uuid, resultSet.getString("username"));
 +        int level = resultSet.getInt("operator_level");
 +        boolean canBypass = resultSet.getBoolean("can_bypass_player_limit");
 +
 +        return new ServerOpListEntry(profile, level, canBypass);
++    }
++}
+diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java b/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..366c7fdbb627ddf8699457c903883931a8b14881
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java
+@@ -0,0 +1,55 @@
++package net.kissenpvp.punishment;
++
++import com.mojang.authlib.GameProfile;
++import net.kissenpvp.api.network.actor.PlayerClient;
++import net.kissenpvp.api.punishment.PunishmentSubscription;
++import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
++import net.minecraft.server.players.UserBanListEntry;
++import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.Nullable;
++
++import java.util.Date;
++
++public class PunishmentEntry extends UserBanListEntry
++{
++    private final PunishmentSubscription punishment;
++
++    public PunishmentEntry(@NotNull PunishmentSubscription punishment)
++    {
++        super((GameProfile) null);
++        this.punishment = punishment;
++    }
++
++    @Override public @NotNull Date getCreated()
++    {
++        return Date.from(punishment.temporal().start());
++    }
++
++    @Override public @NotNull String getSource()
++    {
++        return punishment.operator().username();
++    }
++
++    @Override public @Nullable Date getExpires()
++    {
++        // convert expiry from instant to date if exists. If it doesn't exist, return null'
++        return punishment.temporal().expiry().map(Date::from).orElse(null);
++    }
++
++    @Override public @NotNull String getReason()
++    {
++        PlainTextComponentSerializer serializer = PlainTextComponentSerializer.plainText();
++        return punishment.message().map(serializer::serialize).orElse("Banned by an operator.");
++    }
++
++    @Override public @Nullable GameProfile getUser() throws IllegalStateException
++    {
++        PlayerClient playerClient = punishment.target();
++        return new GameProfile(playerClient.id(), playerClient.username());
++    }
++
++    public @NotNull PunishmentSubscription getPunishment()
++    {
++        return punishment;
++    }
++}
+diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentList.java b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..102e319cd3786f4835e14fa166c3c519cf0420bb
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
+@@ -0,0 +1,59 @@
++package net.kissenpvp.punishment;
++
++import com.mojang.authlib.GameProfile;
++import net.kissenpvp.api.network.actor.PlayerClient;
++import net.kissenpvp.api.punishment.PunishmentSubscription;
++import net.kissenpvp.api.punishment.PunishmentSubscriptionRepository;
++import net.minecraft.server.players.UserBanList;
++import net.minecraft.server.players.UserBanListEntry;
++import org.jetbrains.annotations.NotNull;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++import java.io.IOException;
++import java.util.Collection;
++
++public class PunishmentList extends UserBanList
++{
++    private static final Logger log = LoggerFactory.getLogger(PunishmentList.class);
++    private final PunishmentSubscriptionRepository repository;
++
++    public PunishmentList(@NotNull PunishmentSubscriptionRepository repository)
++    {
++        super(null);
++        this.repository = repository;
++    }
++
++    @Override public void add(@NotNull UserBanListEntry entry)
++    {
++        GameProfile profile = entry.getUser();
++        assert profile != null;
++
++        getMap().put(this.getKeyForUser(profile), entry);
++
++        if(entry instanceof PunishmentEntry punishmentEntry)
++        {
++            repository.save(punishmentEntry.getPunishment()).join();
++            return;
++        }
++
++        super.add(entry);
++        log.warn("Adding legacy entry {} to ban list. Those will not be persisted after restarting the server.", entry);
++    }
++
++    @Override public void save() throws IOException
++    {
++        // saving is handled by the repository
++    }
++
++    @Override public void load() throws IOException
++    {
++        Collection<PunishmentSubscription> subscriptions = repository.findAll().join();
++        for(PunishmentSubscription subscription : subscriptions)
++        {
++            PlayerClient playerClient = subscription.target();
++            GameProfile gameProfile = new GameProfile(playerClient.id(), playerClient.username());
++            getMap().put(getKeyForUser(gameProfile), new PunishmentEntry(subscription));
++        }
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
