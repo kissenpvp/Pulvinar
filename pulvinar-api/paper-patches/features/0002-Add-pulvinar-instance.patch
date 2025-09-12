@@ -59,8 +59,19 @@ index c1f19d5c1b819873fce1185b4fbf4c72eda26309..22197254808819bef8542586faf6a23f
  
      /**
       * Checks if this player is currently online
+diff --git a/src/main/java/org/bukkit/command/ConsoleCommandSender.java b/src/main/java/org/bukkit/command/ConsoleCommandSender.java
+index f309c2ed39bcc700e5b491ff549bf0608a07aab8..d1cd49aebffe50859634118ec3ec324bead8845d 100644
+--- a/src/main/java/org/bukkit/command/ConsoleCommandSender.java
++++ b/src/main/java/org/bukkit/command/ConsoleCommandSender.java
+@@ -2,5 +2,5 @@ package org.bukkit.command;
+ 
+ import org.bukkit.conversations.Conversable;
+ 
+-public interface ConsoleCommandSender extends CommandSender, Conversable {
++public interface ConsoleCommandSender extends CommandSender, Conversable, net.kissenpvp.api.network.actor.ConsoleClient { // Pulvinar
+ }
 diff --git a/src/main/java/org/bukkit/entity/HumanEntity.java b/src/main/java/org/bukkit/entity/HumanEntity.java
-index 90cef1ab811571e0352e2e704b11b0ab6f777883..3595df99b90fd9d8554eba61767ee6405fb9c038 100644
+index 90cef1ab811571e0352e2e704b11b0ab6f777883..8b73113807f044c99e7395a36e13aa22c979dd36 100644
 --- a/src/main/java/org/bukkit/entity/HumanEntity.java
 +++ b/src/main/java/org/bukkit/entity/HumanEntity.java
 @@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
@@ -68,7 +79,7 @@ index 90cef1ab811571e0352e2e704b11b0ab6f777883..3595df99b90fd9d8554eba61767ee640
   */
  @NullMarked
 -public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder {
-+public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder, net.kissenpvp.api.network.actor.AbstractActor { // Pulvinar - Add abstract actor
++public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder, net.kissenpvp.api.network.actor.Actor { // Pulvinar - Make all human entities also extend net.kissenpvp.api.network.actor.Actor
  
      // Paper start
      @Override

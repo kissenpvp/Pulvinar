@@ -18,16 +18,17 @@ index c36bbf2585507f12d7b7b91cae19d50c4213b4c7..f2d30ce7d9b94088ae9834e07cbdf5d6
          // Pulvinar end - integrate player repository into paper
      }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..bf7e81c079e0a2d14e6d119f65cca797f21baf13 100644
+index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..c383be3d1c790a2807cd0e92eaedbfd49781f8b6 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -1,18 +1,13 @@
+@@ -1,18 +1,15 @@
  package net.kissenpvp.base;
  
  import net.kissenpvp.api.database.ConnectionProvider;
 -import net.kissenpvp.api.network.actor.PlayerModule;
 -import net.kissenpvp.api.network.actor.rank.RankModule;
 -import net.kissenpvp.api.punishment.PunishmentModule;
++import net.kissenpvp.api.network.actor.ConsoleClient;
  import net.kissenpvp.database.InternalConnectionProvider;
 -import net.kissenpvp.network.actor.InternalPlayerModule;
  import net.kissenpvp.network.actor.PulvinarPlayerRepository;
@@ -40,10 +41,11 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..bf7e81c079e0a2d14e6d119f65cca797
 -import net.kissenpvp.punishment.repository.PunishmentSubscriptionRepository;
 +import net.kissenpvp.punishment.repository.InternalPunishmentRepository;
 +import net.kissenpvp.punishment.repository.InternalPunishmentSubscriptionRepository;
++import org.bukkit.Bukkit;
  import org.bukkit.configuration.InvalidConfigurationException;
  import org.jetbrains.annotations.NotNull;
  import org.slf4j.Logger;
-@@ -29,7 +24,7 @@ import java.sql.SQLException;
+@@ -29,7 +26,7 @@ import java.sql.SQLException;
  public class PulvinarCore extends KissenCore implements Pulvinar
  {
      private static final Logger log = LoggerFactory.getLogger(PulvinarCore.class);
@@ -52,7 +54,7 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..bf7e81c079e0a2d14e6d119f65cca797
  
      public PulvinarCore(@NotNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -56,23 +51,20 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -56,26 +53,28 @@ public class PulvinarCore extends KissenCore implements Pulvinar
  
          Connection connection = provider.connection().get();
  
@@ -86,6 +88,14 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..bf7e81c079e0a2d14e6d119f65cca797
      }
  
      public @NotNull PulvinarConfig config() {
+         return config;
+     }
++
++    @Override public ConsoleClient console()
++    {
++        return Bukkit.getConsoleSender();
++    }
+ }
 diff --git a/src/main/java/net/kissenpvp/network/actor/ActorData.java b/src/main/java/net/kissenpvp/network/actor/ActorData.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..93dbaf15c61ffecb062827110bb70cc836839678
@@ -484,27 +494,43 @@ index 0000000000000000000000000000000000000000..e11e808f58ab9b94c138984b34b125a3
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java b/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..366c7fdbb627ddf8699457c903883931a8b14881
+index 0000000000000000000000000000000000000000..5202d152c86f76b0f9f5f3780a7e35df5df5f903
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,71 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
 +import net.kissenpvp.api.network.actor.PlayerClient;
 +import net.kissenpvp.api.punishment.PunishmentSubscription;
++import net.kissenpvp.api.temporal.TemporalObject;
++import net.kissenpvp.api.temporal.WritableTemporalObject;
++import net.kissenpvp.temporal.InternalTemporalObject;
++import net.kissenpvp.temporal.InternalWritableTemporalObject;
++import net.kissenpvp.temporal.timespan.PermanentTimeSpan;
++import net.kyori.adventure.text.Component;
 +import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 +import net.minecraft.server.players.UserBanListEntry;
++import org.bukkit.Bukkit;
++import org.jetbrains.annotations.Contract;
 +import org.jetbrains.annotations.NotNull;
 +import org.jetbrains.annotations.Nullable;
 +
 +import java.util.Date;
++import java.util.Objects;
++import java.util.UUID;
 +
 +public class PunishmentEntry extends UserBanListEntry
 +{
 +    private final PunishmentSubscription punishment;
 +
-+    public PunishmentEntry(@NotNull PunishmentSubscription punishment)
++    @Contract(value = "_ -> new", pure = true)
++    public static @NotNull PunishmentEntry from(@NotNull PunishmentSubscription subscription)
++    {
++        return new PunishmentEntry(subscription);
++    }
++
++    private PunishmentEntry(@NotNull PunishmentSubscription punishment)
 +    {
 +        super((GameProfile) null);
 +        this.punishment = punishment;
@@ -545,32 +571,66 @@ index 0000000000000000000000000000000000000000..366c7fdbb627ddf8699457c903883931
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentList.java b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..102e319cd3786f4835e14fa166c3c519cf0420bb
+index 0000000000000000000000000000000000000000..c038fb83afa0273a2c51feb7055d4535e1509ca5
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,96 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
++import net.kissenpvp.api.database.RepositoryHolder;
 +import net.kissenpvp.api.network.actor.PlayerClient;
++import net.kissenpvp.api.punishment.Punishment;
 +import net.kissenpvp.api.punishment.PunishmentSubscription;
 +import net.kissenpvp.api.punishment.PunishmentSubscriptionRepository;
++import net.kissenpvp.api.punishment.PunishmentType;
++import net.kissenpvp.api.temporal.WritableTemporalObject;
++import net.kissenpvp.temporal.InternalWritableTemporalObject;
++import net.kissenpvp.temporal.timespan.PermanentTimeSpan;
++import net.kyori.adventure.text.Component;
 +import net.minecraft.server.players.UserBanList;
 +import net.minecraft.server.players.UserBanListEntry;
++import org.bukkit.Bukkit;
++import org.jetbrains.annotations.Contract;
 +import org.jetbrains.annotations.NotNull;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
 +
 +import java.io.IOException;
 +import java.util.Collection;
++import java.util.Objects;
++import java.util.UUID;
 +
 +public class PunishmentList extends UserBanList
 +{
 +    private static final Logger log = LoggerFactory.getLogger(PunishmentList.class);
 +    private final PunishmentSubscriptionRepository repository;
 +
++    @Contract("_ -> new")
++    private static @NotNull PunishmentSubscription convertLegacy(@NotNull UserBanListEntry entry)
++    {
++        if(Objects.isNull(entry.getUser()))
++        {
++            throw new IllegalArgumentException("Cannot create punishment entry from null user.");
++        }
++
++        UUID linkId = Bukkit.getOfflinePlayer(entry.getUser().getId()).linkId();
++        UUID operator = null; // TODO: determine source by the stupid vanilla string
++        WritableTemporalObject temporalObject = InternalWritableTemporalObject.toTemporal(new PermanentTimeSpan());
++
++        if(!((RepositoryHolder) Bukkit.getPulvinar()).punishmentRepository().has(-1).join())
++        {
++            //TODO prohibit creation of negative id's as they are reserved for internal use.
++            Punishment punishment = new InternalPunishment(-1, PunishmentType.BAN, new PermanentTimeSpan());
++            ((RepositoryHolder) Bukkit.getPulvinar()).punishmentRepository().save(punishment).join();
++        }
++
++        return new InternalPunishmentSubscription(-1, linkId, operator, temporalObject, Component.text(entry.getReason()));
++    }
++
 +    public PunishmentList(@NotNull PunishmentSubscriptionRepository repository)
 +    {
++        //noinspection DataFlowIssue we're not using files anymore. We're beyond that
 +        super(null);
 +        this.repository = repository;
 +    }
@@ -580,16 +640,19 @@ index 0000000000000000000000000000000000000000..102e319cd3786f4835e14fa166c3c519
 +        GameProfile profile = entry.getUser();
 +        assert profile != null;
 +
-+        getMap().put(this.getKeyForUser(profile), entry);
 +
 +        if(entry instanceof PunishmentEntry punishmentEntry)
 +        {
++            getMap().put(this.getKeyForUser(profile), entry);
 +            repository.save(punishmentEntry.getPunishment()).join();
 +            return;
 +        }
 +
-+        super.add(entry);
-+        log.warn("Adding legacy entry {} to ban list. Those will not be persisted after restarting the server.", entry);
++        log.warn("Received legacy ban entry {}. Converting to PunishmentEntry...", entry);
++        PunishmentEntry punishmentEntry = PunishmentEntry.from(convertLegacy(entry));
++
++        // will never end up in a recursion loop as we are passing a punishment entry.
++        add(punishmentEntry);
 +    }
 +
 +    @Override public void save() throws IOException
@@ -604,7 +667,7 @@ index 0000000000000000000000000000000000000000..102e319cd3786f4835e14fa166c3c519
 +        {
 +            PlayerClient playerClient = subscription.target();
 +            GameProfile gameProfile = new GameProfile(playerClient.id(), playerClient.username());
-+            getMap().put(getKeyForUser(gameProfile), new PunishmentEntry(subscription));
++            getMap().put(getKeyForUser(gameProfile), PunishmentEntry.from(subscription));
 +        }
 +    }
 +}
@@ -659,6 +722,37 @@ index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..a4a74f77b9a518cb7df364331e77744c
      @Override public @org.jetbrains.annotations.NotNull String username()
      {
          String userName = getName();
+diff --git a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
+index 15ae2653c1809041b7ab7cb67015e82c226e9f77..527dcaf194501c144ca2ffc11377782e501ea9d4 100644
+--- a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
++++ b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
+@@ -105,4 +105,26 @@ public class CraftConsoleCommandSender extends ServerCommandSender implements Co
+     public boolean hasPermission(org.bukkit.permissions.Permission perm) {
+         return io.papermc.paper.configuration.GlobalConfiguration.get().console.hasAllPermissions || super.hasPermission(perm);
+     }
++
++    // Pulvinar start - implement kissen command sender methods
++    @Override public @org.jetbrains.annotations.NotNull String username()
++    {
++        return getName();
++    }
++
++    @Override public @org.jetbrains.annotations.NotNull java.util.Locale locale()
++    {
++        return java.util.Locale.ROOT;
++    }
++
++    @Override public boolean isClient()
++    {
++        return false;
++    }
++
++    @Override public @org.jetbrains.annotations.NotNull net.kyori.adventure.audience.Audience audience()
++    {
++        return this;
++    }
++    // Pulvinar end - implement kissen command sender methods
+ }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 index afb3df83b717578bdf672df8a1c0b80392ffe341..78203d7a63c18e39b2ab3707f2b29a49ea1e57af 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
