@@ -571,10 +571,10 @@ index 0000000000000000000000000000000000000000..5202d152c86f76b0f9f5f3780a7e35df
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentList.java b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..c038fb83afa0273a2c51feb7055d4535e1509ca5
+index 0000000000000000000000000000000000000000..b8d910a2b5148865a270de9a7b762a3f5efd0aa0
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
-@@ -0,0 +1,96 @@
+@@ -0,0 +1,97 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
@@ -588,6 +588,7 @@ index 0000000000000000000000000000000000000000..c038fb83afa0273a2c51feb7055d4535
 +import net.kissenpvp.temporal.InternalWritableTemporalObject;
 +import net.kissenpvp.temporal.timespan.PermanentTimeSpan;
 +import net.kyori.adventure.text.Component;
++import net.minecraft.server.players.StoredUserEntry;
 +import net.minecraft.server.players.UserBanList;
 +import net.minecraft.server.players.UserBanListEntry;
 +import org.bukkit.Bukkit;
