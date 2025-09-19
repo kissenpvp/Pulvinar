@@ -5,7 +5,7 @@ Subject: [PATCH] Rebrand
 
 
 diff --git a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
-index a5a7334f7a1f147945079f20aa04b4f317d9e94c..f13266696cfd8eb1af2d5dd1ada0f4be89aaf1b4 100644
+index a5a7334f7a1f147945079f20aa04b4f317d9e94c..c269f5e417f25e98aecbe09c931751742b4f73a3 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 @@ -36,7 +36,7 @@ public class PaperVersionFetcher implements VersionFetcher {
@@ -65,7 +65,7 @@ index a5a7334f7a1f147945079f20aa04b4f317d9e94c..f13266696cfd8eb1af2d5dd1ada0f4be
              }
          } catch (final IOException e) {
 diff --git a/src/main/java/com/destroystokyo/paper/console/PaperConsole.java b/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
-index bc7e4e5560708fea89c584b1d8b471f4966f311a..cd548a2a63ad99c0d91eeb7bb4600efd50ae4da6 100644
+index bc7e4e5560708fea89c584b1d8b471f4966f311a..af2f3775610f896675372f110038c229f27316f4 100644
 --- a/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
 +++ b/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
 @@ -20,7 +20,7 @@ public final class PaperConsole extends SimpleTerminalConsole {
@@ -78,7 +78,7 @@ index bc7e4e5560708fea89c584b1d8b471f4966f311a..cd548a2a63ad99c0d91eeb7bb4600efd
                  .completer(new ConsoleCommandCompleter(this.server))
                  .option(LineReader.Option.COMPLETE_IN_WORD, true);
 diff --git a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
-index 1b0ee48e28aaa68ddb1f28c23d3c5f5f40505c98..45a3f2576fd0cca58dfdeb75a2217674a8291ef8 100644
+index b678ca41f7fb1f4aa10c012fb2b432f5e65b2a91..659469207a2a5e30ad159b3d6fbd939e45951de4 100644
 --- a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
 +++ b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
 @@ -32,6 +32,7 @@ public record ServerBuildInfoImpl(
@@ -105,13 +105,13 @@ index 1b0ee48e28aaa68ddb1f28c23d3c5f5f40505c98..45a3f2576fd0cca58dfdeb75a2217674
  
      @Override
      public boolean isBrandCompatible(final @NotNull Key brandId) {
--        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID); // Purpur - Fix pufferfish issues // Purpur - Rebrand
-+        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID) || brandId.equals(BRAND_PURPUR_ID); // Purpur - Fix pufferfish issues // Purpur - Rebrand // Pulvinar
+-        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID); // Purpur - Rebrand
++        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID) || brandId.equals(BRAND_PURPUR_ID); // Purpur - Rebrand // Pulvinar
      }
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
-index 2e7c3d4befeb6256ce81ecaa9ed4e8fbcb21651e..b141d13265063500d915f848697c2e8d3dd44d6e 100644
+index 2e7c3d4befeb6256ce81ecaa9ed4e8fbcb21651e..c1e65fcf2198bb562d9b811baba7336ee13048de 100644
 --- a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 +++ b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 @@ -491,7 +491,7 @@ public class CraftScheduler implements BukkitScheduler {
@@ -124,20 +124,20 @@ index 2e7c3d4befeb6256ce81ecaa9ed4e8fbcb21651e..b141d13265063500d915f848697c2e8d
                  // (async tasks must live with race-conditions if they attempt to cancel between these few lines of code)
              }
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
-index 99eb04643fce44c37fd96c99756837ccafe7b559..49111df856edb29cf351a4b71348a639c2da7239 100644
+index e34ceaa77c7e538c8d6bc341c4c6f450488ce426..63f90de3bed9791e8ba71e1eb18d862692692e6b 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 @@ -11,7 +11,7 @@ public final class Versioning {
      public static String getBukkitVersion() {
          String result = "Unknown-Version";
  
--        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Pufferfish // Purpur - Rebrand
-+        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/net.kissenpvp.pulvinar/pulvinar-api/pom.properties"); // Pufferfish // Purpur - Rebrand // Pulvinar
+-        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Purpur - Rebrand
++        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/net.kissenpvp.pulvinar/pulvinar-api/pom.properties"); // Purpur - Rebrand // Pulvinar
          Properties properties = new Properties();
  
          if (stream != null) {
 diff --git a/src/main/java/org/spigotmc/WatchdogThread.java b/src/main/java/org/spigotmc/WatchdogThread.java
-index 39493810336442e74c0fc99fdeb5e073a8f4e95e..c8bc3ddbb4a2381d1a8355443e6b7d78031a179c 100644
+index 39493810336442e74c0fc99fdeb5e073a8f4e95e..d495e158f08f3497fa1db77c5427c076284be597 100644
 --- a/src/main/java/org/spigotmc/WatchdogThread.java
 +++ b/src/main/java/org/spigotmc/WatchdogThread.java
 @@ -75,14 +75,14 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
