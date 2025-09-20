@@ -494,35 +494,30 @@ index 0000000000000000000000000000000000000000..e11e808f58ab9b94c138984b34b125a3
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java b/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..5202d152c86f76b0f9f5f3780a7e35df5df5f903
+index 0000000000000000000000000000000000000000..aa77e29888e8ac230e3e030c7ec1fbbd0a38593f
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,82 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
 +import net.kissenpvp.api.network.actor.PlayerClient;
 +import net.kissenpvp.api.punishment.PunishmentSubscription;
-+import net.kissenpvp.api.temporal.TemporalObject;
-+import net.kissenpvp.api.temporal.WritableTemporalObject;
-+import net.kissenpvp.temporal.InternalTemporalObject;
-+import net.kissenpvp.temporal.InternalWritableTemporalObject;
-+import net.kissenpvp.temporal.timespan.PermanentTimeSpan;
-+import net.kyori.adventure.text.Component;
 +import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 +import net.minecraft.server.players.UserBanListEntry;
-+import org.bukkit.Bukkit;
 +import org.jetbrains.annotations.Contract;
 +import org.jetbrains.annotations.NotNull;
 +import org.jetbrains.annotations.Nullable;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
 +
 +import java.util.Date;
 +import java.util.Objects;
-+import java.util.UUID;
 +
 +public class PunishmentEntry extends UserBanListEntry
 +{
-+    private final PunishmentSubscription punishment;
++    private static final Logger log = LoggerFactory.getLogger(PunishmentEntry.class);
++    private PunishmentSubscription punishment;
 +
 +    @Contract(value = "_ -> new", pure = true)
 +    public static @NotNull PunishmentEntry from(@NotNull PunishmentSubscription subscription)
@@ -538,29 +533,29 @@ index 0000000000000000000000000000000000000000..5202d152c86f76b0f9f5f3780a7e35df
 +
 +    @Override public @NotNull Date getCreated()
 +    {
-+        return Date.from(punishment.temporal().start());
++        return Date.from(getPunishment().temporal().start());
 +    }
 +
 +    @Override public @NotNull String getSource()
 +    {
-+        return punishment.operator().username();
++        return getPunishment().operator().username();
 +    }
 +
 +    @Override public @Nullable Date getExpires()
 +    {
 +        // convert expiry from instant to date if exists. If it doesn't exist, return null'
-+        return punishment.temporal().expiry().map(Date::from).orElse(null);
++        return getPunishment().temporal().expiry().map(Date::from).orElse(null);
 +    }
 +
 +    @Override public @NotNull String getReason()
 +    {
 +        PlainTextComponentSerializer serializer = PlainTextComponentSerializer.plainText();
-+        return punishment.message().map(serializer::serialize).orElse("Banned by an operator.");
++        return getPunishment().message().map(serializer::serialize).orElse("Banned by an operator.");
 +    }
 +
 +    @Override public @Nullable GameProfile getUser() throws IllegalStateException
 +    {
-+        PlayerClient playerClient = punishment.target();
++        PlayerClient playerClient = getPunishment().target();
 +        return new GameProfile(playerClient.id(), playerClient.username());
 +    }
 +
@@ -568,13 +563,29 @@ index 0000000000000000000000000000000000000000..5202d152c86f76b0f9f5f3780a7e35df
 +    {
 +        return punishment;
 +    }
++
++    public void update(@NotNull PunishmentSubscription subscription)
++    {
++        if(!Objects.equals(subscription, punishment))
++        {
++            throw new IllegalArgumentException("Updated subscription must be the same as the original.");
++        }
++
++        if(Objects.equals(subscription.signature(), punishment.signature()))
++        {
++            log.warn("Updated subscription {} has the same signature as the original. Skipping update.", subscription);
++            return;
++        }
++
++        punishment = subscription;
++    }
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentList.java b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..b8d910a2b5148865a270de9a7b762a3f5efd0aa0
+index 0000000000000000000000000000000000000000..9a0212e3d8fa17884a813f23f0177280179af996
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,155 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
@@ -588,29 +599,29 @@ index 0000000000000000000000000000000000000000..b8d910a2b5148865a270de9a7b762a3f
 +import net.kissenpvp.temporal.InternalWritableTemporalObject;
 +import net.kissenpvp.temporal.timespan.PermanentTimeSpan;
 +import net.kyori.adventure.text.Component;
-+import net.minecraft.server.players.StoredUserEntry;
 +import net.minecraft.server.players.UserBanList;
 +import net.minecraft.server.players.UserBanListEntry;
 +import org.bukkit.Bukkit;
 +import org.jetbrains.annotations.Contract;
 +import org.jetbrains.annotations.NotNull;
++import org.jetbrains.annotations.UnmodifiableView;
++import org.jspecify.annotations.NonNull;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
 +
 +import java.io.IOException;
-+import java.util.Collection;
-+import java.util.Objects;
-+import java.util.UUID;
++import java.util.*;
++import java.util.stream.Collector;
++import java.util.stream.Collectors;
 +
 +public class PunishmentList extends UserBanList
 +{
 +    private static final Logger log = LoggerFactory.getLogger(PunishmentList.class);
 +    private final PunishmentSubscriptionRepository repository;
 +
-+    @Contract("_ -> new")
-+    private static @NotNull PunishmentSubscription convertLegacy(@NotNull UserBanListEntry entry)
++    @Contract("_ -> new") private static @NotNull PunishmentSubscription convertLegacy(@NotNull UserBanListEntry entry)
 +    {
-+        if(Objects.isNull(entry.getUser()))
++        if (Objects.isNull(entry.getUser()))
 +        {
 +            throw new IllegalArgumentException("Cannot create punishment entry from null user.");
 +        }
@@ -619,7 +630,7 @@ index 0000000000000000000000000000000000000000..b8d910a2b5148865a270de9a7b762a3f
 +        UUID operator = null; // TODO: determine source by the stupid vanilla string
 +        WritableTemporalObject temporalObject = InternalWritableTemporalObject.toTemporal(new PermanentTimeSpan());
 +
-+        if(!((RepositoryHolder) Bukkit.getPulvinar()).punishmentRepository().has(-1).join())
++        if (!((RepositoryHolder) Bukkit.getPulvinar()).punishmentRepository().has(-1).join())
 +        {
 +            //TODO prohibit creation of negative id's as they are reserved for internal use.
 +            Punishment punishment = new InternalPunishment(-1, PunishmentType.BAN, new PermanentTimeSpan());
@@ -632,20 +643,16 @@ index 0000000000000000000000000000000000000000..b8d910a2b5148865a270de9a7b762a3f
 +    public PunishmentList(@NotNull PunishmentSubscriptionRepository repository)
 +    {
 +        //noinspection DataFlowIssue we're not using files anymore. We're beyond that
-+        super(null);
-+        this.repository = repository;
++        super(null); this.repository = repository;
 +    }
 +
 +    @Override public void add(@NotNull UserBanListEntry entry)
 +    {
-+        GameProfile profile = entry.getUser();
-+        assert profile != null;
++        GameProfile profile = entry.getUser(); assert profile != null;
 +
-+
-+        if(entry instanceof PunishmentEntry punishmentEntry)
++        if (entry instanceof PunishmentEntry punishmentEntry)
 +        {
-+            getMap().put(this.getKeyForUser(profile), entry);
-+            repository.save(punishmentEntry.getPunishment()).join();
++            getMap().put(this.getKeyForUser(profile), entry); repository.save(punishmentEntry.getPunishment()).join();
 +            return;
 +        }
 +
@@ -661,15 +668,77 @@ index 0000000000000000000000000000000000000000..b8d910a2b5148865a270de9a7b762a3f
 +        // saving is handled by the repository
 +    }
 +
++    @Override public void remove(@NotNull GameProfile user)
++    {
++        Map<String, PunishmentSubscription> updateMap = find(user.getId()).stream().collect(expire());
++        getRepository().saveAll(updateMap.values()).join();
++
++        // update existing punishment entries
++        for (Map.Entry<String, UserBanListEntry> banListEntry : getMap().entrySet())
++        {
++            if (!(banListEntry.getValue() instanceof PunishmentEntry punishmentEntry))
++            {
++                continue;
++            }
++
++            PunishmentSubscription subscription = updateMap.get(punishmentEntry.getPunishment().id());
++            if (Objects.nonNull(subscription))
++            {
++                punishmentEntry.update(subscription);
++            }
++        }
++    }
++
 +    @Override public void load() throws IOException
 +    {
 +        Collection<PunishmentSubscription> subscriptions = repository.findAll().join();
-+        for(PunishmentSubscription subscription : subscriptions)
++        for (PunishmentSubscription subscription : subscriptions)
 +        {
 +            PlayerClient playerClient = subscription.target();
 +            GameProfile gameProfile = new GameProfile(playerClient.id(), playerClient.username());
 +            getMap().put(getKeyForUser(gameProfile), PunishmentEntry.from(subscription));
 +        }
++    }
++
++    /**
++     * Creates a collector that processes {@link PunishmentSubscription} objects by expiring their temporal context
++     * and maps them by their unique identifiers.
++     *
++     * @return a collector that collects {@link PunishmentSubscription} objects into a {@link Map}, where the keys
++     * are the identifiers of the subscriptions, and the values are the subscriptions themselves with their
++     * temporal context expired.
++     */
++    private static @NonNull Collector<PunishmentSubscription, ?, Map<String, PunishmentSubscription>> expire()
++    {
++        return Collectors.toMap(PunishmentSubscription::id, punishment ->
++        {
++            punishment.temporal().expire();
++            return punishment;
++        });
++    }
++
++    /**
++     * Finds all punishment subscriptions associated with the specified userid.
++     *
++     * @param userId the unique identifier of the user for whom punishment subscriptions are to be retrieved; must not be null
++     * @return a collection of unmodifiable punishment subscriptions linked to the specified user
++     * @throws NullPointerException if the provided userId is null
++     */
++    private static @NotNull @UnmodifiableView Collection<PunishmentSubscription> find(@NotNull UUID userId) throws NullPointerException
++    {
++        Objects.requireNonNull(userId, "Cannot find punishments for null user.");
++
++        return getRepository().findSubscriptionsByUserId(userId).join();
++    }
++
++    /**
++     * Retrieves the {@link PunishmentSubscriptionRepository} from the {@link net.kissenpvp.base.PulvinarCore} instance.
++     *
++     * @return a non-null instance of {@link PunishmentSubscriptionRepository}
++     */
++    private static @NotNull PunishmentSubscriptionRepository getRepository()
++    {
++        return ((RepositoryHolder) Bukkit.getPulvinar()).punishmentSubscriptionRepository();
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
