@@ -36,16 +36,30 @@ index 015e3ff8d856a7722def4448d8c68792cc3a32a2..6ab9257e581fdd10872c8be2fd5317d9
          final java.nio.file.Path legacyConfigPath = ((File) optionSet.valueOf("paper-settings")).toPath();
          final java.nio.file.Path configDirPath = ((File) optionSet.valueOf("paper-settings-directory")).toPath();
 diff --git a/net/minecraft/server/commands/BanPlayerCommands.java b/net/minecraft/server/commands/BanPlayerCommands.java
-index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..c7353ae2d1f2a817f718b70fbb3e942f56b0e0e7 100644
+index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..0037d3a927814dae3b45be169f0b46d538e50a7a 100644
 --- a/net/minecraft/server/commands/BanPlayerCommands.java
 +++ b/net/minecraft/server/commands/BanPlayerCommands.java
-@@ -68,4 +68,25 @@ public class BanPlayerCommands {
+@@ -47,9 +47,11 @@ public class BanPlayerCommands {
+ 
+         for (GameProfile gameProfile : gameProfiles) {
+             if (!bans.isBanned(gameProfile)) {
+-                UserBanListEntry userBanListEntry = new UserBanListEntry(
++                // Pulvinar start - use database ban system instead of vanilla
++                UserBanListEntry userBanListEntry = createEntry(source, gameProfile, reason); /*new UserBanListEntry(
+                     gameProfile, null, source.getTextName(), null, reason == null ? null : reason.getString()
+-                );
++                );*/
++                // Pulvinar end - use database ban system instead of vanilla
+                 bans.add(userBanListEntry);
+                 i++;
+                 source.sendSuccess(
+@@ -68,4 +70,31 @@ public class BanPlayerCommands {
              return i;
          }
      }
 +
 +    // Pulvinar start - use database ban system instead of vanilla
-+    private static net.kissenpvp.punishment.PunishmentEntry createPunishment(GameProfile gameProfile, @Nullable Component reason)
++    private static net.kissenpvp.punishment.PunishmentEntry createEntry(CommandSourceStack source, GameProfile gameProfile, @Nullable Component reason)
 +    {
 +        net.kissenpvp.api.temporal.timespan.TimeSpan temporal = new net.kissenpvp.temporal.timespan.PermanentTimeSpan();
 +        net.kissenpvp.temporal.InternalWritableTemporalObject permanent = net.kissenpvp.temporal.InternalWritableTemporalObject.toTemporal(temporal);
@@ -55,10 +69,16 @@ index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..c7353ae2d1f2a817f718b70fbb3e942f
 +            component = net.kyori.adventure.text.Component.text(reason.getString());
 +        }
 +
++        java.util.UUID sourceUuid = null;
++        if( source.isPlayer() )
++        {
++            sourceUuid = java.util.Objects.requireNonNull(source.getPlayer()).getUUID();
++        }
++
 +        return net.kissenpvp.punishment.PunishmentEntry.from(new net.kissenpvp.punishment.InternalPunishmentSubscription(
 +                -1,
 +                gameProfile.getId(), // TODO get actual linkId
-+                null,
++                sourceUuid,
 +                permanent,
 +                component
 +        ));
