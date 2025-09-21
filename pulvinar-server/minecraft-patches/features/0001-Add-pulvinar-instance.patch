@@ -36,7 +36,7 @@ index 015e3ff8d856a7722def4448d8c68792cc3a32a2..6ab9257e581fdd10872c8be2fd5317d9
          final java.nio.file.Path legacyConfigPath = ((File) optionSet.valueOf("paper-settings")).toPath();
          final java.nio.file.Path configDirPath = ((File) optionSet.valueOf("paper-settings-directory")).toPath();
 diff --git a/net/minecraft/server/commands/BanPlayerCommands.java b/net/minecraft/server/commands/BanPlayerCommands.java
-index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..0037d3a927814dae3b45be169f0b46d538e50a7a 100644
+index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..cc5b362d661e887911dbcf69d082b9b6cef9c3bd 100644
 --- a/net/minecraft/server/commands/BanPlayerCommands.java
 +++ b/net/minecraft/server/commands/BanPlayerCommands.java
 @@ -47,9 +47,11 @@ public class BanPlayerCommands {
@@ -53,7 +53,7 @@ index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..0037d3a927814dae3b45be169f0b46d5
                  bans.add(userBanListEntry);
                  i++;
                  source.sendSuccess(
-@@ -68,4 +70,31 @@ public class BanPlayerCommands {
+@@ -68,4 +70,34 @@ public class BanPlayerCommands {
              return i;
          }
      }
@@ -70,14 +70,17 @@ index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..0037d3a927814dae3b45be169f0b46d5
 +        }
 +
 +        java.util.UUID sourceUuid = null;
-+        if( source.isPlayer() )
++        if(source.isPlayer())
 +        {
 +            sourceUuid = java.util.Objects.requireNonNull(source.getPlayer()).getUUID();
 +        }
 +
++        // Look - I know this is stupid and I promise I will come back later for this...
++        java.util.UUID linkId = org.bukkit.Bukkit.getOfflinePlayer(gameProfile.getId()).linkId();
++
 +        return net.kissenpvp.punishment.PunishmentEntry.from(new net.kissenpvp.punishment.InternalPunishmentSubscription(
 +                -1,
-+                gameProfile.getId(), // TODO get actual linkId
++                linkId,
 +                sourceUuid,
 +                permanent,
 +                component
