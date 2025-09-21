@@ -582,7 +582,7 @@ index 0000000000000000000000000000000000000000..aa77e29888e8ac230e3e030c7ec1fbbd
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentList.java b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..ff89792e14e042e916eb0ec1976dbd26eecd2291
+index 0000000000000000000000000000000000000000..a32b169d0b524eb290aff643f09e0c0eba792a1e
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
 @@ -0,0 +1,167 @@
@@ -627,7 +627,7 @@ index 0000000000000000000000000000000000000000..ff89792e14e042e916eb0ec1976dbd26
 +        }
 +
 +        UUID linkId = Bukkit.getOfflinePlayer(entry.getUser().getId()).linkId();
-+        UUID operator = null; // TODO: determine source by the stupid vanilla string
++        UUID operator = null;
 +        WritableTemporalObject temporalObject = InternalWritableTemporalObject.toTemporal(new PermanentTimeSpan());
 +
 +        if (!((RepositoryHolder) Bukkit.getPulvinar()).punishmentRepository().has(-1).join())
