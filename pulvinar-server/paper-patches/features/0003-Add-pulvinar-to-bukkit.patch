@@ -582,10 +582,10 @@ index 0000000000000000000000000000000000000000..aa77e29888e8ac230e3e030c7ec1fbbd
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentList.java b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..a32b169d0b524eb290aff643f09e0c0eba792a1e
+index 0000000000000000000000000000000000000000..9a0212e3d8fa17884a813f23f0177280179af996
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
-@@ -0,0 +1,167 @@
+@@ -0,0 +1,155 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
@@ -627,7 +627,7 @@ index 0000000000000000000000000000000000000000..a32b169d0b524eb290aff643f09e0c0e
 +        }
 +
 +        UUID linkId = Bukkit.getOfflinePlayer(entry.getUser().getId()).linkId();
-+        UUID operator = null;
++        UUID operator = null; // TODO: determine source by the stupid vanilla string
 +        WritableTemporalObject temporalObject = InternalWritableTemporalObject.toTemporal(new PermanentTimeSpan());
 +
 +        if (!((RepositoryHolder) Bukkit.getPulvinar()).punishmentRepository().has(-1).join())
@@ -643,8 +643,7 @@ index 0000000000000000000000000000000000000000..a32b169d0b524eb290aff643f09e0c0e
 +    public PunishmentList(@NotNull PunishmentSubscriptionRepository repository)
 +    {
 +        //noinspection DataFlowIssue we're not using files anymore. We're beyond that
-+        super(null);
-+        this.repository = repository;
++        super(null); this.repository = repository;
 +    }
 +
 +    @Override public void add(@NotNull UserBanListEntry entry)
@@ -675,9 +674,9 @@ index 0000000000000000000000000000000000000000..a32b169d0b524eb290aff643f09e0c0e
 +        getRepository().saveAll(updateMap.values()).join();
 +
 +        // update existing punishment entries
-+        for (UserBanListEntry entry : getEntries())
++        for (Map.Entry<String, UserBanListEntry> banListEntry : getMap().entrySet())
 +        {
-+            if (!(entry instanceof PunishmentEntry punishmentEntry))
++            if (!(banListEntry.getValue() instanceof PunishmentEntry punishmentEntry))
 +            {
 +                continue;
 +            }
@@ -688,17 +687,6 @@ index 0000000000000000000000000000000000000000..a32b169d0b524eb290aff643f09e0c0e
 +                punishmentEntry.update(subscription);
 +            }
 +        }
-+    }
-+
-+    @Override public boolean isBanned(@NotNull GameProfile profile)
-+    {
-+        UserBanListEntry banListEntry = getMap().get(this.getKeyForUser(profile));
-+        if(banListEntry instanceof PunishmentEntry punishmentEntry && punishmentEntry.getPunishment().temporal().expired())
-+        {
-+            return false;
-+        }
-+
-+        return super.isBanned(profile);
 +    }
 +
 +    @Override public void load() throws IOException
