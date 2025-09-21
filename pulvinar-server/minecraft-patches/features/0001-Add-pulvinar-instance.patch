@@ -88,6 +88,19 @@ index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..cc5b362d661e887911dbcf69d082b9b6
 +    }
 +    // Pulvinar end - use database ban system instead of vanilla
  }
+diff --git a/net/minecraft/server/players/BanListEntry.java b/net/minecraft/server/players/BanListEntry.java
+index e111adec2116f922fe67ee434635e50c60dad15c..7cf45d0cf8767f3ba798b8641ed6b92b456fb55f 100644
+--- a/net/minecraft/server/players/BanListEntry.java
++++ b/net/minecraft/server/players/BanListEntry.java
+@@ -70,7 +70,7 @@ public abstract class BanListEntry<T> extends StoredUserEntry<T> {
+ 
+     @Override
+     boolean hasExpired() {
+-        return this.expires != null && this.expires.before(new Date());
++        return this.getExpires() != null && this.getExpires().before(new Date()); // Pulvinar - use getter instead of field to allow override
+     }
+ 
+     @Override
 diff --git a/net/minecraft/server/players/GameProfileCache.java b/net/minecraft/server/players/GameProfileCache.java
 index 066f84df5c31242ab542932f1e243369d0e766e2..a34b21bccb123525806f1ff6f7230d93da2a5b2b 100644
 --- a/net/minecraft/server/players/GameProfileCache.java

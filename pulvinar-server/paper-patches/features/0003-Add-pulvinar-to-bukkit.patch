@@ -494,10 +494,10 @@ index 0000000000000000000000000000000000000000..e11e808f58ab9b94c138984b34b125a3
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java b/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..aa77e29888e8ac230e3e030c7ec1fbbd0a38593f
+index 0000000000000000000000000000000000000000..208ac3b592e92a1ffcee40c2e19831310b9d75ad
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentEntry.java
-@@ -0,0 +1,82 @@
+@@ -0,0 +1,83 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
@@ -544,6 +544,7 @@ index 0000000000000000000000000000000000000000..aa77e29888e8ac230e3e030c7ec1fbbd
 +    @Override public @Nullable Date getExpires()
 +    {
 +        // convert expiry from instant to date if exists. If it doesn't exist, return null'
++        // null means a permanent ban.
 +        return getPunishment().temporal().expiry().map(Date::from).orElse(null);
 +    }
 +
@@ -582,10 +583,10 @@ index 0000000000000000000000000000000000000000..aa77e29888e8ac230e3e030c7ec1fbbd
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentList.java b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..9a0212e3d8fa17884a813f23f0177280179af996
+index 0000000000000000000000000000000000000000..d778d4a56e216d92328bd58c9dd1a424c138bb7b
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
-@@ -0,0 +1,155 @@
+@@ -0,0 +1,142 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
@@ -670,23 +671,10 @@ index 0000000000000000000000000000000000000000..9a0212e3d8fa17884a813f23f0177280
 +
 +    @Override public void remove(@NotNull GameProfile user)
 +    {
++        // TODO only expire -1 as these portray minecraft bans
 +        Map<String, PunishmentSubscription> updateMap = find(user.getId()).stream().collect(expire());
 +        getRepository().saveAll(updateMap.values()).join();
-+
-+        // update existing punishment entries
-+        for (Map.Entry<String, UserBanListEntry> banListEntry : getMap().entrySet())
-+        {
-+            if (!(banListEntry.getValue() instanceof PunishmentEntry punishmentEntry))
-+            {
-+                continue;
-+            }
-+
-+            PunishmentSubscription subscription = updateMap.get(punishmentEntry.getPunishment().id());
-+            if (Objects.nonNull(subscription))
-+            {
-+                punishmentEntry.update(subscription);
-+            }
-+        }
++        getMap().remove(getKeyForUser(user));
 +    }
 +
 +    @Override public void load() throws IOException
