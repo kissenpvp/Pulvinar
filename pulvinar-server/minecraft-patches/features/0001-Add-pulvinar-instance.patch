@@ -35,6 +35,36 @@ index 015e3ff8d856a7722def4448d8c68792cc3a32a2..6ab9257e581fdd10872c8be2fd5317d9
          // Paper start - load paper config files from cli options
          final java.nio.file.Path legacyConfigPath = ((File) optionSet.valueOf("paper-settings")).toPath();
          final java.nio.file.Path configDirPath = ((File) optionSet.valueOf("paper-settings-directory")).toPath();
+diff --git a/net/minecraft/server/commands/BanPlayerCommands.java b/net/minecraft/server/commands/BanPlayerCommands.java
+index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..c7353ae2d1f2a817f718b70fbb3e942f56b0e0e7 100644
+--- a/net/minecraft/server/commands/BanPlayerCommands.java
++++ b/net/minecraft/server/commands/BanPlayerCommands.java
+@@ -68,4 +68,25 @@ public class BanPlayerCommands {
+             return i;
+         }
+     }
++
++    // Pulvinar start - use database ban system instead of vanilla
++    private static net.kissenpvp.punishment.PunishmentEntry createPunishment(GameProfile gameProfile, @Nullable Component reason)
++    {
++        net.kissenpvp.api.temporal.timespan.TimeSpan temporal = new net.kissenpvp.temporal.timespan.PermanentTimeSpan();
++        net.kissenpvp.temporal.InternalWritableTemporalObject permanent = net.kissenpvp.temporal.InternalWritableTemporalObject.toTemporal(temporal);
++        net.kyori.adventure.text.Component component = null;
++        if (java.util.Objects.nonNull(reason))
++        {
++            component = net.kyori.adventure.text.Component.text(reason.getString());
++        }
++
++        return net.kissenpvp.punishment.PunishmentEntry.from(new net.kissenpvp.punishment.InternalPunishmentSubscription(
++                -1,
++                gameProfile.getId(), // TODO get actual linkId
++                null,
++                permanent,
++                component
++        ));
++    }
++    // Pulvinar end - use database ban system instead of vanilla
+ }
 diff --git a/net/minecraft/server/players/GameProfileCache.java b/net/minecraft/server/players/GameProfileCache.java
 index 066f84df5c31242ab542932f1e243369d0e766e2..a34b21bccb123525806f1ff6f7230d93da2a5b2b 100644
 --- a/net/minecraft/server/players/GameProfileCache.java
