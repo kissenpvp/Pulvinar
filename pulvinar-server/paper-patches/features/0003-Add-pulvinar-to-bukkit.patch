@@ -45,10 +45,10 @@ index 10fe41e926e8378c8e5e4b311aff3eef998325ba..6e5e3734e42cea762054c57175913ab8
  
      public boolean pulvinarHooked()
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..d373129bf4aa6ae6230714423e991598aae28aac 100644
+index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..c9f23582b5e473ff41ba7d79a70e7b8fb26da3f4 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -1,18 +1,16 @@
+@@ -1,26 +1,24 @@
  package net.kissenpvp.base;
  
 +import net.kissenpvp.api.base.Pulvinar;
@@ -73,6 +73,15 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..d373129bf4aa6ae6230714423e991598
  import org.bukkit.configuration.InvalidConfigurationException;
  import org.jetbrains.annotations.NotNull;
  import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ 
++import javax.sql.DataSource;
+ import java.io.File;
+ import java.io.IOException;
+-import java.sql.Connection;
+ import java.sql.SQLException;
+ 
+ /**
 @@ -29,7 +27,7 @@ import java.sql.SQLException;
  public class PulvinarCore extends KissenCore implements Pulvinar
  {
@@ -82,9 +91,19 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..d373129bf4aa6ae6230714423e991598
  
      public PulvinarCore(@NotNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -56,26 +54,28 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -49,33 +47,35 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+         ConnectionProvider provider = new InternalConnectionProvider();
+         provider.connect(config.databaseUrl(), config.databaseUser(), config.databasePassword());
  
-         Connection connection = provider.connection().get();
+-        if(provider.connection().isEmpty())
++        if(provider.dataSource().isEmpty())
+         {
+-            throw new SQLException("The providers connection is not present. Couldn't it connect?");
++            throw new SQLException("The providers dataSource is not present. Couldn't it connect?");
+         }
+ 
+-        Connection connection = provider.connection().get();
++        DataSource dataSource = provider.dataSource().get();
  
 -        PunishmentRepository pRepository = new PunishmentRepository(connection);
 -        PunishmentSubscriptionRepository psRepository = new PunishmentSubscriptionRepository(connection);
@@ -96,19 +115,19 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..d373129bf4aa6ae6230714423e991598
 -        InternalRankSubscriptionRepository rsRepository = new InternalRankSubscriptionRepository(connection);
 -        RankModule rankModule = new InternalRankModule(rRepository, rsRepository);
 -        log.debug("The rank module has been initialized.");
-+        builder.punishmentRepository(new InternalPunishmentRepository(connection));
-+        builder.punishmentSubscriptionRepository(new InternalPunishmentSubscriptionRepository(connection));
++        builder.punishmentRepository(new InternalPunishmentRepository(dataSource));
++        builder.punishmentSubscriptionRepository(new InternalPunishmentSubscriptionRepository(dataSource));
  
 -        PulvinarPlayerRepository playerRepository = new PulvinarPlayerRepository(connection);
 -        PlayerModule playerModule = new InternalPlayerModule(playerRepository);
 -        log.debug("The player module has been initialized.");
-+        builder.rankRepository(new InternalRankRepository(connection));
-+        builder.rankSubscriptionRepository(new InternalRankSubscriptionRepository(connection));
++        builder.rankRepository(new InternalRankRepository(dataSource));
++        builder.rankSubscriptionRepository(new InternalRankSubscriptionRepository(dataSource));
  
 -        log.debug("Proceeding to populate core instance...");
 -        startCore(punishmentModule, rankModule, playerModule);
-+        builder.playerRepository(new PulvinarPlayerRepository(connection));
-+        builder.operatorRepository(new PulvinarOperatorRepository(connection));
++        builder.playerRepository(new PulvinarPlayerRepository(dataSource));
++        builder.operatorRepository(new PulvinarOperatorRepository(dataSource));
  
 +        log.debug("Proceeding to populate core instance...");
 +        databaseModule(builder.build());
@@ -248,18 +267,29 @@ index 0000000000000000000000000000000000000000..7b3b910058528d4a4b183f9fb8a58d3c
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-index 196774df5591be3691c89340bba0fe7a0fa91b10..5b9bfb183d62596b671e81e86502b52ad7ecbc6c 100644
+index 196774df5591be3691c89340bba0fe7a0fa91b10..0197a4620c63ada6eae040a7a965924cc6032c2f 100644
 --- a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-@@ -4,7 +4,6 @@ import com.mojang.authlib.GameProfile;
+@@ -4,9 +4,9 @@ import com.mojang.authlib.GameProfile;
  import net.kissenpvp.api.network.actor.PlayerClient;
  import org.bukkit.Bukkit;
  import org.jetbrains.annotations.NotNull;
 -import org.jetbrains.annotations.Nullable;
  import org.jetbrains.annotations.UnmodifiableView;
  
++import javax.sql.DataSource;
  import java.sql.Connection;
-@@ -21,13 +20,14 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
+ import java.sql.ResultSet;
+ import java.sql.SQLException;
+@@ -15,19 +15,20 @@ import java.util.concurrent.CompletableFuture;
+ 
+ public class PulvinarPlayerRepository extends InternalPlayerRepository {
+ 
+-    public PulvinarPlayerRepository(@NotNull Connection connection) throws NullPointerException {
+-        super(connection);
++    public PulvinarPlayerRepository(@NotNull DataSource dataSource) throws NullPointerException {
++        super(dataSource);
+     }
  
      public @NotNull CompletableFuture<@NotNull @UnmodifiableView Collection<GameProfile>> findAllProfiles()
      {
@@ -277,7 +307,7 @@ index 196774df5591be3691c89340bba0fe7a0fa91b10..5b9bfb183d62596b671e81e86502b52a
                  {
                      clients.add(new GameProfile(
                              UUID.fromString(resultSet.getString("id")),
-@@ -37,61 +37,7 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
+@@ -37,61 +38,7 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
              }
  
              return Collections.unmodifiableCollection(clients);
@@ -509,10 +539,10 @@ index 0000000000000000000000000000000000000000..d10c52ddf1401b7c5213856daef0bd2e
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..e11e808f58ab9b94c138984b34b125a3bd94d065
+index 0000000000000000000000000000000000000000..e5bb19b679f1bcf193ef01e5cf56bce58bd6e390
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,31 @@
 +package net.kissenpvp.network.actor.operator;
 +
 +import com.mojang.authlib.GameProfile;
@@ -521,6 +551,7 @@ index 0000000000000000000000000000000000000000..e11e808f58ab9b94c138984b34b125a3
 +import net.minecraft.server.players.ServerOpListEntry;
 +import org.jetbrains.annotations.NotNull;
 +
++import javax.sql.DataSource;
 +import java.sql.Connection;
 +import java.sql.ResultSet;
 +import java.sql.SQLException;
@@ -528,9 +559,9 @@ index 0000000000000000000000000000000000000000..e11e808f58ab9b94c138984b34b125a3
 +
 +public class PulvinarOperatorRepository extends InternalOperatorRepository
 +{
-+    public PulvinarOperatorRepository(@NotNull Connection connection) throws NullPointerException
++    public PulvinarOperatorRepository(@NotNull DataSource dataSource) throws NullPointerException
 +    {
-+        super(connection);
++        super(dataSource);
 +    }
 +
 +    @Override
@@ -634,10 +665,10 @@ index 0000000000000000000000000000000000000000..208ac3b592e92a1ffcee40c2e1983131
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentList.java b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..52af910a01f502a8539e6cf0ca6ba9455e7471bf
+index 0000000000000000000000000000000000000000..d9ddaabc03ba6583596650069964289ee695c2d4
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
-@@ -0,0 +1,131 @@
+@@ -0,0 +1,130 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
@@ -656,7 +687,6 @@ index 0000000000000000000000000000000000000000..52af910a01f502a8539e6cf0ca6ba945
 +import org.bukkit.Bukkit;
 +import org.jetbrains.annotations.Contract;
 +import org.jetbrains.annotations.NotNull;
-+import org.jetbrains.annotations.UnmodifiableView;
 +import org.jspecify.annotations.NonNull;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
