@@ -5,17 +5,39 @@ Subject: [PATCH] Add pulvinar instance
 
 
 diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
-index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..c067fc09a86190da797eeafa858ecb632975fc0b 100644
+index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..999f9f9dbeb4a73fbdd2f34a05a8f8b7a705a24c 100644
 --- a/net/minecraft/server/Main.java
 +++ b/net/minecraft/server/Main.java
-@@ -175,6 +175,13 @@ public class Main {
+@@ -1,6 +1,5 @@
+ package net.minecraft.server;
+ 
+-import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
+ import com.mojang.datafixers.DataFixer;
+ import com.mojang.logging.LogUtils;
+ import com.mojang.serialization.Dynamic;
+@@ -16,12 +15,10 @@ import java.nio.file.Paths;
+ import java.util.Optional;
+ import java.util.function.BooleanSupplier;
+ import javax.annotation.Nullable;
+-import joptsimple.OptionParser;
++
+ import joptsimple.OptionSet;
+-import joptsimple.OptionSpec;
+-import joptsimple.util.PathConverter;
++import net.kissenpvp.api.base.Pulvinar;
+ import net.minecraft.CrashReport;
+-import net.minecraft.DefaultUncaughtExceptionHandler;
+ import net.minecraft.SharedConstants;
+ import net.minecraft.SuppressForbidden;
+ import net.minecraft.Util;
+@@ -175,6 +172,13 @@ public class Main {
  
              org.spigotmc.SpigotConfig.disabledAdvancements = spigotConfiguration.getStringList("advancements.disabled"); // Paper - fix SPIGOT-5885, must be set early in init
  
 +            // Pulvinar start - hook in kissen
 +            LOGGER.info("Pulvinar is now going to hook in pulvinar.");
 +            java.io.File pulvinarSettings = (java.io.File) optionSet.valueOf("pulvinar-settings");
-+            net.kissenpvp.base.Pulvinar pulvinar = new net.kissenpvp.base.PulvinarCore(pulvinarSettings);
++            Pulvinar pulvinar = new net.kissenpvp.base.PulvinarCore(pulvinarSettings);
 +            org.bukkit.Bukkit.setPulvinar(pulvinar);
 +            // Pulvinar end - hook in kissen
 +
@@ -88,6 +110,36 @@ index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..cc5b362d661e887911dbcf69d082b9b6
 +    }
 +    // Pulvinar end - use database ban system instead of vanilla
  }
+diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
+index 577bb59afb4e059523e68af6c3515d64f0b9e559..d9b5db0de695af502c63b9ed26a4dc14bdb7fe69 100644
+--- a/net/minecraft/server/level/ServerPlayer.java
++++ b/net/minecraft/server/level/ServerPlayer.java
+@@ -2296,6 +2296,16 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+ 
+     public void sendSystemMessage(Component message, boolean overlay) {
+         if (this.acceptsSystemMessages(overlay)) {
++
++            // Pulvinar start - implement system message event
++            net.kyori.adventure.text.Component adventure = io.papermc.paper.adventure.PaperAdventure.asAdventure(message);
++            net.kissenpvp.api.event.SystemMessageEvent messageEvent = new net.kissenpvp.api.event.SystemMessageEvent(adventure);
++            org.bukkit.Bukkit.getPluginManager().callEvent(messageEvent);
++
++            if(messageEvent.isCancelled()) { return; }
++            Component outputMessage = io.papermc.paper.adventure.PaperAdventure.asVanilla(messageEvent.getMessage());
++            // Pulvinar end - implement system message event
++
+             this.connection
+                 .send(
+                     new ClientboundSystemChatPacket(message, overlay),
+@@ -2303,7 +2313,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+                         () -> {
+                             if (this.acceptsSystemMessages(false)) {
+                                 int i = 256;
+-                                String string = message.getString(256);
++                                String string = outputMessage.getString(256); //message.getString(256); // Pulvinar - implement system message event
+                                 Component component = Component.literal(string).withStyle(ChatFormatting.YELLOW);
+                                 return new ClientboundSystemChatPacket(
+                                     Component.translatable("multiplayer.message_not_delivered", component).withStyle(ChatFormatting.RED), false
 diff --git a/net/minecraft/server/players/BanListEntry.java b/net/minecraft/server/players/BanListEntry.java
 index e111adec2116f922fe67ee434635e50c60dad15c..7cf45d0cf8767f3ba798b8641ed6b92b456fb55f 100644
 --- a/net/minecraft/server/players/BanListEntry.java

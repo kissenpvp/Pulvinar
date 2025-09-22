@@ -45,12 +45,13 @@ index 10fe41e926e8378c8e5e4b311aff3eef998325ba..6e5e3734e42cea762054c57175913ab8
  
      public boolean pulvinarHooked()
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..c383be3d1c790a2807cd0e92eaedbfd49781f8b6 100644
+index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..d373129bf4aa6ae6230714423e991598aae28aac 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -1,18 +1,15 @@
+@@ -1,18 +1,16 @@
  package net.kissenpvp.base;
  
++import net.kissenpvp.api.base.Pulvinar;
  import net.kissenpvp.api.database.ConnectionProvider;
 -import net.kissenpvp.api.network.actor.PlayerModule;
 -import net.kissenpvp.api.network.actor.rank.RankModule;
@@ -72,7 +73,7 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..c383be3d1c790a2807cd0e92eaedbfd4
  import org.bukkit.configuration.InvalidConfigurationException;
  import org.jetbrains.annotations.NotNull;
  import org.slf4j.Logger;
-@@ -29,7 +26,7 @@ import java.sql.SQLException;
+@@ -29,7 +27,7 @@ import java.sql.SQLException;
  public class PulvinarCore extends KissenCore implements Pulvinar
  {
      private static final Logger log = LoggerFactory.getLogger(PulvinarCore.class);
@@ -81,7 +82,7 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..c383be3d1c790a2807cd0e92eaedbfd4
  
      public PulvinarCore(@NotNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -56,26 +53,28 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -56,26 +54,28 @@ public class PulvinarCore extends KissenCore implements Pulvinar
  
          Connection connection = provider.connection().get();
  
