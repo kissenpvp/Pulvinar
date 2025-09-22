@@ -634,10 +634,10 @@ index 0000000000000000000000000000000000000000..208ac3b592e92a1ffcee40c2e1983131
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentList.java b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..1510d3a5c48642a4725ade21c355c5e73a2b231b
+index 0000000000000000000000000000000000000000..52af910a01f502a8539e6cf0ca6ba9455e7471bf
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
-@@ -0,0 +1,145 @@
+@@ -0,0 +1,131 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
@@ -695,7 +695,8 @@ index 0000000000000000000000000000000000000000..1510d3a5c48642a4725ade21c355c5e7
 +    public PunishmentList(@NotNull PunishmentSubscriptionRepository repository)
 +    {
 +        //noinspection DataFlowIssue we're not using files anymore. We're beyond that
-+        super(null); this.repository = repository;
++        super(null);
++        this.repository = repository;
 +    }
 +
 +    @Override public void add(@NotNull UserBanListEntry entry)
@@ -704,7 +705,8 @@ index 0000000000000000000000000000000000000000..1510d3a5c48642a4725ade21c355c5e7
 +
 +        if (entry instanceof PunishmentEntry punishmentEntry)
 +        {
-+            getMap().put(this.getKeyForUser(profile), entry); repository.save(punishmentEntry.getPunishment()).join();
++            getMap().put(this.getKeyForUser(profile), entry);
++            getRepository().save(punishmentEntry.getPunishment()).join();
 +            return;
 +        }
 +
@@ -722,10 +724,13 @@ index 0000000000000000000000000000000000000000..1510d3a5c48642a4725ade21c355c5e7
 +
 +    @Override public void remove(@NotNull GameProfile user)
 +    {
-+        // TODO only expire -1 as these portray minecraft bans
-+        Map<String, PunishmentSubscription> updateMap = find(user.getId()).stream().collect(expire());
-+        getRepository().saveAll(updateMap.values()).join();
-+        getMap().remove(getKeyForUser(user));
++        UserBanListEntry entry = getMap().remove(getKeyForUser(user));
++        if(entry instanceof PunishmentEntry punishmentEntry)
++        {
++            PunishmentSubscription subscription = punishmentEntry.getPunishment();
++            subscription.temporal().expire();
++            getRepository().save(subscription).join();
++        }
 +    }
 +
 +    @Override public void load() throws IOException
@@ -759,28 +764,9 @@ index 0000000000000000000000000000000000000000..1510d3a5c48642a4725ade21c355c5e7
 +        });
 +    }
 +
-+    /**
-+     * Finds all punishment subscriptions associated with the specified userid.
-+     *
-+     * @param userId the unique identifier of the user for whom punishment subscriptions are to be retrieved; must not be null
-+     * @return a collection of unmodifiable punishment subscriptions linked to the specified user
-+     * @throws NullPointerException if the provided userId is null
-+     */
-+    private static @NotNull @UnmodifiableView Collection<PunishmentSubscription> find(@NotNull UUID userId) throws NullPointerException
++    protected PunishmentSubscriptionRepository getRepository()
 +    {
-+        Objects.requireNonNull(userId, "Cannot find punishments for null user.");
-+
-+        return getRepository().findSubscriptionsByUserId(userId).join();
-+    }
-+
-+    /**
-+     * Retrieves the {@link PunishmentSubscriptionRepository} from the {@link net.kissenpvp.base.PulvinarCore} instance.
-+     *
-+     * @return a non-null instance of {@link PunishmentSubscriptionRepository}
-+     */
-+    private static @NotNull PunishmentSubscriptionRepository getRepository()
-+    {
-+        return ((RepositoryHolder) Bukkit.getPulvinar()).punishmentSubscriptionRepository();
++        return repository;
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
