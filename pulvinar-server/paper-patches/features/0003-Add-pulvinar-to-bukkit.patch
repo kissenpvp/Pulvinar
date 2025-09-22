@@ -109,7 +109,7 @@ index 29b557a6cf9d57602bc622fbec0f90271fbfc80a..80881cb8f73a6f8c40a2546b69b61ef6
          databasePassword = password;
          config.save(file);
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..83e509d5ba044b37d31a7498534f8bb8ef45afc4 100644
+index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..13b5eaa1b577cb111adc9ab0302015a56d64e1a2 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -1,26 +1,24 @@
@@ -147,7 +147,7 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..83e509d5ba044b37d31a7498534f8bb8
  import java.sql.SQLException;
  
  /**
-@@ -29,9 +27,9 @@ import java.sql.SQLException;
+@@ -29,9 +27,11 @@ import java.sql.SQLException;
  public class PulvinarCore extends KissenCore implements Pulvinar
  {
      private static final Logger log = LoggerFactory.getLogger(PulvinarCore.class);
@@ -155,12 +155,18 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..83e509d5ba044b37d31a7498534f8bb8
 +    private final PulvinarConfig config;
  
 -    public PulvinarCore(@NotNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
++    private ConnectionProvider provider;
++
 +    public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
          config.init(optionsFile);
  
-@@ -49,33 +47,35 @@ public class PulvinarCore extends KissenCore implements Pulvinar
-         ConnectionProvider provider = new InternalConnectionProvider();
+@@ -46,36 +46,43 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+             throw new IllegalStateException("Could not connect to database, please check your configuration.");
+         }
+ 
+-        ConnectionProvider provider = new InternalConnectionProvider();
++        provider = new InternalConnectionProvider();
          provider.connect(config.databaseUrl(), config.databaseUser(), config.databasePassword());
  
 -        if(provider.connection().isEmpty())
@@ -210,6 +216,11 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..83e509d5ba044b37d31a7498534f8bb8
 +    @Override public ConsoleClient console()
 +    {
 +        return Bukkit.getConsoleSender();
++    }
++
++    @Override
++    public @NonNull ConnectionProvider connectionProvider() {
++        return provider;
 +    }
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/ActorData.java b/src/main/java/net/kissenpvp/network/actor/ActorData.java
