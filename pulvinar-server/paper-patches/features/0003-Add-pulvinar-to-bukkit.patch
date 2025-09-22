@@ -17,6 +17,33 @@ index c36bbf2585507f12d7b7b91cae19d50c4213b4c7..f2d30ce7d9b94088ae9834e07cbdf5d6
          );
          // Pulvinar end - integrate player repository into paper
      }
+diff --git a/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java b/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
+index 10fe41e926e8378c8e5e4b311aff3eef998325ba..6e5e3734e42cea762054c57175913ab844f52dc3 100644
+--- a/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
++++ b/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
+@@ -81,17 +81,12 @@ public class PaperGameProfileRepository extends YggdrasilGameProfileRepository {
+     // Pulvinar start - implement player repository into paper
+     @Override
+     public java.util.Optional<GameProfile> findProfileByName(String name) {
+-        net.kissenpvp.api.network.actor.PlayerClient playerClient = playerRepository.findByName(name).join();
++        java.util.Optional<net.kissenpvp.api.network.actor.PlayerClient> playerClient = playerRepository.findByName(name).join();
+ 
+-        if(java.util.Objects.nonNull(playerClient))
+-        {
+-            return java.util.Optional.of(new com.mojang.authlib.GameProfile(
+-                    playerClient.id(),
+-                    playerClient.username()
+-            ));
+-        }
+-
+-        return super.findProfileByName(name);
++        return playerClient.map(client -> new GameProfile(
++                client.id(),
++                client.username()
++        )).or(() -> super.findProfileByName(name));
+     }
+ 
+     public boolean pulvinarHooked()
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..c383be3d1c790a2807cd0e92eaedbfd49781f8b6 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
@@ -220,75 +247,98 @@ index 0000000000000000000000000000000000000000..7b3b910058528d4a4b183f9fb8a58d3c
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-index 196774df5591be3691c89340bba0fe7a0fa91b10..e665654b0bef25c1aa66ac18937c931d9d9eb101 100644
+index 196774df5591be3691c89340bba0fe7a0fa91b10..5b9bfb183d62596b671e81e86502b52ad7ecbc6c 100644
 --- a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-@@ -21,28 +21,34 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
+@@ -4,7 +4,6 @@ import com.mojang.authlib.GameProfile;
+ import net.kissenpvp.api.network.actor.PlayerClient;
+ import org.bukkit.Bukkit;
+ import org.jetbrains.annotations.NotNull;
+-import org.jetbrains.annotations.Nullable;
+ import org.jetbrains.annotations.UnmodifiableView;
+ 
+ import java.sql.Connection;
+@@ -21,13 +20,14 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
  
      public @NotNull CompletableFuture<@NotNull @UnmodifiableView Collection<GameProfile>> findAllProfiles()
      {
 -        return CompletableFuture.supplyAsync(() -> query("SELECT id, username FROM %s;", (statement) ->
--        {
--            Collection<GameProfile> clients = new ArrayList<>();
--
++        String sql = "SELECT id, username FROM ksvp_player;";
++        return CompletableFuture.supplyAsync(() -> Objects.requireNonNull(query(sql, (statement) ->
+         {
+             Collection<GameProfile> clients = new ArrayList<>();
+ 
 -            try(ResultSet resultSet = statement.executeQuery())
-+        return CompletableFuture.supplyAsync(() -> {
-+            Collection<GameProfile> profiles =  query("SELECT id, username FROM " + table() + ";", (statement) ->
++            try (ResultSet resultSet = statement.executeQuery())
              {
 -                while(resultSet.next())
-+                Collection<GameProfile> clients = new ArrayList<>();
-+
-+                try(ResultSet resultSet = statement.executeQuery())
++                while (resultSet.next())
                  {
--                    clients.add(new GameProfile(
--                            UUID.fromString(resultSet.getString("id")),
--                            resultSet.getString("username"))
--                    );
-+                    while(resultSet.next())
-+                    {
-+                        clients.add(new GameProfile(
-+                                UUID.fromString(resultSet.getString("id")),
-+                                resultSet.getString("username"))
-+                        );
-+                    }
-                 }
--            }
+                     clients.add(new GameProfile(
+                             UUID.fromString(resultSet.getString("id")),
+@@ -37,61 +37,7 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
+             }
  
--            return Collections.unmodifiableCollection(clients);
+             return Collections.unmodifiableCollection(clients);
 -        }));
-+                return Collections.unmodifiableCollection(clients);
-+            });
-+
-+            assert profiles != null;
-+            return profiles;
-+        });
+-    }
+-
+-    @Override
+-    public @NotNull CompletableFuture<@Nullable PlayerClient> findByName(@NotNull String name, boolean utilizeCache) throws NullPointerException {
+-        String sql = "SELECT * FROM %s WHERE username = ?;";
+-        return CompletableFuture.supplyAsync(() -> query(sql, (statement) ->
+-        {
+-            statement.setString(1, name);
+-
+-            try(ResultSet resultSet = statement.executeQuery())
+-            {
+-                if(!resultSet.next())
+-                {
+-                    return null;
+-                }
+-
+-                return toEntity(resultSet);
+-            }
+-        }));
+-    }
+-
+-    @Override
+-    public @NotNull CompletableFuture<@UnmodifiableView Collection<PlayerClient>> findAllByName(@NotNull Iterable<String> iterable, boolean utilizeCache) throws NullPointerException {
+-
+-        int size = 0;
+-        for (Object ignored : iterable) { size++; }
+-
+-        if(size == 0)
+-        {
+-            return CompletableFuture.completedFuture(Collections.emptyList());
+-        }
+-
+-        String dynamicPlaceholders = String.join(", ", Collections.nCopies(size, "?"));
+-        String sql = "SELECT * FROM %s WHERE username IN (" + dynamicPlaceholders + ");";
+-
+-        return CompletableFuture.supplyAsync(() -> query(sql, (statement) ->
+-        {
+-            int current = 0;
+-            for (String xx : iterable) {
+-                statement.setString(current + 1, xx);
+-                current++;
+-            }
+-
+-            List<PlayerClient> clients = new ArrayList<>();
+-            try(ResultSet resultSet = statement.executeQuery())
+-            {
+-                while(resultSet.next())
+-                {
+-                    clients.add(toEntity(resultSet));
+-                }
+-            }
+-
+-            return Collections.unmodifiableList(clients);
+-        }));
++        })));
      }
  
      @Override
-     public @NotNull CompletableFuture<@Nullable PlayerClient> findByName(@NotNull String name, boolean utilizeCache) throws NullPointerException {
--        String sql = "SELECT * FROM %s WHERE username = ?;";
-+        //TODO: utilize cache
-+        String sql = "SELECT * FROM " + table() + " WHERE username = ?;";
-         return CompletableFuture.supplyAsync(() -> query(sql, (statement) ->
-         {
-             statement.setString(1, name);
-@@ -62,6 +68,7 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
-     @Override
-     public @NotNull CompletableFuture<@UnmodifiableView Collection<PlayerClient>> findAllByName(@NotNull Iterable<String> iterable, boolean utilizeCache) throws NullPointerException {
- 
-+        //TODO: utilize cache
-         int size = 0;
-         for (Object ignored : iterable) { size++; }
- 
-@@ -71,7 +78,7 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
-         }
- 
-         String dynamicPlaceholders = String.join(", ", Collections.nCopies(size, "?"));
--        String sql = "SELECT * FROM %s WHERE username IN (" + dynamicPlaceholders + ");";
-+        String sql = "SELECT * FROM " + table() + " WHERE username IN (" + dynamicPlaceholders + ");";
- 
-         return CompletableFuture.supplyAsync(() -> query(sql, (statement) ->
-         {
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
 index 9cd8f429b25647168d3141d78afe67f5f28068c4..12cb65a641418cfbc3373c733365c2df0f27a2ac 100644
 --- a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
@@ -583,10 +633,10 @@ index 0000000000000000000000000000000000000000..208ac3b592e92a1ffcee40c2e1983131
 +}
 diff --git a/src/main/java/net/kissenpvp/punishment/PunishmentList.java b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d778d4a56e216d92328bd58c9dd1a424c138bb7b
+index 0000000000000000000000000000000000000000..1510d3a5c48642a4725ade21c355c5e73a2b231b
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/punishment/PunishmentList.java
-@@ -0,0 +1,142 @@
+@@ -0,0 +1,145 @@
 +package net.kissenpvp.punishment;
 +
 +import com.mojang.authlib.GameProfile;
@@ -684,7 +734,10 @@ index 0000000000000000000000000000000000000000..d778d4a56e216d92328bd58c9dd1a424
 +        {
 +            PlayerClient playerClient = subscription.target();
 +            GameProfile gameProfile = new GameProfile(playerClient.id(), playerClient.username());
-+            getMap().put(getKeyForUser(gameProfile), PunishmentEntry.from(subscription));
++            if(!subscription.temporal().expired())
++            {
++                getMap().put(getKeyForUser(gameProfile), PunishmentEntry.from(subscription));
++            }
 +        }
 +    }
 +
