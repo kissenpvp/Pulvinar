@@ -111,10 +111,10 @@ index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..cc5b362d661e887911dbcf69d082b9b6
 +    // Pulvinar end - use database ban system instead of vanilla
  }
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 577bb59afb4e059523e68af6c3515d64f0b9e559..d9b5db0de695af502c63b9ed26a4dc14bdb7fe69 100644
+index 577bb59afb4e059523e68af6c3515d64f0b9e559..907334d40e7748aad6d793d634e32a9d3115506e 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -2296,6 +2296,16 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2296,14 +2296,24 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
  
      public void sendSystemMessage(Component message, boolean overlay) {
          if (this.acceptsSystemMessages(overlay)) {
@@ -130,8 +130,9 @@ index 577bb59afb4e059523e68af6c3515d64f0b9e559..d9b5db0de695af502c63b9ed26a4dc14
 +
              this.connection
                  .send(
-                     new ClientboundSystemChatPacket(message, overlay),
-@@ -2303,7 +2313,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+-                    new ClientboundSystemChatPacket(message, overlay),
++                    new ClientboundSystemChatPacket(outputMessage /*message*/, overlay),  // Pulvinar - implement system message event
+                     PacketSendListener.exceptionallySend(
                          () -> {
                              if (this.acceptsSystemMessages(false)) {
                                  int i = 256;
