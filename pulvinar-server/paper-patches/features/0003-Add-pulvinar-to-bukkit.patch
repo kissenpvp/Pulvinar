@@ -44,6 +44,22 @@ index 10fe41e926e8378c8e5e4b311aff3eef998325ba..6e5e3734e42cea762054c57175913ab8
      }
  
      public boolean pulvinarHooked()
+diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginManagerImpl.java b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginManagerImpl.java
+index 097500a59336db1bbfffcd1aa4cff7a8586e46ec..3922e9d51fef0952a3344af6acb56e91b44c663c 100644
+--- a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginManagerImpl.java
++++ b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginManagerImpl.java
+@@ -243,4 +243,11 @@ public class PaperPluginManagerImpl implements PluginManager, DependencyContext
+     public MutableGraph<String> getInstanceManagerGraph() {
+         return instanceManager.getDependencyGraph();
+     }
++
++    // Pulvinar start - implement player property repository
++    @Override
++    public @NotNull net.kissenpvp.api.network.actor. @org.jspecify.annotations.NonNull PlayerProperties playerProperties(@NotNull @org.jspecify.annotations.NonNull Plugin plugin, @NotNull org.bukkit.@org.jspecify.annotations.NonNull OfflinePlayer player) {
++        return ((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).playerRepository().playerProperties(plugin, player);
++    }
++    // Pulvinar end - implement player property repository
+ }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarConfig.java b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
 index 29b557a6cf9d57602bc622fbec0f90271fbfc80a..80881cb8f73a6f8c40a2546b69b61ef6e463b413 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarConfig.java
@@ -109,23 +125,29 @@ index 29b557a6cf9d57602bc622fbec0f90271fbfc80a..80881cb8f73a6f8c40a2546b69b61ef6
          databasePassword = password;
          config.save(file);
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..13b5eaa1b577cb111adc9ab0302015a56d64e1a2 100644
+index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..dcbfc0b566ad95b0e44501356f1b5c638b315d38 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -1,26 +1,24 @@
+@@ -1,27 +1,35 @@
  package net.kissenpvp.base;
  
++import net.kissenpvp.api.base.KissenPlugin;
 +import net.kissenpvp.api.base.Pulvinar;
  import net.kissenpvp.api.database.ConnectionProvider;
 -import net.kissenpvp.api.network.actor.PlayerModule;
 -import net.kissenpvp.api.network.actor.rank.RankModule;
 -import net.kissenpvp.api.punishment.PunishmentModule;
 +import net.kissenpvp.api.network.actor.ConsoleClient;
++import net.kissenpvp.api.network.actor.PlayerClient;
++import net.kissenpvp.api.network.actor.PlayerProperties;
++import net.kissenpvp.api.network.actor.PlayerRepository;
  import net.kissenpvp.database.InternalConnectionProvider;
 -import net.kissenpvp.network.actor.InternalPlayerModule;
++import net.kissenpvp.network.actor.InternalPlayerRepository;
  import net.kissenpvp.network.actor.PulvinarPlayerRepository;
 -import net.kissenpvp.network.actor.rank.InternalRankModule;
 +import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
++import net.kissenpvp.network.actor.properties.PropertyRepository;
  import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
  import net.kissenpvp.network.actor.rank.repository.InternalRankSubscriptionRepository;
 -import net.kissenpvp.punishment.InternalPunishmentModule;
@@ -137,6 +159,7 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..13b5eaa1b577cb111adc9ab0302015a5
  import org.bukkit.configuration.InvalidConfigurationException;
 -import org.jetbrains.annotations.NotNull;
 +import org.jspecify.annotations.NonNull;
++import org.jspecify.annotations.Nullable;
  import org.slf4j.Logger;
  import org.slf4j.LoggerFactory;
  
@@ -145,23 +168,31 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..13b5eaa1b577cb111adc9ab0302015a5
  import java.io.IOException;
 -import java.sql.Connection;
  import java.sql.SQLException;
++import java.util.HashMap;
++import java.util.Map;
++import java.util.Objects;
  
  /**
-@@ -29,9 +27,11 @@ import java.sql.SQLException;
+  * Allows access to the kissen api
+@@ -29,9 +37,15 @@ import java.sql.SQLException;
  public class PulvinarCore extends KissenCore implements Pulvinar
  {
      private static final Logger log = LoggerFactory.getLogger(PulvinarCore.class);
 -    private PulvinarConfig config;
 +    private final PulvinarConfig config;
- 
--    public PulvinarCore(@NotNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
++
 +    private ConnectionProvider provider;
 +
++    private Map<KissenPlugin, PropertyRepository> playerRepositories;
++
 +    public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
++        this.playerRepositories = new HashMap<>();
+ 
+-    public PulvinarCore(@NotNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
          config.init(optionsFile);
  
-@@ -46,36 +46,43 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -46,36 +60,50 @@ public class PulvinarCore extends KissenCore implements Pulvinar
              throw new IllegalStateException("Could not connect to database, please check your configuration.");
          }
  
@@ -197,15 +228,21 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..13b5eaa1b577cb111adc9ab0302015a5
 -        log.debug("The player module has been initialized.");
 +        builder.rankRepository(new InternalRankRepository(dataSource));
 +        builder.rankSubscriptionRepository(new InternalRankSubscriptionRepository(dataSource));
- 
--        log.debug("Proceeding to populate core instance...");
--        startCore(punishmentModule, rankModule, playerModule);
++
 +        builder.playerRepository(new PulvinarPlayerRepository(dataSource));
 +        builder.operatorRepository(new PulvinarOperatorRepository(dataSource));
  
-+        log.debug("Proceeding to populate core instance...");
+         log.debug("Proceeding to populate core instance...");
+-        startCore(punishmentModule, rankModule, playerModule);
 +        databaseModule(builder.build());
 +        init();
++    }
+ 
++    public @NonNull PlayerProperties properties(@NonNull KissenPlugin plugin, @NonNull PlayerClient playerClient)
++    {
++        DataSource dataSource = provider.dataSource().orElseThrow(() -> new IllegalStateException("The provider's dataSource is not present."));
++        PropertyRepository repository = playerRepositories.computeIfAbsent(plugin, (ignored) -> new PropertyRepository(plugin, dataSource));
++        return repository.find(playerClient).join();
      }
  
 -    public @NotNull PulvinarConfig config() {
@@ -266,13 +303,15 @@ index 0000000000000000000000000000000000000000..eb8a8fba85175befa220c55a487cef20
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PlayerMock.java b/src/main/java/net/kissenpvp/network/actor/PlayerMock.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..a227b8843242bc9a44aadb4fd96afb39b40f11ba
+index 0000000000000000000000000000000000000000..b12177fdb282965673c7273d020d4b89841abf71
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PlayerMock.java
-@@ -0,0 +1,75 @@
+@@ -0,0 +1,82 @@
 +package net.kissenpvp.network.actor;
 +
 +import com.mojang.authlib.GameProfile;
++import net.kissenpvp.api.base.KissenPlugin;
++import net.kissenpvp.api.network.actor.PlayerProperties;
 +import net.kissenpvp.api.punishment.Punishment;
 +import net.kissenpvp.api.punishment.PunishmentSubscription;
 +import net.kissenpvp.api.temporal.timespan.DefinedTimeSpan;
@@ -327,6 +366,11 @@ index 0000000000000000000000000000000000000000..a227b8843242bc9a44aadb4fd96afb39
 +    @Override
 +    public @NonNull PunishmentSubscription punish(@NonNull Punishment punishment, @Nullable Component component) throws NullPointerException
 +    {
++        throw new UnsupportedOperationException("Cannot punish a player mock.");
++    }
++
++    @Override
++    public @NonNull PlayerProperties persistentProperties(@NonNull KissenPlugin kissenPlugin) throws NullPointerException {
 +        throw new UnsupportedOperationException("Cannot punish a player mock.");
 +    }
 +
@@ -896,7 +940,7 @@ index 0000000000000000000000000000000000000000..fa84c23d12a84082d11019c3e25c465a
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..a4a74f77b9a518cb7df364331e77744c9cf94061 100644
+index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..c1f7beeb65b8136dfb6885b02ef1aa4d9e18cc40 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 @@ -8,6 +8,10 @@ import java.util.Date;
@@ -910,16 +954,17 @@ index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..a4a74f77b9a518cb7df364331e77744c
  import net.minecraft.core.GlobalPos;
  import net.minecraft.nbt.CompoundTag;
  import net.minecraft.network.protocol.game.ClientboundTagQueryPacket;
-@@ -35,6 +39,8 @@ import org.bukkit.configuration.serialization.SerializableAs;
+@@ -35,6 +39,9 @@ import org.bukkit.configuration.serialization.SerializableAs;
  import org.bukkit.craftbukkit.util.CraftLocation;
  import org.bukkit.entity.EntityType;
  import org.bukkit.entity.Player;
 +import org.jetbrains.annotations.NotNull;
 +import org.jetbrains.annotations.Nullable;
++import org.jspecify.annotations.NonNull;
  
  @SerializableAs("Player")
  public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializable {
-@@ -777,7 +783,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+@@ -777,7 +784,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
  
      @Override public @org.jetbrains.annotations.NotNull net.kissenpvp.api.temporal.timespan.DefinedTimeSpan timePlayed()
      {
@@ -928,7 +973,7 @@ index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..a4a74f77b9a518cb7df364331e77744c
      }
  
      @Override public @org.jetbrains.annotations.NotNull java.util.UUID id()
-@@ -795,6 +801,17 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+@@ -795,6 +802,17 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
          return false;
      }
  
@@ -946,6 +991,18 @@ index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..a4a74f77b9a518cb7df364331e77744c
      @Override public @org.jetbrains.annotations.NotNull String username()
      {
          String userName = getName();
+@@ -811,6 +829,11 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+         return java.util.Locale.ENGLISH;
+     }
+ 
++    @Override
++    public net.kissenpvp.api.network.actor.@NonNull PlayerProperties persistentProperties(net.kissenpvp.api.base.@NonNull KissenPlugin plugin) {
++        return org.bukkit.Bukkit.getPluginManager().playerProperties((org.bukkit.plugin.Plugin) plugin, this);
++    }
++
+     @Override public final boolean isClient()
+     {
+         return true;
 diff --git a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
 index 15ae2653c1809041b7ab7cb67015e82c226e9f77..527dcaf194501c144ca2ffc11377782e501ea9d4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
@@ -978,7 +1035,7 @@ index 15ae2653c1809041b7ab7cb67015e82c226e9f77..527dcaf194501c144ca2ffc11377782e
 +    // Pulvinar end - implement kissen command sender methods
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index afb3df83b717578bdf672df8a1c0b80392ffe341..46518e40bb52837d190c6480cdeb30be3d3f4078 100644
+index afb3df83b717578bdf672df8a1c0b80392ffe341..fec145efefa287b1b76fbf3811cc296056d21f3b 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -3625,7 +3625,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
@@ -990,7 +1047,7 @@ index afb3df83b717578bdf672df8a1c0b80392ffe341..46518e40bb52837d190c6480cdeb30be
      {
          return this;
      }
-@@ -3640,12 +3640,23 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3640,12 +3640,28 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
          return java.time.Instant.ofEpochMilli(getLastLogin());
      }
  
@@ -1010,6 +1067,11 @@ index afb3df83b717578bdf672df8a1c0b80392ffe341..46518e40bb52837d190c6480cdeb30be
 +    public net.kissenpvp.api.punishment.@NonNull PunishmentSubscription punish(@org.jetbrains.annotations.NotNull net.kissenpvp.api.punishment.Punishment punishment, @org.jetbrains.annotations.Nullable net.kyori.adventure.text.Component component) throws NullPointerException
 +    {
 +        return null;
++    }
++
++    @Override
++    public net.kissenpvp.api.network.actor.@NonNull PlayerProperties persistentProperties(net.kissenpvp.api.base.@NonNull KissenPlugin plugin) {
++        return org.bukkit.Bukkit.getPluginManager().playerProperties((org.bukkit.plugin.Plugin) plugin, this);
 +    }
 +
      @Override public @NonNull UUID id()
