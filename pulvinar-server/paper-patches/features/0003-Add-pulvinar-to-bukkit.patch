@@ -44,22 +44,6 @@ index 10fe41e926e8378c8e5e4b311aff3eef998325ba..6e5e3734e42cea762054c57175913ab8
      }
  
      public boolean pulvinarHooked()
-diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginManagerImpl.java b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginManagerImpl.java
-index 097500a59336db1bbfffcd1aa4cff7a8586e46ec..3922e9d51fef0952a3344af6acb56e91b44c663c 100644
---- a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginManagerImpl.java
-+++ b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginManagerImpl.java
-@@ -243,4 +243,11 @@ public class PaperPluginManagerImpl implements PluginManager, DependencyContext
-     public MutableGraph<String> getInstanceManagerGraph() {
-         return instanceManager.getDependencyGraph();
-     }
-+
-+    // Pulvinar start - implement player property repository
-+    @Override
-+    public @NotNull net.kissenpvp.api.network.actor. @org.jspecify.annotations.NonNull PlayerProperties playerProperties(@NotNull @org.jspecify.annotations.NonNull Plugin plugin, @NotNull org.bukkit.@org.jspecify.annotations.NonNull OfflinePlayer player) {
-+        return ((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).playerRepository().playerProperties(plugin, player);
-+    }
-+    // Pulvinar end - implement player property repository
- }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarConfig.java b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
 index 29b557a6cf9d57602bc622fbec0f90271fbfc80a..80881cb8f73a6f8c40a2546b69b61ef6e463b413 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarConfig.java

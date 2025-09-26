@@ -173,32 +173,3 @@ index 95d2ada67d86bc9d764d4455f4ef74ce88621695..9f57d0f100c3dd9506a1c8203ac5f74f
      /**
       * Returns the folder that the plugin data files are located in. The
       * folder may not yet exist.
-diff --git a/src/main/java/org/bukkit/plugin/PluginManager.java b/src/main/java/org/bukkit/plugin/PluginManager.java
-index 215accd4e01662b2e4cb1574e3b40ecaf39fd235..fa7dedad6b1765b1f2cda512c2d1889835f53aab 100644
---- a/src/main/java/org/bukkit/plugin/PluginManager.java
-+++ b/src/main/java/org/bukkit/plugin/PluginManager.java
-@@ -326,4 +326,8 @@ public interface PluginManager extends io.papermc.paper.plugin.PermissionManager
-     @org.jetbrains.annotations.ApiStatus.Experimental
-     void overridePermissionManager(@NotNull Plugin plugin, @Nullable io.papermc.paper.plugin.PermissionManager permissionManager);
-     // Paper end
-+
-+    // Pulvinar start - implement player property repository
-+    @NotNull net.kissenpvp.api.network.actor.@org.jspecify.annotations.NonNull PlayerProperties playerProperties(@NotNull @org.jspecify.annotations.NonNull Plugin plugin, @NotNull org.bukkit. @org.jspecify.annotations.NonNull OfflinePlayer player);
-+    // Pulvinar end - implement player property repository
- }
-diff --git a/src/main/java/org/bukkit/plugin/SimplePluginManager.java b/src/main/java/org/bukkit/plugin/SimplePluginManager.java
-index dfc2d76403993640e6283f25f9f3647bb6d1a30c..b73176d633d9685ac73e3acc3f744d570d4b3bc9 100644
---- a/src/main/java/org/bukkit/plugin/SimplePluginManager.java
-+++ b/src/main/java/org/bukkit/plugin/SimplePluginManager.java
-@@ -992,4 +992,11 @@ public final class SimplePluginManager implements PluginManager {
-         this.paperPluginManager.addPermissions(perm);
-     }
-     // Paper end
-+
-+    // Pulvinar start - implement player property repository
-+    @Override
-+    public @NotNull net.kissenpvp.api.network.actor. @org.jspecify.annotations.NonNull PlayerProperties playerProperties(@NotNull @org.jspecify.annotations.NonNull Plugin plugin, @NotNull org.bukkit.@org.jspecify.annotations.NonNull OfflinePlayer player) {
-+        return ((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).playerRepository().playerProperties(plugin, player);
-+    }
-+    // Pulvinar end - implement player property repository
- }
