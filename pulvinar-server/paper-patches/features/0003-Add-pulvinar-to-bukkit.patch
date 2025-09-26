@@ -265,7 +265,7 @@ index 0000000000000000000000000000000000000000..eb8a8fba85175befa220c55a487cef20
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-index 196774df5591be3691c89340bba0fe7a0fa91b10..8dae019c35775d1955dbb5f47f32bb3b48daf45b 100644
+index 196774df5591be3691c89340bba0fe7a0fa91b10..66d255da1f9d3ab89b7459b4fb5566b32fca6864 100644
 --- a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 @@ -3,11 +3,9 @@ package net.kissenpvp.network.actor;
@@ -309,7 +309,7 @@ index 196774df5591be3691c89340bba0fe7a0fa91b10..8dae019c35775d1955dbb5f47f32bb3b
                  {
                      clients.add(new GameProfile(
                              UUID.fromString(resultSet.getString("id")),
-@@ -37,72 +36,18 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
+@@ -37,72 +36,55 @@ public class PulvinarPlayerRepository extends InternalPlayerRepository {
              }
  
              return Collections.unmodifiableCollection(clients);
@@ -317,20 +317,31 @@ index 196774df5591be3691c89340bba0fe7a0fa91b10..8dae019c35775d1955dbb5f47f32bb3b
 +        })));
      }
  
-     @Override
+-    @Override
 -    public @NotNull CompletableFuture<@Nullable PlayerClient> findByName(@NotNull String name, boolean utilizeCache) throws NullPointerException {
 -        String sql = "SELECT * FROM %s WHERE username = ?;";
 -        return CompletableFuture.supplyAsync(() -> query(sql, (statement) ->
 -        {
 -            statement.setString(1, name);
--
++    public @NonNull CompletableFuture<Void> generateProfile(@NonNull GameProfile profiles)
++    {
++        return generateProfile(Collections.singleton(profiles));
++    }
+ 
 -            try(ResultSet resultSet = statement.executeQuery())
 -            {
 -                if(!resultSet.next())
--                {
++    public @NonNull CompletableFuture<Void> generateProfile(@NonNull Iterable<GameProfile> profiles)
++    {
++        return CompletableFuture.supplyAsync(() -> {
++            query("INSERT INTO ksvp_identity (link_id) VALUES (?);", statement -> {
++                for(GameProfile profile : profiles)
+                 {
 -                    return null;
--                }
--
++                    statement.setString(1, String.valueOf(profile.getId()));
++                    statement.addBatch();
+                 }
+ 
 -                return toEntity(resultSet);
 -            }
 -        }));
@@ -349,7 +360,10 @@ index 196774df5591be3691c89340bba0fe7a0fa91b10..8dae019c35775d1955dbb5f47f32bb3b
 -
 -        String dynamicPlaceholders = String.join(", ", Collections.nCopies(size, "?"));
 -        String sql = "SELECT * FROM %s WHERE username IN (" + dynamicPlaceholders + ");";
--
++                statement.executeBatch();
++                return null;
++            });
+ 
 -        return CompletableFuture.supplyAsync(() -> query(sql, (statement) ->
 -        {
 -            int current = 0;
@@ -360,18 +374,30 @@ index 196774df5591be3691c89340bba0fe7a0fa91b10..8dae019c35775d1955dbb5f47f32bb3b
 -
 -            List<PlayerClient> clients = new ArrayList<>();
 -            try(ResultSet resultSet = statement.executeQuery())
--            {
++            String sql = "INSERT INTO ksvp_player (id, link_id, username) VALUES (?, ?, ?);";
++            return query(sql, (statement) ->
+             {
 -                while(resultSet.next())
--                {
++                for(GameProfile profile : profiles)
+                 {
 -                    clients.add(toEntity(resultSet));
--                }
++                    String uuid = String.valueOf(profile.getId());
++                    statement.setString(1, uuid);
++                    statement.setString(2, uuid);
++                    statement.setString(3, profile.getName());
++                    statement.addBatch();
+                 }
 -            }
--
+ 
 -            return Collections.unmodifiableList(clients);
 -        }));
--    }
--
--    @Override
++                statement.executeBatch();
++                return null;
++            });
++        });
+     }
+ 
+     @Override
 -    protected @NotNull PlayerClient toCachedEntity(@NotNull UUID uuid, @NotNull ResultSet resultSet) throws SQLException, NullPointerException {
 +    protected @NonNull PlayerClient toCachedEntity(@NonNull UUID uuid, @NonNull ResultSet resultSet) throws SQLException, NullPointerException {
          PlayerClient playerClient = Bukkit.getOfflinePlayer(uuid);
@@ -386,7 +412,7 @@ index 196774df5591be3691c89340bba0fe7a0fa91b10..8dae019c35775d1955dbb5f47f32bb3b
      }
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
-index 9cd8f429b25647168d3141d78afe67f5f28068c4..63c7254959449a2586cee5492de62ca3a144c58a 100644
+index 9cd8f429b25647168d3141d78afe67f5f28068c4..bf008a9c541bfbb977c92b2d0f03dd6b5153d7f3 100644
 --- a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
 @@ -1,31 +1,68 @@
@@ -461,7 +487,7 @@ index 9cd8f429b25647168d3141d78afe67f5f28068c4..63c7254959449a2586cee5492de62ca3
 +                get(gameProfile.getId()).isEmpty()
 +        ) {
 +            log.info("Profile {} has not been cached yet, saving to database...", gameProfile.getName());
-+            //playerRepository.save(PlayerMock.of(gameProfile)).join(); // TODO
++            playerRepository.generateProfile(gameProfile).join();
 +        }
 +
 +        super.add(gameProfile);
