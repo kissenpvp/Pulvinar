@@ -280,3 +280,79 @@ index d445e8f126f077d8419c52fa5436ea963a1a42a4..a0c9255e1cce64c733cc70d4a523912f
 +    }
 +    // Pulvinar end - allow protected access to map
  }
+diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
+index fe44d8d17d2622b3d6021c11579af85ef96737bb..6207758d31408c4f95507c72787b4e9006b1f87c 100644
+--- a/net/minecraft/world/level/storage/PlayerDataStorage.java
++++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
+@@ -36,6 +36,26 @@ public class PlayerDataStorage {
+         try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), LOGGER)) {
+             TagValueOutput tagValueOutput = TagValueOutput.createWithContext(scopedCollector, player.registryAccess());
+             player.saveWithoutId(tagValueOutput);
++
++            // Pulvinar start - store userdata in a database instead of a world
++            net.kissenpvp.api.database.RepositoryHolder pulvinar = (net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar();
++            net.kissenpvp.network.actor.InternalPlayerRepository playerRepository = (net.kissenpvp.network.actor.InternalPlayerRepository) pulvinar.playerRepository();
++
++            CompoundTag tag = tagValueOutput.buildResult();
++
++            try (java.io.ByteArrayOutputStream byteArrayOutputStream = new java.io.ByteArrayOutputStream()) {
++                net.minecraft.nbt.NbtIo.writeCompressed(tag, byteArrayOutputStream);
++                byte[] data = byteArrayOutputStream.toByteArray();
++                playerRepository.saveProperties(player.getUUID(), data);
++            }
++            catch (java.io.IOException ioException)
++            {
++                ioException.printStackTrace();
++            }
++
++            if(true) { return; } // we're skipping the file part
++            // Pulvinar end - store userdata in a database instead of a world
++
+             Path path = this.playerDir.toPath();
+             Path path1 = Files.createTempFile(path, player.getStringUUID() + "-", ".dat");
+             CompoundTag compoundTag = tagValueOutput.buildResult();
+@@ -49,6 +69,11 @@ public class PlayerDataStorage {
+     }
+ 
+     private void backup(String name, String stringUuid, String suffix) { // CraftBukkit
++
++        // Pulvinar start - store userdata in a database instead of a world
++        if (true) { return; } // we don't do that here
++        // Pulvinar end - store userdata in a database instead of a world
++
+         Path path = this.playerDir.toPath();
+         Path path1 = path.resolve(stringUuid + suffix); // CraftBukkit
+         Path path2 = path.resolve(stringUuid + "_corrupted_" + LocalDateTime.now().format(FORMATTER) + suffix); // CraftBukkit
+@@ -62,6 +87,23 @@ public class PlayerDataStorage {
+     }
+ 
+     private Optional<CompoundTag> load(String name, String stringUuid, String suffix) { // CraftBukkit
++
++        // Pulvinar start - store userdata in a database instead of a world
++        net.kissenpvp.api.database.RepositoryHolder pulvinar = (net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar();
++        net.kissenpvp.network.actor.InternalPlayerRepository playerRepository = (net.kissenpvp.network.actor.InternalPlayerRepository) pulvinar.playerRepository();
++
++        Optional<java.sql.Blob> data = playerRepository.findProperties(java.util.UUID.fromString(stringUuid)).join();
++        return data.map(blob -> {
++            try {
++                return NbtIo.readCompressed(blob.getBinaryStream(), NbtAccounter.unlimitedHeap());
++            }
++            catch (java.sql.SQLException | java.io.IOException exception)
++            {
++                LOGGER.warn("Failed to load player data for {}.", name, exception);
++                return null;
++            }
++        });
++        /*
+         File file = new File(this.playerDir, stringUuid + suffix); // CraftBukkit
+         // Spigot start
+         boolean usingWrongFile = false;
+@@ -88,6 +130,8 @@ public class PlayerDataStorage {
+         }
+ 
+         return Optional.empty();
++        */
++        // Pulvinar end - store userdata in a database instead of a world
+     }
+ 
+     public Optional<ValueInput> load(Player player, ProblemReporter problemReporter) {
