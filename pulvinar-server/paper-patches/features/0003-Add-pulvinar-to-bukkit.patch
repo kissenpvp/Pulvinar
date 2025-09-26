@@ -109,7 +109,7 @@ index 29b557a6cf9d57602bc622fbec0f90271fbfc80a..80881cb8f73a6f8c40a2546b69b61ef6
          databasePassword = password;
          config.save(file);
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..fc487d8677dd3c01ef433f3ed43fd72ca2d6e20a 100644
+index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..b8c55be948181a5e7adf6ec759a8c509ef92a07e 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -1,26 +1,24 @@
@@ -161,7 +161,7 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..fc487d8677dd3c01ef433f3ed43fd72c
          config = new PulvinarConfig();
          config.init(optionsFile);
  
-@@ -46,36 +46,43 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -46,36 +46,48 @@ public class PulvinarCore extends KissenCore implements Pulvinar
              throw new IllegalStateException("Could not connect to database, please check your configuration.");
          }
  
@@ -178,34 +178,38 @@ index c42169f7ac76f2ebc2c0d48fba93183df0caf19a..fc487d8677dd3c01ef433f3ed43fd72c
  
 -        Connection connection = provider.connection().get();
 +        DataSource dataSource = provider.dataSource().get();
++
++        InternalRepositoryHolder.RepositoryHolderBuilder builder = InternalRepositoryHolder.builder();
  
 -        PunishmentRepository pRepository = new PunishmentRepository(connection);
 -        PunishmentSubscriptionRepository psRepository = new PunishmentSubscriptionRepository(connection);
 -        PunishmentModule punishmentModule = new InternalPunishmentModule(pRepository, psRepository);
 -        log.debug("The punishment module has been initialized.");
-+        InternalRepositoryHolder.RepositoryHolderBuilder builder = InternalRepositoryHolder.builder();
++        builder.punishmentRepository(new InternalPunishmentRepository(dataSource));
++        builder.punishmentSubscriptionRepository(new InternalPunishmentSubscriptionRepository(dataSource));
  
 -        InternalRankRepository rRepository = new InternalRankRepository(connection);
 -        InternalRankSubscriptionRepository rsRepository = new InternalRankSubscriptionRepository(connection);
 -        RankModule rankModule = new InternalRankModule(rRepository, rsRepository);
 -        log.debug("The rank module has been initialized.");
-+        builder.punishmentRepository(new InternalPunishmentRepository(dataSource));
-+        builder.punishmentSubscriptionRepository(new InternalPunishmentSubscriptionRepository(dataSource));
++        builder.rankRepository(new InternalRankRepository(dataSource));
++        builder.rankSubscriptionRepository(new InternalRankSubscriptionRepository(dataSource));
  
 -        PulvinarPlayerRepository playerRepository = new PulvinarPlayerRepository(connection);
 -        PlayerModule playerModule = new InternalPlayerModule(playerRepository);
 -        log.debug("The player module has been initialized.");
-+        builder.rankRepository(new InternalRankRepository(dataSource));
-+        builder.rankSubscriptionRepository(new InternalRankSubscriptionRepository(dataSource));
- 
--        log.debug("Proceeding to populate core instance...");
--        startCore(punishmentModule, rankModule, playerModule);
 +        builder.playerRepository(new PulvinarPlayerRepository(dataSource));
 +        builder.operatorRepository(new PulvinarOperatorRepository(dataSource));
  
-+        log.debug("Proceeding to populate core instance...");
+         log.debug("Proceeding to populate core instance...");
+-        startCore(punishmentModule, rankModule, playerModule);
 +        databaseModule(builder.build());
 +        init();
++    }
+ 
++    public void shutdown()
++    {
++        connectionProvider().disconnect();
      }
  
 -    public @NotNull PulvinarConfig config() {

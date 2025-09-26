@@ -44,6 +44,22 @@ index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..999f9f9dbeb4a73fbdd2f34a05a8f8b7
              // Paper start - fix SPIGOT-5824
              File file;
              File userCacheFile = new File(Services.USERID_CACHE_FILE);
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index e50bdf12b4935cd91d9d70c8563e58c84cf26757..3c744f7ec2503ae0bc598d3b352962fc45c4dde1 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -1078,6 +1078,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             ca.spottedleaf.moonrise.common.util.MoonriseCommon.haltExecutors();
+         }
+         // Paper end - rewrite chunk system
++
++        // Pulvinar start - shutdown pulvinar
++        ((net.kissenpvp.base.PulvinarCore) org.bukkit.Bukkit.getPulvinar()).shutdown();
++        // Pulvinar end - shutdown pulvinar
++
+         // Paper start - Improved watchdog support - move final shutdown items here
+         Util.shutdownExecutors();
+         try {
 diff --git a/net/minecraft/server/Services.java b/net/minecraft/server/Services.java
 index 015e3ff8d856a7722def4448d8c68792cc3a32a2..6ab9257e581fdd10872c8be2fd5317d9606b0a78 100644
 --- a/net/minecraft/server/Services.java
