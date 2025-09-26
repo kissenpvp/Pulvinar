@@ -264,87 +264,6 @@ index 0000000000000000000000000000000000000000..eb8a8fba85175befa220c55a487cef20
 +        return new InternalDefinedTimeSpan(totalTimePlayed.get(ChronoUnit.MILLIS));
 +    }
 +}
-diff --git a/src/main/java/net/kissenpvp/network/actor/PlayerMock.java b/src/main/java/net/kissenpvp/network/actor/PlayerMock.java
-new file mode 100644
-index 0000000000000000000000000000000000000000..a227b8843242bc9a44aadb4fd96afb39b40f11ba
---- /dev/null
-+++ b/src/main/java/net/kissenpvp/network/actor/PlayerMock.java
-@@ -0,0 +1,75 @@
-+package net.kissenpvp.network.actor;
-+
-+import com.mojang.authlib.GameProfile;
-+import net.kissenpvp.api.punishment.Punishment;
-+import net.kissenpvp.api.punishment.PunishmentSubscription;
-+import net.kissenpvp.api.temporal.timespan.DefinedTimeSpan;
-+import net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan;
-+import net.kyori.adventure.text.Component;
-+import org.jspecify.annotations.NonNull;
-+import org.jspecify.annotations.Nullable;
-+
-+import java.time.Instant;
-+import java.util.Locale;
-+import java.util.Objects;
-+import java.util.UUID;
-+
-+public class PlayerMock extends InternalPlayerClient
-+{
-+    private final UUID id;
-+    private final String username;
-+
-+    public static @NonNull PlayerMock of(@NonNull GameProfile gameProfile)
-+    {
-+        Objects.requireNonNull(gameProfile, "GameProfile cannot be null");
-+        return new PlayerMock(gameProfile.getId(), gameProfile.getName());
-+    }
-+
-+    private PlayerMock(@NonNull UUID id, @NonNull String username)
-+    {
-+        super(id);
-+        this.id = id;
-+        this.username = username;
-+    }
-+
-+    @Override public @NonNull UUID getUniqueId()
-+    {
-+        return id;
-+    }
-+
-+    @Override public long getLastLogin()
-+    {
-+        return Instant.now().getEpochSecond();
-+    }
-+
-+    @Override public @NonNull DefinedTimeSpan timePlayed()
-+    {
-+        return new InternalDefinedTimeSpan(0L);
-+    }
-+
-+    @Override public @NonNull PunishmentSubscription punish(@NonNull Punishment punishment) throws NullPointerException
-+    {
-+        return punish(punishment, null);
-+    }
-+
-+    @Override
-+    public @NonNull PunishmentSubscription punish(@NonNull Punishment punishment, @Nullable Component component) throws NullPointerException
-+    {
-+        throw new UnsupportedOperationException("Cannot punish a player mock.");
-+    }
-+
-+    @Override public @NonNull String username()
-+    {
-+        return username;
-+    }
-+
-+    @Override public @NonNull Locale locale()
-+    {
-+        return Locale.US;
-+    }
-+
-+    @Override public boolean isOp()
-+    {
-+        return false;
-+    }
-+}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 index 196774df5591be3691c89340bba0fe7a0fa91b10..8dae019c35775d1955dbb5f47f32bb3b48daf45b 100644
 --- a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
@@ -467,7 +386,7 @@ index 196774df5591be3691c89340bba0fe7a0fa91b10..8dae019c35775d1955dbb5f47f32bb3b
      }
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
-index 9cd8f429b25647168d3141d78afe67f5f28068c4..9d7b254755bf3589e752eac238de2a2b6bfff846 100644
+index 9cd8f429b25647168d3141d78afe67f5f28068c4..63c7254959449a2586cee5492de62ca3a144c58a 100644
 --- a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
 @@ -1,31 +1,68 @@
@@ -542,7 +461,7 @@ index 9cd8f429b25647168d3141d78afe67f5f28068c4..9d7b254755bf3589e752eac238de2a2b
 +                get(gameProfile.getId()).isEmpty()
 +        ) {
 +            log.info("Profile {} has not been cached yet, saving to database...", gameProfile.getName());
-+            playerRepository.save(PlayerMock.of(gameProfile)).join();
++            //playerRepository.save(PlayerMock.of(gameProfile)).join(); // TODO
 +        }
 +
 +        super.add(gameProfile);
@@ -896,7 +815,7 @@ index 0000000000000000000000000000000000000000..fa84c23d12a84082d11019c3e25c465a
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..2ba59e922aa17b272d8255bd990c7b52c3d7ca98 100644
+index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..b13f6a32954e259be9bab856de2f0018a6a1d835 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 @@ -8,6 +8,10 @@ import java.util.Date;
@@ -945,16 +864,24 @@ index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..2ba59e922aa17b272d8255bd990c7b52
          File playerDir = server.console.playerDataStorage.getPlayerDir();
          try {
              File tempFile = File.createTempFile(this.getUniqueId()+"-", ".dat", playerDir);
-@@ -777,7 +802,7 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
- 
-     @Override public @org.jetbrains.annotations.NotNull net.kissenpvp.api.temporal.timespan.DefinedTimeSpan timePlayed()
-     {
--        return null;
-+        return new net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan(0L);
+@@ -770,16 +795,6 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+         return getUniqueId(); // TODO - actually load the data
      }
  
+-    @Override public @org.jetbrains.annotations.NotNull Instant lastLogin()
+-    {
+-        return java.time.Instant.ofEpochMilli(getLastLogin());
+-    }
+-
+-    @Override public @org.jetbrains.annotations.NotNull net.kissenpvp.api.temporal.timespan.DefinedTimeSpan timePlayed()
+-    {
+-        return null;
+-    }
+-
      @Override public @org.jetbrains.annotations.NotNull java.util.UUID id()
-@@ -795,6 +820,17 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+     {
+         return getUniqueId();
+@@ -795,6 +810,17 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
          return false;
      }
  
@@ -972,11 +899,23 @@ index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..2ba59e922aa17b272d8255bd990c7b52
      @Override public @org.jetbrains.annotations.NotNull String username()
      {
          String userName = getName();
+@@ -806,11 +832,6 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+         return this.getName();
+     }
+ 
+-    @Override public @org.jetbrains.annotations.NotNull java.util.Locale locale()
+-    {
+-        return java.util.Locale.ENGLISH;
+-    }
+-
+     @Override public final boolean isClient()
+     {
+         return true;
 diff --git a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
-index 15ae2653c1809041b7ab7cb67015e82c226e9f77..527dcaf194501c144ca2ffc11377782e501ea9d4 100644
+index 15ae2653c1809041b7ab7cb67015e82c226e9f77..08494fd02a9444a8fd3cf375938f63c8fce0f313 100644
 --- a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
 +++ b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
-@@ -105,4 +105,26 @@ public class CraftConsoleCommandSender extends ServerCommandSender implements Co
+@@ -105,4 +105,21 @@ public class CraftConsoleCommandSender extends ServerCommandSender implements Co
      public boolean hasPermission(org.bukkit.permissions.Permission perm) {
          return io.papermc.paper.configuration.GlobalConfiguration.get().console.hasAllPermissions || super.hasPermission(perm);
      }
@@ -985,11 +924,6 @@ index 15ae2653c1809041b7ab7cb67015e82c226e9f77..527dcaf194501c144ca2ffc11377782e
 +    @Override public @org.jetbrains.annotations.NotNull String username()
 +    {
 +        return getName();
-+    }
-+
-+    @Override public @org.jetbrains.annotations.NotNull java.util.Locale locale()
-+    {
-+        return java.util.Locale.ROOT;
 +    }
 +
 +    @Override public boolean isClient()
@@ -1003,8 +937,24 @@ index 15ae2653c1809041b7ab7cb67015e82c226e9f77..527dcaf194501c144ca2ffc11377782e
 +    }
 +    // Pulvinar end - implement kissen command sender methods
  }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
+index 4ca88af53dd3629366ce37e91d72fb8080b8ec4a..d209695bbf9672908f6b69bd471a19670de4e68e 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
+@@ -987,11 +987,6 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+         return this.getName();
+     }
+ 
+-    @Override public @NotNull java.util.Locale locale()
+-    {
+-        return java.util.Locale.ENGLISH;
+-    }
+-
+     @Override public final boolean isClient()
+     {
+         return true;
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index afb3df83b717578bdf672df8a1c0b80392ffe341..46518e40bb52837d190c6480cdeb30be3d3f4078 100644
+index afb3df83b717578bdf672df8a1c0b80392ffe341..095cb6bac5f983125df5dc71d9171d9f57322f78 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -3625,7 +3625,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
@@ -1016,28 +966,24 @@ index afb3df83b717578bdf672df8a1c0b80392ffe341..46518e40bb52837d190c6480cdeb30be
      {
          return this;
      }
-@@ -3640,12 +3640,23 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
-         return java.time.Instant.ofEpochMilli(getLastLogin());
+@@ -3635,15 +3635,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+         return getUniqueId(); //TODO - implement actual link id
+     }
+ 
+-    @Override public @NonNull Instant lastLogin()
++    @Override public net.kissenpvp.api.punishment.@NonNull PunishmentSubscription punish(@org.jetbrains.annotations.NotNull net.kissenpvp.api.punishment.Punishment punishment) throws NullPointerException
+     {
+-        return java.time.Instant.ofEpochMilli(getLastLogin());
++        return punish(punishment, null);
      }
  
 -    @Override public @org.jetbrains.annotations.NotNull net.kissenpvp.api.temporal.timespan.DefinedTimeSpan timePlayed()
-+    @Override public net.kissenpvp.api.temporal.timespan.@NonNull DefinedTimeSpan timePlayed()
-     {
-         // TODO - implement online time
-         return new net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan(0L);
-     }
- 
-+    @Override public net.kissenpvp.api.punishment.@NonNull PunishmentSubscription punish(@org.jetbrains.annotations.NotNull net.kissenpvp.api.punishment.Punishment punishment) throws NullPointerException
-+    {
-+        return punish(punishment, null);
-+    }
-+
 +    @Override
 +    public net.kissenpvp.api.punishment.@NonNull PunishmentSubscription punish(@org.jetbrains.annotations.NotNull net.kissenpvp.api.punishment.Punishment punishment, @org.jetbrains.annotations.Nullable net.kyori.adventure.text.Component component) throws NullPointerException
-+    {
-+        return null;
-+    }
-+
-     @Override public @NonNull UUID id()
      {
-         return getUniqueId();
+-        // TODO - implement online time
+-        return new net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan(0L);
++        return null;
+     }
+ 
+     @Override public @NonNull UUID id()
