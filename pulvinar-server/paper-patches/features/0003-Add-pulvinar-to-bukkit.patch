@@ -845,7 +845,7 @@ index 0000000000000000000000000000000000000000..fa84c23d12a84082d11019c3e25c465a
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..b13f6a32954e259be9bab856de2f0018a6a1d835 100644
+index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..e16665a5d345afd58c44004c0e0ef6f96f7fe4d1 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 @@ -8,6 +8,10 @@ import java.util.Date;
@@ -911,7 +911,7 @@ index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..b13f6a32954e259be9bab856de2f0018
      @Override public @org.jetbrains.annotations.NotNull java.util.UUID id()
      {
          return getUniqueId();
-@@ -795,6 +810,17 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+@@ -795,6 +810,30 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
          return false;
      }
  
@@ -926,10 +926,23 @@ index b54529d0efd4a989407423c6aa2b7e7dca2bb3a4..b13f6a32954e259be9bab856de2f0018
 +        return null;
 +    }
 +
++    @Override
++    public java.util.@NonNull List<net.kissenpvp.api.network.actor.rank.RankSubscription> rankHistory() {
++        net.kissenpvp.api.network.actor.rank.RankSubscriptionRepository repository = ((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).rankSubscriptionRepository();
++        return repository.findHistory(this).join();
++    }
++
++    @Override
++    public net.kissenpvp.api.network.actor.rank.@NonNull RankSubscription rank() {
++        net.kissenpvp.network.actor.rank.DummyRankSubscription subscription = new net.kissenpvp.network.actor.rank.DummyRankSubscription(this);
++        net.kissenpvp.api.network.actor.rank.RankSubscriptionRepository repository = ((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).rankSubscriptionRepository();
++        return repository.findActive(this).join().orElse(subscription);
++    }
++
      @Override public @org.jetbrains.annotations.NotNull String username()
      {
          String userName = getName();
-@@ -806,11 +832,6 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+@@ -806,11 +845,6 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
          return this.getName();
      }
  
@@ -984,7 +997,7 @@ index 4ca88af53dd3629366ce37e91d72fb8080b8ec4a..d209695bbf9672908f6b69bd471a1967
      {
          return true;
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index afb3df83b717578bdf672df8a1c0b80392ffe341..095cb6bac5f983125df5dc71d9171d9f57322f78 100644
+index afb3df83b717578bdf672df8a1c0b80392ffe341..019d96c03eb0944b5b2f9342ed7f41af0331e0da 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -3625,7 +3625,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
@@ -996,7 +1009,7 @@ index afb3df83b717578bdf672df8a1c0b80392ffe341..095cb6bac5f983125df5dc71d9171d9f
      {
          return this;
      }
-@@ -3635,15 +3635,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3635,15 +3635,35 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
          return getUniqueId(); //TODO - implement actual link id
      }
  
@@ -1014,6 +1027,26 @@ index afb3df83b717578bdf672df8a1c0b80392ffe341..095cb6bac5f983125df5dc71d9171d9f
 -        // TODO - implement online time
 -        return new net.kissenpvp.temporal.timespan.InternalDefinedTimeSpan(0L);
 +        return null;
++    }
++
++    @Override
++    public java.util.@NonNull List<net.kissenpvp.api.network.actor.rank.RankSubscription> rankHistory() {
++        net.kissenpvp.api.network.actor.rank.RankSubscriptionRepository repository = ((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).rankSubscriptionRepository();
++        return repository.findHistory(this).join();
++    }
++
++    private net.kissenpvp.api.network.actor.rank.RankSubscription currentRank;
++
++    @Override
++    public net.kissenpvp.api.network.actor.rank.@NonNull RankSubscription rank() {
++        if(java.util.Objects.isNull(currentRank))
++        {
++            net.kissenpvp.network.actor.rank.DummyRankSubscription subscription = new net.kissenpvp.network.actor.rank.DummyRankSubscription(this);
++            net.kissenpvp.api.network.actor.rank.RankSubscriptionRepository repository = ((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).rankSubscriptionRepository();
++            currentRank = repository.findActive(this).join().orElse(subscription);
++        }
++
++        return currentRank; // TODO rework caching to be loaded with the userdata to reduce overhead
      }
  
      @Override public @NonNull UUID id()
