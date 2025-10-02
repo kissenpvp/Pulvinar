@@ -1,0 +1,11 @@
+--- a/src/main/resources/data/minecraft/datapacks/paper/pack.mcmeta
++++ b/src/main/resources/data/minecraft/datapacks/paper/pack.mcmeta
+@@ -1,7 +_,6 @@
+ {
+     "pack": {
+         "description": "Built-in Paper Datapack",
+-        "min_format": 88,
+-        "max_format": 88
++        "pack_format": 81
+     }
+ }

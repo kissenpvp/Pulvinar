@@ -1,0 +1,11 @@
+--- a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
++++ b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
+@@ -153,7 +_,7 @@
+         return runtimePluginEntrypointHandler.getPluginProviderStorage().getLoaded().toArray(new JavaPlugin[0]);
+     }
+ 
+-    // Plugins are disabled in order like this inorder to "roughly" prevent
++    // Plugins are disabled in order like this inorder to "rougly" prevent
+     // their dependencies unloading first. But, eh.
+     public void disablePlugins() {
+         Plugin[] plugins = this.getPlugins();

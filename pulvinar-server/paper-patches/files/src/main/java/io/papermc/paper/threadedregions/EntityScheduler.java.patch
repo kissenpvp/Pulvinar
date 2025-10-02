@@ -1,0 +1,35 @@
+--- a/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java
++++ b/src/main/java/io/papermc/paper/threadedregions/EntityScheduler.java
+@@ -1,5 +_,6 @@
+ package io.papermc.paper.threadedregions;
+ 
++import ca.spottedleaf.concurrentutil.util.Validate;
+ import ca.spottedleaf.moonrise.common.list.ReferenceList;
+ import ca.spottedleaf.moonrise.common.util.TickThread;
+ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+@@ -9,7 +_,6 @@
+ import java.util.ArrayDeque;
+ import java.util.ArrayList;
+ import java.util.List;
+-import java.util.Objects;
+ import java.util.concurrent.atomic.AtomicLong;
+ import java.util.concurrent.locks.StampedLock;
+ import java.util.function.Consumer;
+@@ -52,7 +_,7 @@
+     private final ArrayDeque<ScheduledTask> currentlyExecuting = new ArrayDeque<>();
+ 
+     public EntityScheduler(final CraftEntity entity) {
+-        this.entity = Objects.requireNonNull(entity);
++        this.entity = Validate.notNull(entity);
+     }
+ 
+     // must own state lock
+@@ -168,7 +_,7 @@
+      *         since the scheduler has been retired.
+      */
+     public boolean schedule(final Consumer<? extends Entity> run, final Consumer<? extends Entity> retired, final long delay) {
+-        Objects.requireNonNull(run, "Run task may not be null");
++        Validate.notNull(run, "Run task may not be null");
+ 
+         final ScheduledTask task = new ScheduledTask(run, retired);
+         synchronized (this.stateLock) {

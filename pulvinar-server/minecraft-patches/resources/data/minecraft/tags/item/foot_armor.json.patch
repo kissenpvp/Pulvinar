@@ -1,0 +1,10 @@
+--- a/data/minecraft/tags/item/foot_armor.json
++++ b/data/minecraft/tags/item/foot_armor.json
+@@ -1,7 +_,6 @@
+ {
+   "values": [
+     "minecraft:leather_boots",
+-    "minecraft:copper_boots",
+     "minecraft:chainmail_boots",
+     "minecraft:golden_boots",
+     "minecraft:iron_boots",

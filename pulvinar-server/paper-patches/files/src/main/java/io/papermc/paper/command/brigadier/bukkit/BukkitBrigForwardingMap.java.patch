@@ -1,0 +1,20 @@
+--- a/src/main/java/io/papermc/paper/command/brigadier/bukkit/BukkitBrigForwardingMap.java
++++ b/src/main/java/io/papermc/paper/command/brigadier/bukkit/BukkitBrigForwardingMap.java
+@@ -165,7 +_,7 @@
+ 
+         @Override
+         public Iterator<Command> iterator() {
+-            // AVOID CME since commands can modify multiple commands now through aliases, which means it may appear in the iterator even if removed.
++            // AVOID CME since commands can modify multiple commands now through alises, which means it may appear in the iterator even if removed.
+             // Oh well!
+             Iterator<CommandNode<CommandSourceStack>> iterator = new ArrayList<>(BukkitBrigForwardingMap.this.getDispatcher().getRoot().getChildren()).iterator();
+ 
+@@ -227,7 +_,7 @@
+ 
+         @Override
+         public Iterator<String> iterator() {
+-            return Iterators.transform(BukkitBrigForwardingMap.this.values.iterator(), Command::getName); // Wrap around the values iterator for consistency
++            return Iterators.transform(BukkitBrigForwardingMap.this.values.iterator(), Command::getName); // Wrap around the values iterator for consistancy
+         }
+ 
+         @Override

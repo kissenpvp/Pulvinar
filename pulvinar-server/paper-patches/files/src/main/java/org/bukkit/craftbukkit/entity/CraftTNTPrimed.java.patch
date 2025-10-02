@@ -1,0 +1,11 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftTNTPrimed.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftTNTPrimed.java
+@@ -58,7 +_,7 @@
+     @Override
+     public void setSource(Entity source) {
+         if (source instanceof LivingEntity) {
+-            this.getHandle().owner = EntityReference.of(((CraftLivingEntity) source).getHandle());
++            this.getHandle().owner = new EntityReference<>(((CraftLivingEntity) source).getHandle());
+         } else {
+             this.getHandle().owner = null;
+         }

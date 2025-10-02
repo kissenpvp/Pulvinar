@@ -1,0 +1,29 @@
+--- a/src/main/java/io/papermc/paper/registry/data/util/Conversions.java
++++ b/src/main/java/io/papermc/paper/registry/data/util/Conversions.java
+@@ -13,7 +_,6 @@
+ import io.papermc.paper.registry.entry.RegistryEntryMeta;
+ import java.util.function.Consumer;
+ import net.kyori.adventure.text.Component;
+-import net.minecraft.core.ClientAsset;
+ import net.minecraft.core.Holder;
+ import net.minecraft.core.HolderLookup;
+ import net.minecraft.core.Registry;
+@@ -73,15 +_,15 @@
+         return vanilla == null ? Component.empty() : this.serializer.deserialize(vanilla);
+     }
+ 
+-    public ClientTextureAsset asBukkit(final ClientAsset.@Nullable Texture clientTextureAsset) {
++    public ClientTextureAsset asBukkit(final net.minecraft.core.@Nullable ClientAsset clientTextureAsset) {
+         return clientTextureAsset == null ? null : ClientTextureAsset.clientTextureAsset(
+             PaperAdventure.asAdventure(clientTextureAsset.id()),
+             PaperAdventure.asAdventure(clientTextureAsset.texturePath())
+         );
+     }
+ 
+-    public ClientAsset.ResourceTexture asVanilla(final @Nullable ClientTextureAsset clientTextureAsset) {
+-        return clientTextureAsset == null ? null : new ClientAsset.ResourceTexture(
++    public net.minecraft.core.ClientAsset asVanilla(final @Nullable ClientTextureAsset clientTextureAsset) {
++        return clientTextureAsset == null ? null : new net.minecraft.core.ClientAsset(
+             PaperAdventure.asVanilla(clientTextureAsset.identifier()),
+             PaperAdventure.asVanilla(clientTextureAsset.texturePath())
+         );

@@ -1,0 +1,11 @@
+--- a/src/main/java/io/papermc/paper/datapack/PaperDatapackManager.java
++++ b/src/main/java/io/papermc/paper/datapack/PaperDatapackManager.java
+@@ -25,7 +_,7 @@
+     }
+ 
+     @Override
+-    public @Nullable Datapack getPack(final String name) {
++    public @Nullable Datapack getPack(final @NonNull String name) {
+         final @Nullable Pack pack = this.repository.getPack(name);
+         if (pack == null) {
+             return null;

@@ -1,0 +1,32 @@
+--- a/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
++++ b/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
+@@ -1459,29 +_,6 @@
+         codAlwaysDropExp = getBoolean("mobs.cod.always-drop-exp", codAlwaysDropExp);
+     }
+ 
+-    public boolean copperGolemRidable = false;
+-    public boolean copperGolemRidableInWater = true;
+-    public boolean copperGolemControllable = true;
+-    public boolean copperGolemCanSwim = false;
+-    public double copperGolemMaxHealth = 12.0D;
+-    public double copperGolemStepHeight = 1.0D;
+-    public double copperGolemMovementSpeed = 0.2D;
+-    public double copperGolemScale = 1.0D;
+-    public boolean copperGolemTakeDamageFromWater = false;
+-    public boolean copperGolemAlwaysDropExp = false;
+-    private void copperGolemSettings() {
+-        copperGolemRidable = getBoolean("mobs.copper_golem.ridable", copperGolemRidable);
+-        copperGolemRidableInWater = getBoolean("mobs.copper_golem.ridable-in-water", copperGolemRidableInWater);
+-        copperGolemControllable = getBoolean("mobs.copper_golem.controllable", copperGolemControllable);
+-        copperGolemCanSwim = getBoolean("mobs.copper_golem.can-swim", copperGolemCanSwim);
+-        copperGolemMaxHealth = getDouble("mobs.copper_golem.attributes.max_health", copperGolemMaxHealth);
+-        copperGolemStepHeight = getDouble("mobs.copper_golem.attributes.step_height", copperGolemStepHeight);
+-        copperGolemMovementSpeed = getDouble("mobs.copper_golem.attributes.movement_speed", copperGolemMovementSpeed);
+-        copperGolemScale = Mth.clamp(getDouble("mobs.copper_golem.attributes.scale", copperGolemScale), 0.0625D, 16.0D);
+-        copperGolemTakeDamageFromWater = getBoolean("mobs.copper_golem.takes-damage-from-water", copperGolemTakeDamageFromWater);
+-        copperGolemAlwaysDropExp = getBoolean("mobs.copper_golem.always-drop-exp", copperGolemAlwaysDropExp);
+-    }
+-
+     public boolean cowRidable = false;
+     public boolean cowRidableInWater = true;
+     public boolean cowControllable = true;

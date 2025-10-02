@@ -1,0 +1,11 @@
+--- a/data/minecraft/tags/item/hoes.json
++++ b/data/minecraft/tags/item/hoes.json
+@@ -5,7 +_,6 @@
+     "minecraft:golden_hoe",
+     "minecraft:netherite_hoe",
+     "minecraft:wooden_hoe",
+-    "minecraft:iron_hoe",
+-    "minecraft:copper_hoe"
++    "minecraft:iron_hoe"
+   ]
+ }

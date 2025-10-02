@@ -1,0 +1,11 @@
+--- a/src/main/java/org/spigotmc/WatchdogThread.java
++++ b/src/main/java/org/spigotmc/WatchdogThread.java
+@@ -86,7 +_,7 @@
+ 
+                     if (net.minecraft.world.level.Level.lastPhysicsProblem != null) {
+                         logger.log(Level.SEVERE, "------------------------------");
+-                        logger.log(Level.SEVERE, "During the run of the server, a physics stackoverflow was suppressed");
++                        logger.log(Level.SEVERE, "During the run of the server, a physics stackoverflow was supressed");
+                         logger.log(Level.SEVERE, "near " + net.minecraft.world.level.Level.lastPhysicsProblem);
+                     }
+ 

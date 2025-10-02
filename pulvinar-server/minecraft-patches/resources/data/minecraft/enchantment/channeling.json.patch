@@ -1,0 +1,18 @@
+--- a/data/minecraft/enchantment/channeling.json
++++ b/data/minecraft/enchantment/channeling.json
+@@ -38,11 +_,12 @@
+             {
+               "condition": "minecraft:location_check",
+               "predicate": {
+-                "block": {
+-                  "blocks": "#minecraft:lightning_rods"
+-                },
+                 "can_see_sky": true
+               }
++            },
++            {
++              "block": "minecraft:lightning_rod",
++              "condition": "minecraft:block_state_property"
+             }
+           ]
+         }

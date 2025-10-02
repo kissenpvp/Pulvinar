@@ -1,0 +1,23 @@
+--- a/src/generated/java/org/bukkit/craftbukkit/block/impl/CraftMultiface.java
++++ b/src/generated/java/org/bukkit/craftbukkit/block/impl/CraftMultiface.java
+@@ -2,7 +_,7 @@
+ 
+ import com.google.common.base.Preconditions;
+ import com.google.common.collect.ImmutableSet;
+-import io.papermc.paper.annotation.GeneratedClass;
++import io.papermc.paper.generated.GeneratedFrom;
+ import java.util.Collections;
+ import java.util.Map;
+ import java.util.Set;
+@@ -14,10 +_,8 @@
+ import org.bukkit.block.BlockFace;
+ import org.bukkit.block.data.type.ResinClump;
+ import org.bukkit.craftbukkit.block.data.CraftBlockData;
+-import org.jspecify.annotations.NullMarked;
+ 
+-@NullMarked
+-@GeneratedClass
++@GeneratedFrom("1.21.8")
+ public class CraftMultiface extends CraftBlockData implements ResinClump {
+     private static final BooleanProperty WATERLOGGED = MultifaceBlock.WATERLOGGED;
+ 

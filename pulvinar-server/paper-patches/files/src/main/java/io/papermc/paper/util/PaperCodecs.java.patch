@@ -1,0 +1,18 @@
+--- a/src/main/java/io/papermc/paper/util/PaperCodecs.java
++++ b/src/main/java/io/papermc/paper/util/PaperCodecs.java
+@@ -25,11 +_,11 @@
+ @NullMarked
+ public final class PaperCodecs {
+ 
+-    public static final Codec<TriState> TRI_STATE_CODEC = Codec.STRING.comapFlatMap(name -> {
++    public static final Codec<TriState> TRI_STATE_CODEC = Codec.STRING.comapFlatMap(s -> {
+         try {
+-            return DataResult.success(TriState.valueOf(name));
+-        } catch (IllegalArgumentException e) {
+-            return DataResult.error(() -> "Unknown TriState value: " + name);
++            return DataResult.success(TriState.valueOf(s));
++        } catch (Exception e) {
++            return DataResult.error(() -> "Unknown TriState value: " + s);
+         }
+     }, TriState::name);
+ 

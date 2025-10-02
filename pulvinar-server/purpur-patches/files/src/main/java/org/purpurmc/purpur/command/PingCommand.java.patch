@@ -1,0 +1,11 @@
+--- a/src/main/java/org/purpurmc/purpur/command/PingCommand.java
++++ b/src/main/java/org/purpurmc/purpur/command/PingCommand.java
+@@ -24,7 +_,7 @@
+ 
+     private static int execute(CommandSourceStack sender, Collection<ServerPlayer> targets) {
+         for (ServerPlayer player : targets) {
+-            String output = String.format(PurpurConfig.pingCommandOutput, player.getGameProfile().name(), player.connection.latency());
++            String output = String.format(PurpurConfig.pingCommandOutput, player.getGameProfile().getName(), player.connection.latency());
+             sender.sendSuccess(output, false);
+         }
+         return targets.size();

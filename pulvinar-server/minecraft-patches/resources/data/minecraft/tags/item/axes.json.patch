@@ -1,0 +1,11 @@
+--- a/data/minecraft/tags/item/axes.json
++++ b/data/minecraft/tags/item/axes.json
+@@ -5,7 +_,6 @@
+     "minecraft:golden_axe",
+     "minecraft:netherite_axe",
+     "minecraft:wooden_axe",
+-    "minecraft:iron_axe",
+-    "minecraft:copper_axe"
++    "minecraft:iron_axe"
+   ]
+ }

@@ -1,0 +1,10 @@
+--- a/data/minecraft/worldgen/biome/mushroom_fields.json
++++ b/data/minecraft/worldgen/biome/mushroom_fields.json
+@@ -74,6 +_,7 @@
+       "minecraft:mushroom_island_vegetation",
+       "minecraft:brown_mushroom_taiga",
+       "minecraft:red_mushroom_taiga",
++      "minecraft:patch_pumpkin",
+       "minecraft:patch_sugar_cane",
+       "minecraft:patch_firefly_bush_near_water"
+     ],

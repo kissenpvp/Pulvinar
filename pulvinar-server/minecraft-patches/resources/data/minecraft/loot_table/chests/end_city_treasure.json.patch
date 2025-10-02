@@ -1,0 +1,13 @@
+--- a/data/minecraft/loot_table/chests/end_city_treasure.json
++++ b/data/minecraft/loot_table/chests/end_city_treasure.json
+@@ -91,10 +_,6 @@
+         },
+         {
+           "type": "minecraft:item",
+-          "name": "minecraft:copper_horse_armor"
+-        },
+-        {
+-          "type": "minecraft:item",
+           "name": "minecraft:iron_horse_armor"
+         },
+         {

@@ -1,0 +1,10 @@
+--- a/data/minecraft/tags/worldgen/biome/stronghold_biased_to.json
++++ b/data/minecraft/tags/worldgen/biome/stronghold_biased_to.json
+@@ -28,7 +_,6 @@
+     "minecraft:eroded_badlands",
+     "minecraft:wooded_badlands",
+     "minecraft:meadow",
+-    "minecraft:cherry_grove",
+     "minecraft:grove",
+     "minecraft:snowy_slopes",
+     "minecraft:frozen_peaks",

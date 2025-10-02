@@ -1,0 +1,10 @@
+--- a/data/minecraft/tags/block/mineable/axe.json
++++ b/data/minecraft/tags/block/mineable/axe.json
+@@ -53,7 +_,6 @@
+     "minecraft:bamboo_mosaic_stairs",
+     "#minecraft:bamboo_blocks",
+     "minecraft:chiseled_bookshelf",
+-    "#minecraft:wooden_shelves",
+     "minecraft:creaking_heart"
+   ]
+ }

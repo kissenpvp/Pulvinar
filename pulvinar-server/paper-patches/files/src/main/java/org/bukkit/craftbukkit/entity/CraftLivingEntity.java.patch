@@ -1,0 +1,136 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
+@@ -24,7 +_,6 @@
+ import net.minecraft.world.entity.Mob;
+ import net.minecraft.world.entity.ai.attributes.Attributes;
+ import net.minecraft.world.entity.decoration.ArmorStand;
+-import net.minecraft.world.entity.decoration.Mannequin;
+ import net.minecraft.world.entity.projectile.FireworkRocketEntity;
+ import net.minecraft.world.entity.projectile.FishingHook;
+ import net.minecraft.world.entity.projectile.LargeFireball;
+@@ -91,7 +_,6 @@
+ import org.bukkit.util.BlockIterator;
+ import org.bukkit.util.RayTraceResult;
+ import org.bukkit.util.Vector;
+-import org.jspecify.annotations.NonNull;
+ 
+ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
+ 
+@@ -100,7 +_,7 @@
+     public CraftLivingEntity(final CraftServer server, final net.minecraft.world.entity.LivingEntity entity) {
+         super(server, entity);
+ 
+-        if (entity instanceof Mob || entity instanceof ArmorStand || entity instanceof Mannequin) {
++        if (entity instanceof Mob || entity instanceof ArmorStand) {
+             this.equipment = new CraftEntityEquipment(this);
+         }
+     }
+@@ -290,12 +_,22 @@
+     }
+ 
+     @Override
++    public Block getTargetBlockExact(int maxDistance) {
++        return this.getTargetBlockExact(maxDistance, FluidCollisionMode.NEVER);
++    }
++
++    @Override
+     public Block getTargetBlockExact(int maxDistance, FluidCollisionMode fluidCollisionMode) {
+         RayTraceResult hitResult = this.rayTraceBlocks(maxDistance, fluidCollisionMode);
+         return (hitResult != null ? hitResult.getHitBlock() : null);
+     }
+ 
+     @Override
++    public RayTraceResult rayTraceBlocks(double maxDistance) {
++        return this.rayTraceBlocks(maxDistance, FluidCollisionMode.NEVER);
++    }
++
++    @Override
+     public RayTraceResult rayTraceBlocks(double maxDistance, FluidCollisionMode fluidCollisionMode) {
+         Preconditions.checkState(!this.getHandle().generation, "Cannot ray tray blocks during world generation");
+ 
+@@ -514,6 +_,11 @@
+     }
+ 
+     @Override
++    public boolean addPotionEffect(PotionEffect effect) {
++        return this.addPotionEffect(effect, false);
++    }
++
++    @Override
+     public boolean addPotionEffect(PotionEffect effect, boolean force) {
+         org.spigotmc.AsyncCatcher.catchOp("effect add"); // Paper
+         this.getHandle().addEffect(org.bukkit.craftbukkit.potion.CraftPotionUtil.fromBukkit(effect), EntityPotionEffectEvent.Cause.PLUGIN); // Paper - Don't ignore icon
+@@ -560,8 +_,20 @@
+     }
+ 
+     @Override
++    public <T extends Projectile> T launchProjectile(Class<? extends T> projectile) {
++        return this.launchProjectile(projectile, null);
++    }
++
++    @Override
++    public <T extends Projectile> T launchProjectile(Class<? extends T> projectile, Vector velocity) {
++        // Paper start - launchProjectile consumer
++        return this.launchProjectile(projectile, velocity, null);
++    }
++
++    @Override
+     @SuppressWarnings("unchecked")
+     public <T extends Projectile> T launchProjectile(Class<? extends T> projectile, Vector velocity, java.util.function.Consumer<? super T> function) {
++        // Paper end - launchProjectile consumer
+         Preconditions.checkState(!this.getHandle().generation, "Cannot launch projectile during world generation");
+ 
+         net.minecraft.world.level.Level world = ((CraftWorld) this.getWorld()).getHandle();
+@@ -669,7 +_,7 @@
+         Preconditions.checkArgument(launch != null, "Projectile (%s) not supported", projectile.getName());
+ 
+         if (velocity != null) {
+-            launch.getBukkitEntity().setVelocity(velocity);
++            ((T) launch.getBukkitEntity()).setVelocity(velocity);
+         }
+         if (function != null) {
+             function.accept((T) launch.getBukkitEntity());
+@@ -714,7 +_,7 @@
+     }
+ 
+     @Override
+-    public @NonNull EntityEquipment getEquipment() {
++    public EntityEquipment getEquipment() {
+         return this.equipment;
+     }
+ 
+@@ -762,7 +_,7 @@
+ 
+     @Override
+     public boolean isGliding() {
+-        return this.getHandle().isFallFlying();
++        return this.getHandle().getSharedFlag(7);
+     }
+ 
+     @Override
+@@ -860,7 +_,7 @@
+             float actualYaw = yaw + 90;
+             ClientboundHurtAnimationPacket packet = new ClientboundHurtAnimationPacket(this.getEntityId(), actualYaw);
+ 
+-            world.getChunkSource().sendToTrackingPlayersAndSelf(this.getHandle(), packet);
++            world.getChunkSource().broadcastAndSend(this.getHandle(), packet);
+         }
+     }
+ 
+@@ -974,6 +_,16 @@
+     @Override
+     public void setArrowsStuck(final int arrows) {
+         this.getHandle().setArrowCount(arrows);
++    }
++
++    @Override
++    public int getShieldBlockingDelay() {
++        return this.getHandle().shieldBlockingDelay;
++    }
++
++    @Override
++    public void setShieldBlockingDelay(int delay) {
++        this.getHandle().shieldBlockingDelay = delay;
+     }
+ 
+     @Override

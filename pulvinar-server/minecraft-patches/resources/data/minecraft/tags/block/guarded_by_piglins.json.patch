@@ -1,0 +1,9 @@
+--- a/data/minecraft/tags/block/guarded_by_piglins.json
++++ b/data/minecraft/tags/block/guarded_by_piglins.json
+@@ -1,6 +_,5 @@
+ {
+   "values": [
+-    "#minecraft:copper_chests",
+     "minecraft:gold_block",
+     "minecraft:barrel",
+     "minecraft:chest",

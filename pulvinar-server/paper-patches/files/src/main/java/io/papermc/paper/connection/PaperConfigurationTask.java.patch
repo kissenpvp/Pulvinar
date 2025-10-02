@@ -1,0 +1,11 @@
+--- a/src/main/java/io/papermc/paper/connection/PaperConfigurationTask.java
++++ b/src/main/java/io/papermc/paper/connection/PaperConfigurationTask.java
+@@ -15,7 +_,7 @@
+ public class PaperConfigurationTask implements ConfigurationTask {
+     private static final Logger LOGGER = LogUtils.getClassLogger();
+ 
+-    public static final ExecutorService CONFIGURATION_POOL = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Configuration Thread #%d")
++    private static final ExecutorService CONFIGURATION_POOL = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("Configuration Thread #%d")
+         .setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER)).build());
+ 
+     public static final ConfigurationTask.Type TYPE = new ConfigurationTask.Type("paper_event_handling");

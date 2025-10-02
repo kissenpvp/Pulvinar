@@ -1,0 +1,11 @@
+--- a/data/minecraft/tags/entity_type/can_breathe_under_water.json
++++ b/data/minecraft/tags/entity_type/can_breathe_under_water.json
+@@ -13,7 +_,6 @@
+     "minecraft:squid",
+     "minecraft:tropical_fish",
+     "minecraft:tadpole",
+-    "minecraft:armor_stand",
+-    "minecraft:copper_golem"
++    "minecraft:armor_stand"
+   ]
+ }

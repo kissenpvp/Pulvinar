@@ -1,0 +1,11 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftAnimals.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftAnimals.java
+@@ -29,7 +_,7 @@
+ 
+     @Override
+     public void setBreedCause(UUID uuid) {
+-        this.getHandle().loveCause = uuid == null ? null : EntityReference.of(uuid);
++        this.getHandle().loveCause = uuid == null ? null : new EntityReference<>(uuid);
+     }
+ 
+     @Override

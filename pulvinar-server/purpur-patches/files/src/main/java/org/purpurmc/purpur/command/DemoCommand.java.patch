@@ -1,0 +1,11 @@
+--- a/src/main/java/org/purpurmc/purpur/command/DemoCommand.java
++++ b/src/main/java/org/purpurmc/purpur/command/DemoCommand.java
+@@ -27,7 +_,7 @@
+         for (ServerPlayer player : targets) {
+             ClientboundGameEventPacket packet = new ClientboundGameEventPacket(ClientboundGameEventPacket.DEMO_EVENT, 0);
+             player.connection.send(packet);
+-            String output = String.format(PurpurConfig.demoCommandOutput, player.getGameProfile().name());
++            String output = String.format(PurpurConfig.demoCommandOutput, player.getGameProfile().getName());
+             sender.sendSuccess(output, false);
+         }
+         return targets.size();

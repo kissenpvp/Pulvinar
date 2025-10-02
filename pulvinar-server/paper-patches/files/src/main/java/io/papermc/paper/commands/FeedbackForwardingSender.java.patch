@@ -1,0 +1,18 @@
+--- a/src/main/java/io/papermc/paper/commands/FeedbackForwardingSender.java
++++ b/src/main/java/io/papermc/paper/commands/FeedbackForwardingSender.java
+@@ -68,12 +_,12 @@
+     }
+ 
+     public CommandSourceStack asVanilla() {
+-        final @Nullable ServerLevel respawnDimension = this.server.getServer().findRespawnDimension();
++        final @Nullable ServerLevel overworld = this.server.getServer().overworld();
+         return new CommandSourceStack(
+             new Source(this),
+-            respawnDimension == null ? Vec3.ZERO : Vec3.atLowerCornerOf(respawnDimension.getRespawnData().pos()),
++            overworld == null ? Vec3.ZERO : Vec3.atLowerCornerOf(overworld.getSharedSpawnPos()),
+             Vec2.ZERO,
+-            respawnDimension,
++            overworld,
+             4,
+             this.getName(),
+             net.minecraft.network.chat.Component.literal(this.getName()),

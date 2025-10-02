@@ -1,0 +1,11 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftAreaEffectCloud.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftAreaEffectCloud.java
+@@ -233,7 +_,7 @@
+ 
+     @Override
+     public void setOwnerUniqueId(final java.util.UUID ownerUuid) {
+-        this.getHandle().owner = ownerUuid == null ? null : EntityReference.of(ownerUuid);
++        this.getHandle().owner = ownerUuid == null ? null : new EntityReference<>(ownerUuid);
+     }
+     // Paper end
+ }

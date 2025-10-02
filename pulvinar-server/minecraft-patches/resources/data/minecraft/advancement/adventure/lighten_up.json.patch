@@ -1,0 +1,10 @@
+--- a/data/minecraft/advancement/adventure/lighten_up.json
++++ b/data/minecraft/advancement/adventure/lighten_up.json
+@@ -29,7 +_,6 @@
+                 "minecraft:wooden_axe",
+                 "minecraft:golden_axe",
+                 "minecraft:stone_axe",
+-                "minecraft:copper_axe",
+                 "minecraft:iron_axe",
+                 "minecraft:diamond_axe",
+                 "minecraft:netherite_axe"

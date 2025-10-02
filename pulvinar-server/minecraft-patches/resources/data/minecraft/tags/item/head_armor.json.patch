@@ -1,0 +1,10 @@
+--- a/data/minecraft/tags/item/head_armor.json
++++ b/data/minecraft/tags/item/head_armor.json
+@@ -1,7 +_,6 @@
+ {
+   "values": [
+     "minecraft:leather_helmet",
+-    "minecraft:copper_helmet",
+     "minecraft:chainmail_helmet",
+     "minecraft:golden_helmet",
+     "minecraft:iron_helmet",

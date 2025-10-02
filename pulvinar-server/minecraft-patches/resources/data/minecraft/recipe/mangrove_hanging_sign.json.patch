@@ -1,0 +1,11 @@
+--- a/data/minecraft/recipe/mangrove_hanging_sign.json
++++ b/data/minecraft/recipe/mangrove_hanging_sign.json
+@@ -4,7 +_,7 @@
+   "group": "hanging_sign",
+   "key": {
+     "#": "minecraft:stripped_mangrove_log",
+-    "X": "minecraft:iron_chain"
++    "X": "minecraft:chain"
+   },
+   "pattern": [
+     "X X",

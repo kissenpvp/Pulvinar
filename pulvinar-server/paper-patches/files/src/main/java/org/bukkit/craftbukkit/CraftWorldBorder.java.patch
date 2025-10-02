@@ -1,0 +1,26 @@
+--- a/src/main/java/org/bukkit/craftbukkit/CraftWorldBorder.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftWorldBorder.java
+@@ -29,7 +_,7 @@
+ 
+     @Override
+     public void reset() {
+-        this.getHandle().applySettings(net.minecraft.world.level.border.WorldBorder.Settings.DEFAULT);
++        this.getHandle().applySettings(net.minecraft.world.level.border.WorldBorder.DEFAULT_SETTINGS);
+     }
+ 
+     @Override
+@@ -83,12 +_,12 @@
+ 
+     @Override
+     public double getDamageBuffer() {
+-        return this.handle.getSafeZone();
++        return this.handle.getDamageSafeZone();
+     }
+ 
+     @Override
+     public void setDamageBuffer(double blocks) {
+-        this.handle.setSafeZone(blocks);
++        this.handle.setDamageSafeZone(blocks);
+     }
+ 
+     @Override

@@ -1,0 +1,14 @@
+--- a/data/minecraft/loot_table/chests/simple_dungeon.json
++++ b/data/minecraft/loot_table/chests/simple_dungeon.json
+@@ -57,11 +_,6 @@
+         },
+         {
+           "type": "minecraft:item",
+-          "name": "minecraft:copper_horse_armor",
+-          "weight": 15
+-        },
+-        {
+-          "type": "minecraft:item",
+           "name": "minecraft:iron_horse_armor",
+           "weight": 15
+         },

@@ -1,0 +1,11 @@
+--- a/data/minecraft/trim_material/copper.json
++++ b/data/minecraft/trim_material/copper.json
+@@ -3,8 +_,5 @@
+   "description": {
+     "color": "#B4684D",
+     "translate": "trim_material.minecraft.copper"
+-  },
+-  "override_armor_assets": {
+-    "minecraft:copper": "copper_darker"
+   }
+ }

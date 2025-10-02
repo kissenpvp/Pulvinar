@@ -1,0 +1,11 @@
+--- a/src/main/java/org/bukkit/craftbukkit/CraftLootTable.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftLootTable.java
+@@ -153,7 +_,7 @@
+         if (position == null) {
+             position = info.getOptionalParameter(LootContextParams.THIS_ENTITY).position(); // Every vanilla context has origin or this_entity, see LootContextParamSets
+         }
+-        Location location = CraftLocation.toBukkit(position, info.getLevel());
++        Location location = CraftLocation.toBukkit(position, info.getLevel().getWorld());
+         LootContext.Builder contextBuilder = new LootContext.Builder(location);
+ 
+         if (info.hasParameter(LootContextParams.ATTACKING_ENTITY)) {

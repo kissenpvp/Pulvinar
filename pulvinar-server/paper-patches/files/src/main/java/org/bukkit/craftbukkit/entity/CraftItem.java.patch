@@ -1,0 +1,11 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftItem.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftItem.java
+@@ -138,7 +_,7 @@
+ 
+     @Override
+     public void setThrower(UUID uuid) {
+-        this.getHandle().thrower = uuid == null ? null : EntityReference.of(uuid);
++        this.getHandle().thrower = uuid == null ? null : new EntityReference<>(uuid);
+     }
+ 
+     @Override

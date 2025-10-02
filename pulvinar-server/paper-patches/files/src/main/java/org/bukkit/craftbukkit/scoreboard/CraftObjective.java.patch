@@ -1,0 +1,11 @@
+--- a/src/main/java/org/bukkit/craftbukkit/scoreboard/CraftObjective.java
++++ b/src/main/java/org/bukkit/craftbukkit/scoreboard/CraftObjective.java
+@@ -159,7 +_,7 @@
+         this.checkState();
+ 
+         net.minecraft.network.chat.numbers.NumberFormat vanilla = this.objective.numberFormat();
+-
++        
+         if (vanilla == null) {
+             return null;
+         }

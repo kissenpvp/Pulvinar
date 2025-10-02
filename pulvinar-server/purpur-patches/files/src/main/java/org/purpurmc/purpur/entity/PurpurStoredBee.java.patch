@@ -1,0 +1,26 @@
+--- a/src/main/java/org/purpurmc/purpur/entity/PurpurStoredBee.java
++++ b/src/main/java/org/purpurmc/purpur/entity/PurpurStoredBee.java
+@@ -37,7 +_,7 @@
+         this.handle = data;
+         this.blockStorage = blockStorage;
+ 
+-        CompoundTag customData = handle.occupant.entityData().copyTagWithEntityId();
++        CompoundTag customData = handle.occupant.entityData().copyTag();
+ 
+         try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(blockEntity.problemPath(), LOGGER)) {
+             ValueInput valueInput = TagValueInput.create(scopedCollector, RegistryAccess.EMPTY, customData);
+@@ -106,11 +_,11 @@
+ 
+     @Override
+     public void update() {
+-        handle.occupant.entityData().copyTagWithEntityId().put("BukkitValues", this.persistentDataContainer.toTagCompound());
++        handle.occupant.entityData().copyTag().put("BukkitValues", this.persistentDataContainer.toTagCompound());
+         if(customName == null) {
+-            handle.occupant.entityData().copyTagWithEntityId().remove("CustomName");
++            handle.occupant.entityData().copyTag().remove("CustomName");
+         } else {
+-            handle.occupant.entityData().copyTagWithEntityId().putString("CustomName", CraftChatMessage.toJSON(PaperAdventure.asVanilla(customName)));
++            handle.occupant.entityData().copyTag().putString("CustomName", CraftChatMessage.toJSON(PaperAdventure.asVanilla(customName)));
+         }
+     }
+ }

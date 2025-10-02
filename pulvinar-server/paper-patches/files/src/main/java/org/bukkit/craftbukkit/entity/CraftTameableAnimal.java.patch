@@ -1,0 +1,11 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftTameableAnimal.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftTameableAnimal.java
+@@ -30,7 +_,7 @@
+     }
+ 
+     public void setOwnerUUID(UUID uuid) {
+-        this.getHandle().setOwnerReference(uuid == null ? null : EntityReference.of(uuid));
++        this.getHandle().setOwnerReference(uuid == null ? null : new EntityReference<>(uuid));
+     }
+ 
+     @Override

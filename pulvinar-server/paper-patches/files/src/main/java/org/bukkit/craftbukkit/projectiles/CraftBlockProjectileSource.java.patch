@@ -1,0 +1,19 @@
+--- a/src/main/java/org/bukkit/craftbukkit/projectiles/CraftBlockProjectileSource.java
++++ b/src/main/java/org/bukkit/craftbukkit/projectiles/CraftBlockProjectileSource.java
+@@ -41,6 +_,16 @@
+     }
+ 
+     @Override
++    public <T extends Projectile> T launchProjectile(Class<? extends T> projectile) {
++        return this.launchProjectile(projectile, null);
++    }
++
++    @Override
++    public <T extends Projectile> T launchProjectile(Class<? extends T> projectile, Vector velocity) {
++        return this.launchProjectile(projectile, velocity, null);
++    }
++
++    @Override
+     public <T extends Projectile> T launchProjectile(Class<? extends T> projectile, Vector velocity, Consumer<? super T> function) {
+         Preconditions.checkArgument(this.getBlock().getType() == Material.DISPENSER, "Block is no longer dispenser");
+ 

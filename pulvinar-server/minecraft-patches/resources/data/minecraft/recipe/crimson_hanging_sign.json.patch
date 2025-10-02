@@ -1,0 +1,11 @@
+--- a/data/minecraft/recipe/crimson_hanging_sign.json
++++ b/data/minecraft/recipe/crimson_hanging_sign.json
+@@ -4,7 +_,7 @@
+   "group": "hanging_sign",
+   "key": {
+     "#": "minecraft:stripped_crimson_stem",
+-    "X": "minecraft:iron_chain"
++    "X": "minecraft:chain"
+   },
+   "pattern": [
+     "X X",

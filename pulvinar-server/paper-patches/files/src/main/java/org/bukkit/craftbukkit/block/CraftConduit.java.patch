@@ -1,0 +1,11 @@
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftConduit.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftConduit.java
+@@ -98,7 +_,7 @@
+                 return false;
+             }
+ 
+-            conduit.destroyTarget = EntityReference.of(((CraftLivingEntity) target).getHandle());
++            conduit.destroyTarget = new EntityReference<>(((CraftLivingEntity) target).getHandle());
+         }
+ 
+         ConduitBlockEntity.updateAndAttackTarget(

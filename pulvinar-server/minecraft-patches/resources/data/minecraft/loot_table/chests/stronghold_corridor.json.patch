@@ -1,0 +1,13 @@
+--- a/data/minecraft/loot_table/chests/stronghold_corridor.json
++++ b/data/minecraft/loot_table/chests/stronghold_corridor.json
+@@ -156,10 +_,6 @@
+         },
+         {
+           "type": "minecraft:item",
+-          "name": "minecraft:copper_horse_armor"
+-        },
+-        {
+-          "type": "minecraft:item",
+           "name": "minecraft:iron_horse_armor"
+         },
+         {

@@ -1,0 +1,18 @@
+--- a/data/minecraft/loot_table/blocks/dragon_head.json
++++ b/data/minecraft/loot_table/blocks/dragon_head.json
+@@ -6,15 +_,6 @@
+       "entries": [
+         {
+           "type": "minecraft:item",
+-          "functions": [
+-            {
+-              "function": "minecraft:copy_components",
+-              "include": [
+-                "minecraft:custom_name"
+-              ],
+-              "source": "block_entity"
+-            }
+-          ],
+           "name": "minecraft:dragon_head"
+         }
+       ],

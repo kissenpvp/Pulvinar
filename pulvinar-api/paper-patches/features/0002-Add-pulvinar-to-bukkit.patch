@@ -75,7 +75,7 @@ index 0000000000000000000000000000000000000000..4b35e5def2c99431e27f34ed7210fed5
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
-index bb21401d142e2a9385d52afe40c54d793103afe2..59b323e021e2ddd2224252a2e6bfb008c372157a 100644
+index aceb1c1fe9992c1cafd1a66644f8a6992474602f..14dd96ddb92e18c0c3bd8e8adeef40eff8645aab 100644
 --- a/src/main/java/org/bukkit/Bukkit.java
 +++ b/src/main/java/org/bukkit/Bukkit.java
 @@ -15,6 +15,7 @@ import java.util.UUID;
@@ -86,7 +86,7 @@ index bb21401d142e2a9385d52afe40c54d793103afe2..59b323e021e2ddd2224252a2e6bfb008
  import net.kyori.adventure.text.Component;
  import org.bukkit.Warning.WarningState;
  import org.bukkit.advancement.Advancement;
-@@ -71,6 +72,23 @@ import org.jetbrains.annotations.Nullable;
+@@ -70,6 +71,23 @@ import org.jetbrains.annotations.Nullable;
  public final class Bukkit {
      private static Server server;
  
@@ -111,15 +111,15 @@ index bb21401d142e2a9385d52afe40c54d793103afe2..59b323e021e2ddd2224252a2e6bfb008
       * Static class cannot be initialized.
       */
 diff --git a/src/main/java/org/bukkit/OfflinePlayer.java b/src/main/java/org/bukkit/OfflinePlayer.java
-index c1f19d5c1b819873fce1185b4fbf4c72eda26309..22197254808819bef8542586faf6a23f8b380b67 100644
+index 28ebe77719afcc6b975def6b9d89f469173396f0..5960c9c48e8bbe44a965b8cb9be04e636e88b26f 100644
 --- a/src/main/java/org/bukkit/OfflinePlayer.java
 +++ b/src/main/java/org/bukkit/OfflinePlayer.java
-@@ -20,7 +20,7 @@ import org.jspecify.annotations.Nullable;
+@@ -22,7 +22,7 @@ import org.jspecify.annotations.Nullable;
   * player needing to be online.
   */
  @NullMarked
--public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable, io.papermc.paper.persistence.PersistentDataViewHolder { // Paper - Add Offline PDC API
-+public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable, io.papermc.paper.persistence.PersistentDataViewHolder, net.kissenpvp.api.network.actor.PlayerClient { // Paper - Add Offline PDC API // Pulvinar - Add PlayerClient Actor
+-public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable, io.papermc.paper.persistence.PersistentDataViewHolder, PlayerHeadObjectContents.SkinSource { // Paper - Add Offline PDC API
++public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable, io.papermc.paper.persistence.PersistentDataViewHolder, PlayerHeadObjectContents.SkinSource, net.kissenpvp.api.network.actor.PlayerClient { // Paper - Add Offline PDC API // Pulvinar - Add PlayerClient Actor
  
      /**
       * Checks if this player is currently online
@@ -135,10 +135,10 @@ index f309c2ed39bcc700e5b491ff549bf0608a07aab8..d1cd49aebffe50859634118ec3ec324b
 +public interface ConsoleCommandSender extends CommandSender, Conversable, net.kissenpvp.api.network.actor.ConsoleClient { // Pulvinar
  }
 diff --git a/src/main/java/org/bukkit/entity/HumanEntity.java b/src/main/java/org/bukkit/entity/HumanEntity.java
-index 90cef1ab811571e0352e2e704b11b0ab6f777883..8b73113807f044c99e7395a36e13aa22c979dd36 100644
+index f2a1693a1ef03dafa33442d61f73f91bd6202370..79edfde9da222558a8ea037c0b6ca9a2b80ef905 100644
 --- a/src/main/java/org/bukkit/entity/HumanEntity.java
 +++ b/src/main/java/org/bukkit/entity/HumanEntity.java
-@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
+@@ -29,7 +29,7 @@ import org.jspecify.annotations.Nullable;
   * Represents a human entity, such as an NPC or a player
   */
  @NullMarked
@@ -148,10 +148,10 @@ index 90cef1ab811571e0352e2e704b11b0ab6f777883..8b73113807f044c99e7395a36e13aa22
      // Paper start
      @Override
 diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
-index 18ab7ed5819510f6ee6de380cdbb0cff2493f58f..9100d5af3882a261f24674a2a4d1bd51c01e97c6 100644
+index b221735602f669ef984b44d73605095460316753..c86ed7d8df9370631e8f7fdc263485a3f5eb2b9f 100644
 --- a/src/main/java/org/bukkit/entity/Player.java
 +++ b/src/main/java/org/bukkit/entity/Player.java
-@@ -63,7 +63,7 @@ import org.jspecify.annotations.Nullable;
+@@ -64,7 +64,7 @@ import org.jspecify.annotations.Nullable;
   * Represents a player, connected or not
   */
  @NullMarked

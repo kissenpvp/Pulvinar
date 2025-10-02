@@ -1,0 +1,11 @@
+--- a/data/minecraft/tags/item/pickaxes.json
++++ b/data/minecraft/tags/item/pickaxes.json
+@@ -5,7 +_,6 @@
+     "minecraft:golden_pickaxe",
+     "minecraft:netherite_pickaxe",
+     "minecraft:wooden_pickaxe",
+-    "minecraft:iron_pickaxe",
+-    "minecraft:copper_pickaxe"
++    "minecraft:iron_pickaxe"
+   ]
+ }

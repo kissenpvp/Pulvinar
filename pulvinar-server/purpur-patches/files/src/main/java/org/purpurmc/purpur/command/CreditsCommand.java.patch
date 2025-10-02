@@ -1,0 +1,11 @@
+--- a/src/main/java/org/purpurmc/purpur/command/CreditsCommand.java
++++ b/src/main/java/org/purpurmc/purpur/command/CreditsCommand.java
+@@ -27,7 +_,7 @@
+         for (ServerPlayer player : targets) {
+             ClientboundGameEventPacket packet = new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 1F);
+             player.connection.send(packet);
+-            String output = String.format(PurpurConfig.creditsCommandOutput, player.getGameProfile().name());
++            String output = String.format(PurpurConfig.creditsCommandOutput, player.getGameProfile().getName());
+             sender.sendSuccess(output, false);
+         }
+         return targets.size();

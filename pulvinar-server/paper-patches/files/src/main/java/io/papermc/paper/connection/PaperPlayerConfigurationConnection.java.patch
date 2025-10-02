@@ -1,0 +1,13 @@
+--- a/src/main/java/io/papermc/paper/connection/PaperPlayerConfigurationConnection.java
++++ b/src/main/java/io/papermc/paper/connection/PaperPlayerConfigurationConnection.java
+@@ -88,8 +_,8 @@
+     public Pointers pointers() {
+         if (this.adventurePointers == null) {
+             this.adventurePointers = Pointers.builder()
+-                .withDynamic(Identity.NAME, () -> this.handle.getOwner().name())
+-                .withDynamic(Identity.UUID, () -> this.handle.getOwner().id())
++                .withDynamic(Identity.NAME, () -> this.handle.getOwner().getName())
++                .withDynamic(Identity.UUID, () -> this.handle.getOwner().getId())
+                 .build();
+         }
+ 

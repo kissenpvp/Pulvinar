@@ -1,0 +1,11 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftVex.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftVex.java
+@@ -27,7 +_,7 @@
+ 
+     @Override
+     public void setSummoner(org.bukkit.entity.Mob summoner) {
+-        this.getHandle().owner = summoner == null ? null : EntityReference.of(((CraftMob) summoner).getHandle());
++        this.getHandle().owner = summoner == null ? null : new EntityReference<>(((CraftMob) summoner).getHandle());
+     }
+ 
+     @Override

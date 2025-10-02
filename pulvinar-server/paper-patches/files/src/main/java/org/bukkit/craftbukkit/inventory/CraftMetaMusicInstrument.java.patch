@@ -1,0 +1,20 @@
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaMusicInstrument.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftMetaMusicInstrument.java
+@@ -79,14 +_,14 @@
+ 
+     @Override
+     int applyHash() {
+-        final int original;
+-        int hash = original = super.applyHash();
++        final int orginal;
++        int hash = orginal = super.applyHash();
+ 
+         if (this.hasInstrument()) {
+             hash = 61 * hash + this.instrument.hashCode();
+         }
+ 
+-        return original != hash ? CraftMetaMusicInstrument.class.hashCode() ^ hash : hash;
++        return orginal != hash ? CraftMetaMusicInstrument.class.hashCode() ^ hash : hash;
+     }
+ 
+     @Override

@@ -1,0 +1,13 @@
+--- a/src/main/java/org/bukkit/craftbukkit/command/VanillaCommandWrapper.java
++++ b/src/main/java/org/bukkit/craftbukkit/command/VanillaCommandWrapper.java
+@@ -74,9 +_,7 @@
+     public static CommandSourceStack getListener(CommandSender sender) {
+         if (sender instanceof CraftEntity entity) {
+             if (sender instanceof CommandMinecart) {
+-                return ((CraftMinecartCommand) sender).getHandle().getCommandBlock().createCommandSourceStack(
+-                    ((CraftMinecartCommand) sender).getHandle().getCommandBlock().new CloseableCommandBlockSource()
+-                );
++                return ((CraftMinecartCommand) sender).getHandle().getCommandBlock().createCommandSourceStack();
+             }
+ 
+             if (sender instanceof CraftPlayer player) {

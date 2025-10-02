@@ -5,7 +5,7 @@ Subject: [PATCH] Add pulvinar instance
 
 
 diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
-index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..999f9f9dbeb4a73fbdd2f34a05a8f8b7a705a24c 100644
+index 2c85607bcc62b227485972707c3541247a626524..579b98e5b82bf17afe7d74a188dae3136a0568e7 100644
 --- a/net/minecraft/server/Main.java
 +++ b/net/minecraft/server/Main.java
 @@ -1,6 +1,5 @@
@@ -30,7 +30,7 @@ index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..999f9f9dbeb4a73fbdd2f34a05a8f8b7
  import net.minecraft.SharedConstants;
  import net.minecraft.SuppressForbidden;
  import net.minecraft.Util;
-@@ -175,6 +172,13 @@ public class Main {
+@@ -173,6 +170,13 @@ public class Main {
  
              org.spigotmc.SpigotConfig.disabledAdvancements = spigotConfiguration.getStringList("advancements.disabled"); // Paper - fix SPIGOT-5885, must be set early in init
  
@@ -45,10 +45,10 @@ index b06c2c4aa77edafb374f7cf0406cf4d29c6e7f9f..999f9f9dbeb4a73fbdd2f34a05a8f8b7
              File file;
              File userCacheFile = new File(Services.USERID_CACHE_FILE);
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index e50bdf12b4935cd91d9d70c8563e58c84cf26757..3c744f7ec2503ae0bc598d3b352962fc45c4dde1 100644
+index 5f86c3024a857d5ec3ac39a4ef1d2a77b452c2bb..75c3ca14e2784a34d708d56affb69e3e980c1193 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1078,6 +1078,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1010,6 +1010,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              ca.spottedleaf.moonrise.common.util.MoonriseCommon.haltExecutors();
          }
          // Paper end - rewrite chunk system
@@ -60,31 +60,18 @@ index e50bdf12b4935cd91d9d70c8563e58c84cf26757..3c744f7ec2503ae0bc598d3b352962fc
          // Paper start - Improved watchdog support - move final shutdown items here
          Util.shutdownExecutors();
          try {
-diff --git a/net/minecraft/server/Services.java b/net/minecraft/server/Services.java
-index 015e3ff8d856a7722def4448d8c68792cc3a32a2..6ab9257e581fdd10872c8be2fd5317d9606b0a78 100644
---- a/net/minecraft/server/Services.java
-+++ b/net/minecraft/server/Services.java
-@@ -29,7 +29,7 @@ public record Services(
-     public static Services create(YggdrasilAuthenticationService authenticationService, File profileRepository, File userCacheFile, joptsimple.OptionSet optionSet) throws Exception { // Paper - add optionset to load paper config files; add userCacheFile parameter
-         MinecraftSessionService minecraftSessionService = authenticationService.createMinecraftSessionService();
-         GameProfileRepository gameProfileRepository = authenticationService.createProfileRepository();
--        GameProfileCache gameProfileCache = new GameProfileCache(gameProfileRepository, userCacheFile); // Paper - use specified user cache file
-+        GameProfileCache gameProfileCache = new net.kissenpvp.network.actor.PulvinarProfileCache(gameProfileRepository); // new GameProfileCache(gameProfileRepository, userCacheFile); // Paper - use specified user cache file // Pulvinar - delegate caching to database
-         // Paper start - load paper config files from cli options
-         final java.nio.file.Path legacyConfigPath = ((File) optionSet.valueOf("paper-settings")).toPath();
-         final java.nio.file.Path configDirPath = ((File) optionSet.valueOf("paper-settings-directory")).toPath();
 diff --git a/net/minecraft/server/commands/BanPlayerCommands.java b/net/minecraft/server/commands/BanPlayerCommands.java
-index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..cc5b362d661e887911dbcf69d082b9b6cef9c3bd 100644
+index ac88de89b4a66e17f25ed4d36d911dc5e84dc892..4411945edf12a7b6479f0d5028e82b728ae2de0f 100644
 --- a/net/minecraft/server/commands/BanPlayerCommands.java
 +++ b/net/minecraft/server/commands/BanPlayerCommands.java
 @@ -47,9 +47,11 @@ public class BanPlayerCommands {
  
-         for (GameProfile gameProfile : gameProfiles) {
-             if (!bans.isBanned(gameProfile)) {
+         for (NameAndId nameAndId : gameProfiles) {
+             if (!bans.isBanned(nameAndId)) {
 -                UserBanListEntry userBanListEntry = new UserBanListEntry(
 +                // Pulvinar start - use database ban system instead of vanilla
-+                UserBanListEntry userBanListEntry = createEntry(source, gameProfile, reason); /*new UserBanListEntry(
-                     gameProfile, null, source.getTextName(), null, reason == null ? null : reason.getString()
++                UserBanListEntry userBanListEntry = createEntry(source, nameAndId, reason); /*new UserBanListEntry(
+                     nameAndId, null, source.getTextName(), null, reason == null ? null : reason.getString()
 -                );
 +                );*/
 +                // Pulvinar end - use database ban system instead of vanilla
@@ -97,7 +84,7 @@ index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..cc5b362d661e887911dbcf69d082b9b6
      }
 +
 +    // Pulvinar start - use database ban system instead of vanilla
-+    private static net.kissenpvp.punishment.PunishmentEntry createEntry(CommandSourceStack source, GameProfile gameProfile, @Nullable Component reason)
++    private static net.kissenpvp.punishment.PunishmentEntry createEntry(CommandSourceStack source, NameAndId gameProfile, @Nullable Component reason)
 +    {
 +        net.kissenpvp.api.temporal.timespan.TimeSpan temporal = new net.kissenpvp.temporal.timespan.PermanentTimeSpan();
 +        net.kissenpvp.temporal.InternalWritableTemporalObject permanent = net.kissenpvp.temporal.InternalWritableTemporalObject.toTemporal(temporal);
@@ -114,7 +101,7 @@ index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..cc5b362d661e887911dbcf69d082b9b6
 +        }
 +
 +        // Look - I know this is stupid and I promise I will come back later for this...
-+        java.util.UUID linkId = org.bukkit.Bukkit.getOfflinePlayer(gameProfile.getId()).linkId();
++        java.util.UUID linkId = org.bukkit.Bukkit.getOfflinePlayer(gameProfile.id()).linkId();
 +
 +        return net.kissenpvp.punishment.PunishmentEntry.from(new net.kissenpvp.punishment.InternalPunishmentSubscription(
 +                -1,
@@ -127,10 +114,10 @@ index ac3ba9d0ea344fa189912d359b718fbe05e7aa49..cc5b362d661e887911dbcf69d082b9b6
 +    // Pulvinar end - use database ban system instead of vanilla
  }
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 577bb59afb4e059523e68af6c3515d64f0b9e559..907334d40e7748aad6d793d634e32a9d3115506e 100644
+index 1464445bac22571ff5a3036384815042797c29ef..4a4107c3aae759224e6d082bf63246a97f43cfde 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -2296,14 +2296,24 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2412,14 +2412,24 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
  
      public void sendSystemMessage(Component message, boolean overlay) {
          if (this.acceptsSystemMessages(overlay)) {
@@ -158,10 +145,10 @@ index 577bb59afb4e059523e68af6c3515d64f0b9e559..907334d40e7748aad6d793d634e32a9d
                                  return new ClientboundSystemChatPacket(
                                      Component.translatable("multiplayer.message_not_delivered", component).withStyle(ChatFormatting.RED), false
 diff --git a/net/minecraft/server/players/BanListEntry.java b/net/minecraft/server/players/BanListEntry.java
-index e111adec2116f922fe67ee434635e50c60dad15c..7cf45d0cf8767f3ba798b8641ed6b92b456fb55f 100644
+index b6de347c131c8451ad7b6a1fa4a2be80ac3754eb..979aadc752c26a8109b61b3333744696c7f37fb6 100644
 --- a/net/minecraft/server/players/BanListEntry.java
 +++ b/net/minecraft/server/players/BanListEntry.java
-@@ -70,7 +70,7 @@ public abstract class BanListEntry<T> extends StoredUserEntry<T> {
+@@ -78,7 +78,7 @@ public abstract class BanListEntry<T> extends StoredUserEntry<T> {
  
      @Override
      boolean hasExpired() {
@@ -170,93 +157,78 @@ index e111adec2116f922fe67ee434635e50c60dad15c..7cf45d0cf8767f3ba798b8641ed6b92b
      }
  
      @Override
-diff --git a/net/minecraft/server/players/GameProfileCache.java b/net/minecraft/server/players/GameProfileCache.java
-index 066f84df5c31242ab542932f1e243369d0e766e2..a34b21bccb123525806f1ff6f7230d93da2a5b2b 100644
---- a/net/minecraft/server/players/GameProfileCache.java
-+++ b/net/minecraft/server/players/GameProfileCache.java
-@@ -317,12 +317,12 @@ public class GameProfileCache {
-         }
+diff --git a/net/minecraft/server/players/CachedUserNameToIdResolver.java b/net/minecraft/server/players/CachedUserNameToIdResolver.java
+index c4c1274481cf2353c8af5c1feb697a1bcf0ce5f4..76fef1b4fd819a3590f393f2d32d336b4ff4d640 100644
+--- a/net/minecraft/server/players/CachedUserNameToIdResolver.java
++++ b/net/minecraft/server/players/CachedUserNameToIdResolver.java
+@@ -282,12 +282,12 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
+         return Optional.empty();
      }
  
 -    static class GameProfileInfo {
 +    protected static class GameProfileInfo { // Pulvinar - allow protected access
-         private final GameProfile profile;
+         private final NameAndId nameAndId;
          final Date expirationDate;
          private volatile long lastAccess;
  
--        GameProfileInfo(GameProfile profile, Date expirationDate) {
-+        public GameProfileInfo(GameProfile profile, Date expirationDate) {  // Pulvinar - allow public access
-             this.profile = profile;
+-        GameProfileInfo(NameAndId nameAndId, Date expirationDate) {
++        public GameProfileInfo(NameAndId nameAndId, Date expirationDate) {  // Pulvinar - allow public access
+             this.nameAndId = nameAndId;
              this.expirationDate = expirationDate;
          }
-@@ -343,4 +343,19 @@ public class GameProfileCache {
+@@ -308,4 +308,10 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
              return this.lastAccess;
          }
      }
 +
 +    // Pulvinar start - allow protected access to the profile repository and executor
-+    protected Map<String, CompletableFuture<Optional<GameProfile>>> getRequests()
-+    {
-+        return requests;
-+    }
-+
-+    protected @Nullable Executor getExecutor() {
-+        return this.executor;
-+    }
-+
 +    protected GameProfileRepository getRepository() {
 +        return this.profileRepository;
 +    }
 +    // Pulvinar end - allow protected access to the profile repository and executor
  }
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index db56578bff06574337463c2421537f43d1a19189..2e37d716e5d84c8b2e47438f4df694250067b0c2 100644
+index 042861f45c7ee423614122387ac652d60dfc2852..6558de56497b6cf24514a2dab10965781b8796fe 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -113,9 +113,9 @@ public abstract class PlayerList {
-     private final MinecraftServer server;
-     public final List<ServerPlayer> players = new java.util.concurrent.CopyOnWriteArrayList(); // CraftBukkit - ArrayList -> CopyOnWriteArrayList: Iterator safety
-     private final Map<UUID, ServerPlayer> playersByUUID = Maps.newHashMap();
--    private final UserBanList bans = new UserBanList(USERBANLIST_FILE);
-+    private final UserBanList bans = new net.kissenpvp.punishment.PunishmentList(((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).punishmentSubscriptionRepository()); // new UserBanList(USERBANLIST_FILE); // Pulvinar - migrate ban operations to database
-     private final IpBanList ipBans = new IpBanList(IPBANLIST_FILE);
--    private final ServerOpList ops = new ServerOpList(OPLIST_FILE);
-+    private final ServerOpList ops = new net.kissenpvp.network.actor.operator.PulvinarOperatorList(((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).operatorRepository()); // new ServerOpList(OPLIST_FILE); // Pulvinar - migrate operator data to database
-     private final UserWhiteList whitelist = new UserWhiteList(WHITELIST_FILE);
-     // CraftBukkit start
-     // private final Map<UUID, ServerStatsCounter> stats = Maps.newHashMap();
+@@ -141,8 +141,8 @@ public abstract class PlayerList {
+         this.registries = registries;
+         this.playerIo = playerIo;
+         this.whitelist = new UserWhiteList(WHITELIST_FILE, notificationService);
+-        this.ops = new ServerOpList(OPLIST_FILE, notificationService);
+-        this.bans = new UserBanList(USERBANLIST_FILE, notificationService);
++        this.ops = new net.kissenpvp.network.actor.operator.PulvinarOperatorList(((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).operatorRepository()); // new ServerOpList(OPLIST_FILE, notificationService); // Pulvinar - migrate operator data to database
++        this.bans =  new net.kissenpvp.punishment.PunishmentList(((net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar()).punishmentSubscriptionRepository()); // new UserBanList(USERBANLIST_FILE, notificationService); // Pulvinar - migrate ban operations to database
+         this.ipBans = new IpBanList(IPBANLIST_FILE, notificationService);
+     }
+ 
 diff --git a/net/minecraft/server/players/ServerOpListEntry.java b/net/minecraft/server/players/ServerOpListEntry.java
-index aa2663be118b628257e16e3da309e8a3b4f9ad71..f01f19d97161ad109aaa06c9d52e7fe23f6b83c3 100644
+index 2013f5c2fd114819258cb34199665e6632efcdf9..292a75d89d2f7f7ffe51360e1a587f2c182bdc9a 100644
 --- a/net/minecraft/server/players/ServerOpListEntry.java
 +++ b/net/minecraft/server/players/ServerOpListEntry.java
-@@ -2,10 +2,12 @@ package net.minecraft.server.players;
+@@ -2,7 +2,7 @@ package net.minecraft.server.players;
  
  import com.google.gson.JsonObject;
- import com.mojang.authlib.GameProfile;
-+import org.jetbrains.annotations.NotNull;
-+
- import java.util.UUID;
- import javax.annotation.Nullable;
  
--public class ServerOpListEntry extends StoredUserEntry<GameProfile> {
-+public class ServerOpListEntry extends StoredUserEntry<GameProfile> implements net.kissenpvp.api.network.actor.OperatorInfo { // Pulvinar start - migrate operator data to database
+-public class ServerOpListEntry extends StoredUserEntry<NameAndId> {
++public class ServerOpListEntry extends StoredUserEntry<NameAndId> implements net.kissenpvp.api.network.actor.OperatorInfo { // Pulvinar start - migrate operator data to database
      private final int level;
      private final boolean bypassesPlayerLimit;
  
-@@ -56,4 +58,36 @@ public class ServerOpListEntry extends StoredUserEntry<GameProfile> {
-             return null;
+@@ -34,4 +34,36 @@ public class ServerOpListEntry extends StoredUserEntry<NameAndId> {
+             data.addProperty("bypassesPlayerLimit", this.bypassesPlayerLimit);
          }
      }
 +
 +    // Pulvinar start - migrate operator data to database
-+    @Override public UUID id()
++    @Override public java.util.UUID id()
 +    {
 +        if(java.util.Objects.isNull(getUser()))
 +        {
 +            throw new java.lang.IllegalStateException("User is null");
 +        }
 +
-+        return getUser().getId();
++        return getUser().id();
 +    }
 +
 +    @Override public String name()
@@ -266,7 +238,7 @@ index aa2663be118b628257e16e3da309e8a3b4f9ad71..f01f19d97161ad109aaa06c9d52e7fe2
 +            throw new java.lang.IllegalStateException("User is null");
 +        }
 +
-+        return getUser().getName();
++        return getUser().name();
 +    }
 +
 +    @Override public int signature()
@@ -281,10 +253,10 @@ index aa2663be118b628257e16e3da309e8a3b4f9ad71..f01f19d97161ad109aaa06c9d52e7fe2
 +    // Pulvinar end - migrate operator data to database
  }
 diff --git a/net/minecraft/server/players/StoredUserList.java b/net/minecraft/server/players/StoredUserList.java
-index d445e8f126f077d8419c52fa5436ea963a1a42a4..a0c9255e1cce64c733cc70d4a523912f7cab05d0 100644
+index 7ba3f7937d9c51690b735f26fb45dc0a8f94b31f..f94e791db0583f11940dda78946137ac3af6d5e5 100644
 --- a/net/minecraft/server/players/StoredUserList.java
 +++ b/net/minecraft/server/players/StoredUserList.java
-@@ -132,4 +132,11 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
+@@ -159,4 +159,11 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
              // Spigot end
          }
      }
@@ -297,10 +269,10 @@ index d445e8f126f077d8419c52fa5436ea963a1a42a4..a0c9255e1cce64c733cc70d4a523912f
 +    // Pulvinar end - allow protected access to map
  }
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index fe44d8d17d2622b3d6021c11579af85ef96737bb..6207758d31408c4f95507c72787b4e9006b1f87c 100644
+index 02f72bf880e2c162e94a9ebea32890cb25738758..470eff15b18a9051ae773415b2e5ec20971cd975 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
-@@ -36,6 +36,26 @@ public class PlayerDataStorage {
+@@ -37,6 +37,26 @@ public class PlayerDataStorage {
          try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), LOGGER)) {
              TagValueOutput tagValueOutput = TagValueOutput.createWithContext(scopedCollector, player.registryAccess());
              player.saveWithoutId(tagValueOutput);
@@ -327,48 +299,48 @@ index fe44d8d17d2622b3d6021c11579af85ef96737bb..6207758d31408c4f95507c72787b4e90
              Path path = this.playerDir.toPath();
              Path path1 = Files.createTempFile(path, player.getStringUUID() + "-", ".dat");
              CompoundTag compoundTag = tagValueOutput.buildResult();
-@@ -49,6 +69,11 @@ public class PlayerDataStorage {
+@@ -50,6 +70,10 @@ public class PlayerDataStorage {
      }
  
-     private void backup(String name, String stringUuid, String suffix) { // CraftBukkit
-+
+     private void backup(NameAndId nameAndId, String suffix) {
 +        // Pulvinar start - store userdata in a database instead of a world
 +        if (true) { return; } // we don't do that here
 +        // Pulvinar end - store userdata in a database instead of a world
 +
          Path path = this.playerDir.toPath();
-         Path path1 = path.resolve(stringUuid + suffix); // CraftBukkit
-         Path path2 = path.resolve(stringUuid + "_corrupted_" + LocalDateTime.now().format(FORMATTER) + suffix); // CraftBukkit
-@@ -62,6 +87,23 @@ public class PlayerDataStorage {
+         String string = nameAndId.id().toString();
+         Path path1 = path.resolve(string + suffix);
+@@ -64,7 +88,22 @@ public class PlayerDataStorage {
      }
  
-     private Optional<CompoundTag> load(String name, String stringUuid, String suffix) { // CraftBukkit
-+
+     private Optional<CompoundTag> load(NameAndId nameAndId, String suffix) {
+-        File file = new File(this.playerDir, nameAndId.id().toString() + suffix);
 +        // Pulvinar start - store userdata in a database instead of a world
 +        net.kissenpvp.api.database.RepositoryHolder pulvinar = (net.kissenpvp.api.database.RepositoryHolder) org.bukkit.Bukkit.getPulvinar();
 +        net.kissenpvp.network.actor.InternalPlayerRepository playerRepository = (net.kissenpvp.network.actor.InternalPlayerRepository) pulvinar.playerRepository();
 +
-+        Optional<java.sql.Blob> data = playerRepository.findProperties(java.util.UUID.fromString(stringUuid)).join();
++        Optional<java.sql.Blob> data = playerRepository.findProperties(nameAndId.id()).join();
 +        return data.map(blob -> {
 +            try {
 +                return NbtIo.readCompressed(blob.getBinaryStream(), NbtAccounter.unlimitedHeap());
 +            }
 +            catch (java.sql.SQLException | java.io.IOException exception)
 +            {
-+                LOGGER.warn("Failed to load player data for {}.", name, exception);
++                LOGGER.warn("Failed to load player data for {}.", nameAndId.name(), exception);
 +                return null;
 +            }
 +        });
-+        /*
-         File file = new File(this.playerDir, stringUuid + suffix); // CraftBukkit
++        /*File file = new File(this.playerDir, nameAndId.id().toString() + suffix);
          // Spigot start
          boolean usingWrongFile = false;
-@@ -88,6 +130,8 @@ public class PlayerDataStorage {
+         if (org.bukkit.Bukkit.getOnlineMode() && !file.exists()) { // Paper - Check online mode first
+@@ -89,7 +128,8 @@ public class PlayerDataStorage {
+             }
          }
  
-         return Optional.empty();
-+        */
+-        return Optional.empty();
++        return Optional.empty();*/
 +        // Pulvinar end - store userdata in a database instead of a world
      }
  
-     public Optional<ValueInput> load(Player player, ProblemReporter problemReporter) {
+     public Optional<CompoundTag> load(NameAndId nameAndId) {

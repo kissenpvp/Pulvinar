@@ -1,0 +1,10 @@
+--- a/data/minecraft/tags/item/leg_armor.json
++++ b/data/minecraft/tags/item/leg_armor.json
+@@ -1,7 +_,6 @@
+ {
+   "values": [
+     "minecraft:leather_leggings",
+-    "minecraft:copper_leggings",
+     "minecraft:chainmail_leggings",
+     "minecraft:golden_leggings",
+     "minecraft:iron_leggings",

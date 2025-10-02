@@ -1,0 +1,12 @@
+--- a/data/minecraft/tags/item/non_flammable_wood.json
++++ b/data/minecraft/tags/item/non_flammable_wood.json
+@@ -29,8 +_,6 @@
+     "minecraft:crimson_sign",
+     "minecraft:warped_sign",
+     "minecraft:warped_hanging_sign",
+-    "minecraft:crimson_hanging_sign",
+-    "minecraft:warped_shelf",
+-    "minecraft:crimson_shelf"
++    "minecraft:crimson_hanging_sign"
+   ]
+ }

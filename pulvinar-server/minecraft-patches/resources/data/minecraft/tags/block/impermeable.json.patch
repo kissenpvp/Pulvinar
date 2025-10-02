@@ -1,0 +1,11 @@
+--- a/data/minecraft/tags/block/impermeable.json
++++ b/data/minecraft/tags/block/impermeable.json
+@@ -17,7 +_,6 @@
+     "minecraft:green_stained_glass",
+     "minecraft:red_stained_glass",
+     "minecraft:black_stained_glass",
+-    "minecraft:tinted_glass",
+-    "minecraft:barrier"
++    "minecraft:tinted_glass"
+   ]
+ }

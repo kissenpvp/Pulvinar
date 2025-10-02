@@ -1,0 +1,19 @@
+--- a/src/main/java/io/papermc/paper/datacomponent/item/ItemComponentTypesBridgesImpl.java
++++ b/src/main/java/io/papermc/paper/datacomponent/item/ItemComponentTypesBridgesImpl.java
+@@ -151,16 +_,6 @@
+     }
+ 
+     @Override
+-    public ResolvableProfile.SkinPatchBuilder skinPatch() {
+-        return new PaperResolvableProfile.SkinPatchBuilderImpl();
+-    }
+-
+-    @Override
+-    public ResolvableProfile.SkinPatch emptySkinPatch() {
+-        return new PaperResolvableProfile.PaperSkinPatch(null, null, null, null);
+-    }
+-
+-    @Override
+     public ResolvableProfile resolvableProfile(final PlayerProfile profile) {
+         return PaperResolvableProfile.toApi(profile);
+     }

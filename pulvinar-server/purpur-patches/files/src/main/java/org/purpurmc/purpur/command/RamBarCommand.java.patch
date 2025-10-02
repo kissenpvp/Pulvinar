@@ -1,0 +1,11 @@
+--- a/src/main/java/org/purpurmc/purpur/command/RamBarCommand.java
++++ b/src/main/java/org/purpurmc/purpur/command/RamBarCommand.java
+@@ -35,7 +_,7 @@
+             Component output = MiniMessage.miniMessage().deserialize(PurpurConfig.rambarCommandOutput,
+                     Placeholder.component("onoff", Component.translatable(result ? "options.on" : "options.off")
+                             .color(result ? NamedTextColor.GREEN : NamedTextColor.RED)),
+-                    Placeholder.parsed("target", player.getGameProfile().name()));
++                    Placeholder.parsed("target", player.getGameProfile().getName()));
+ 
+             sender.sendSuccess(output, false);
+         }

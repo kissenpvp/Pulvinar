@@ -1,0 +1,13 @@
+--- a/src/main/java/io/papermc/paper/util/OldEnumHolderable.java
++++ b/src/main/java/io/papermc/paper/util/OldEnumHolderable.java
+@@ -63,6 +_,10 @@
+ 
+     @Override
+     public String toString() {
++        if (this.name != null) {
++            // TODO remove in next feature release or 1.22
++            return this.name;
++        }
+         return this.implToString();
+     }
+ }

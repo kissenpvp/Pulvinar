@@ -1,0 +1,11 @@
+--- a/src/main/java/com/destroystokyo/paper/VersionHistoryManager.java
++++ b/src/main/java/com/destroystokyo/paper/VersionHistoryManager.java
+@@ -32,7 +_,7 @@
+         final Path path = Paths.get("version_history.json");
+ 
+         if (Files.exists(path)) {
+-            // Basic file sanity checks
++            // Basic file santiy checks
+             if (!Files.isRegularFile(path)) {
+                 if (Files.isDirectory(path)) {
+                     logger.severe(path + " is a directory, cannot be used for version history");

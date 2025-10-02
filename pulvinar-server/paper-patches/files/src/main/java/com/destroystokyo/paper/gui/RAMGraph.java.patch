@@ -1,0 +1,11 @@
+--- a/src/main/java/com/destroystokyo/paper/gui/RAMGraph.java
++++ b/src/main/java/com/destroystokyo/paper/gui/RAMGraph.java
+@@ -72,7 +_,7 @@
+         DATA.add(new GraphData(jvm.totalMemory(), jvm.freeMemory(), jvm.maxMemory()));
+ 
+         PointerInfo pointerInfo = null;
+-        // I think I recall spotting a bug report where this throw an exception once
++        // I think I recall spotting a bug report where this throwed an exception once
+         // not sure it's of concern here
+         try {
+             pointerInfo = MouseInfo.getPointerInfo();

@@ -1,0 +1,22 @@
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/view/builder/CraftStandardInventoryViewBuilder.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/view/builder/CraftStandardInventoryViewBuilder.java
+@@ -1,9 +_,9 @@
+ package org.bukkit.craftbukkit.inventory.view.builder;
+ 
++import net.minecraft.network.chat.Component;
+ import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.world.inventory.AbstractContainerMenu;
+ import net.minecraft.world.inventory.MenuType;
+-import net.minecraft.world.level.block.entity.ChestBlockEntity;
+ import org.bukkit.inventory.InventoryView;
+ import org.bukkit.inventory.view.builder.InventoryViewBuilder;
+ 
+@@ -11,7 +_,7 @@
+ 
+     public CraftStandardInventoryViewBuilder(final MenuType<?> handle) {
+         super(handle);
+-        super.defaultTitle = ChestBlockEntity.DEFAULT_NAME;
++        super.defaultTitle = Component.translatable("container.chest");
+     }
+ 
+     @Override

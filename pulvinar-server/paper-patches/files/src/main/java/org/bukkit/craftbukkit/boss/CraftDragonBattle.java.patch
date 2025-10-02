@@ -1,0 +1,11 @@
+--- a/src/main/java/org/bukkit/craftbukkit/boss/CraftDragonBattle.java
++++ b/src/main/java/org/bukkit/craftbukkit/boss/CraftDragonBattle.java
+@@ -45,7 +_,7 @@
+             return null;
+         }
+ 
+-        return CraftLocation.toBukkit(this.handle.portalLocation, this.handle.level);
++        return CraftLocation.toBukkit(this.handle.portalLocation, this.handle.level.getWorld());
+     }
+ 
+     @Override

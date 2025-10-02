@@ -1,0 +1,37 @@
+--- a/src/main/java/org/bukkit/craftbukkit/ban/CraftProfileBanEntry.java
++++ b/src/main/java/org/bukkit/craftbukkit/ban/CraftProfileBanEntry.java
+@@ -1,8 +_,8 @@
+ package org.bukkit.craftbukkit.ban;
+ 
++import com.mojang.authlib.GameProfile;
+ import java.time.Instant;
+ import java.util.Date;
+-import net.minecraft.server.players.NameAndId;
+ import net.minecraft.server.players.UserBanList;
+ import net.minecraft.server.players.UserBanListEntry;
+ import org.bukkit.BanEntry;
+@@ -10,13 +_,13 @@
+ public final class CraftProfileBanEntry implements BanEntry<com.destroystokyo.paper.profile.PlayerProfile> { // Paper
+     private static final Date minorDate = Date.from(Instant.parse("1899-12-31T04:00:00Z"));
+     private final UserBanList list;
+-    private final NameAndId profile;
++    private final GameProfile profile;
+     private Date created;
+     private String source;
+     private Date expiration;
+     private String reason;
+ 
+-    public CraftProfileBanEntry(NameAndId profile, UserBanListEntry entry, UserBanList list) {
++    public CraftProfileBanEntry(GameProfile profile, UserBanListEntry entry, UserBanList list) {
+         this.list = list;
+         this.profile = profile;
+         this.created = entry.getCreated() != null ? new Date(entry.getCreated().getTime()) : null;
+@@ -27,7 +_,7 @@
+ 
+     @Override
+     public String getTarget() {
+-        return this.profile.name();
++        return this.profile.getName();
+     }
+ 
+     @Override

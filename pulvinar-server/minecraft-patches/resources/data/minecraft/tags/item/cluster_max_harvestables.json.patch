@@ -1,0 +1,11 @@
+--- a/data/minecraft/tags/item/cluster_max_harvestables.json
++++ b/data/minecraft/tags/item/cluster_max_harvestables.json
+@@ -5,7 +_,6 @@
+     "minecraft:iron_pickaxe",
+     "minecraft:netherite_pickaxe",
+     "minecraft:stone_pickaxe",
+-    "minecraft:wooden_pickaxe",
+-    "minecraft:copper_pickaxe"
++    "minecraft:wooden_pickaxe"
+   ]
+ }

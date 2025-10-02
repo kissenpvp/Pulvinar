@@ -1,0 +1,9 @@
+--- a/data/minecraft/tags/entity_type/fall_damage_immune.json
++++ b/data/minecraft/tags/entity_type/fall_damage_immune.json
+@@ -1,6 +_,5 @@
+ {
+   "values": [
+-    "minecraft:copper_golem",
+     "minecraft:iron_golem",
+     "minecraft:snow_golem",
+     "minecraft:shulker",
