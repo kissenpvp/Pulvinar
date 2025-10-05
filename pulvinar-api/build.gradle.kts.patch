@@ -13,21 +13,21 @@
          java {
              srcDir(generatedDir)
              srcDir(file("../paper-api/src/main/java"))
-+            srcDir(file("../purpur-api/src/main/java"))
++            srcDir(file("../purpur-api/src/main/java")) // Pulvinar
          }
          resources {
              srcDir(file("../paper-api/src/main/resources"))
-+            srcDir(file("../purpur-api/src/main/resources"))
++            srcDir(file("../purpur-api/src/main/resources")) // Pulvinar
          }
      }
      test {
          java {
              srcDir(file("../paper-api/src/test/java"))
-+            srcDir(file("../purpur-api/src/test/java"))
++            srcDir(file("../purpur-api/src/test/java")) // Pulvinar
          }
          resources {
              srcDir(file("../paper-api/src/test/resources"))
-+            srcDir(file("../purpur-api/src/test/resources"))
++            srcDir(file("../purpur-api/src/test/resources")) // Pulvinar
          }
      }
  }

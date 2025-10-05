@@ -1,41 +1,24 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: GideonWhite1029 <gideonwhite1029@gmail.com>
-Date: Fri, 11 Apr 2025 10:35:11 +0300
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Sun, 5 Oct 2025 11:59:02 +0200
 Subject: [PATCH] Rebrand
 
 
 diff --git a/src/main/java/io/papermc/paper/ServerBuildInfo.java b/src/main/java/io/papermc/paper/ServerBuildInfo.java
-index fb1fe2651e53a9bf46b3632c638e13eea9dcda93..43392a5c290f04944dfbf0433756cba6014eefdd 100644
+index fb1fe2651e53a9bf46b3632c638e13eea9dcda93..02fd4f0cae73f3f22aa52d38241e58b833c74f7d 100644
 --- a/src/main/java/io/papermc/paper/ServerBuildInfo.java
 +++ b/src/main/java/io/papermc/paper/ServerBuildInfo.java
-@@ -25,6 +25,12 @@ public interface ServerBuildInfo {
+@@ -25,6 +25,13 @@ public interface ServerBuildInfo {
       */
      Key BRAND_PURPUR_ID = Key.key("purpurmc", "purpur");
      // Purpur end
++
 +    // Pulvinar start
 +    /**
-+     * The brand id for Tentacles.
++     * The brand id for Pulvinar.
 +     */
 +    Key BRAND_PULVINAR_ID = Key.key("kissenpvp", "pulvinar");
 +    // Pulvinar end
      /**
       * Gets the {@code ServerBuildInfo}.
       *
-diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index 69c0ca1b0c0cdbc911ba3f053fafc5624539917d..bf717c445de9e6b826244d4e9b4cbe237261ac55 100644
---- a/src/main/java/org/bukkit/Server.java
-+++ b/src/main/java/org/bukkit/Server.java
-@@ -2399,6 +2399,13 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
-         }
-         // Purpur end
- 
-+        // Pulvinar start
-+        @NotNull
-+        public org.bukkit.configuration.file.YamlConfiguration getPulvinarConfig() {
-+            throw new UnsupportedOperationException("Not supported yet.");
-+        }
-+        // Pulvinar end
-+
-         /**
-          * Sends the component to the player
-          *

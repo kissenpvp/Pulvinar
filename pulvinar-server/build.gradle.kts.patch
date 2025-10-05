@@ -32,7 +32,7 @@
 +    // Pulvinar end - Rebrand
  
      spigot {
-         enabled = true
+         enabled = false
 @@ -125,10 +_,14 @@
      main {
          java { srcDir("../paper-server/src/main/java") }
@@ -48,15 +48,15 @@
      }
  }
  val log4jPlugins = sourceSets.create("log4jPlugins") {
-@@ -156,7 +_,9 @@
+@@ -157,7 +_,9 @@
  }
  
  dependencies {
 -    implementation(project(":purpur-api")) // Purpur
-+    implementation(project(":pulvinar-api")) // Purpur // Pulvinar
++    //implementation(project(":purpur-api")) // Purpur
++    implementation(project(":pulvinar-api")) // Pulvinar
 +    implementation("net.kissenpvp:kissen-source:1.0.0-SNAPSHOT") // Pulvinar
-+
-     implementation("ca.spottedleaf:concurrentutil:0.0.3")
+     implementation("ca.spottedleaf:concurrentutil:0.0.5")
      implementation("org.jline:jline-terminal-ffm:3.27.1") // use ffm on java 22+
      implementation("org.jline:jline-terminal-jni:3.27.1") // fall back to jni on java 21
 @@ -231,14 +_,14 @@

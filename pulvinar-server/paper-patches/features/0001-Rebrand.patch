@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: GideonWhite1029 <gideonwhite1029@gmail.com>
-Date: Fri, 11 Apr 2025 10:35:57 +0300
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Sun, 5 Oct 2025 11:59:02 +0200
 Subject: [PATCH] Rebrand
 
 
 diff --git a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
-index a5a7334f7a1f147945079f20aa04b4f317d9e94c..c269f5e417f25e98aecbe09c931751742b4f73a3 100644
+index a5a7334f7a1f147945079f20aa04b4f317d9e94c..822c0e35a59dcb0e39430c4ba8c0d0423a6987b2 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 @@ -36,7 +36,7 @@ public class PaperVersionFetcher implements VersionFetcher {
@@ -22,50 +22,33 @@ index a5a7334f7a1f147945079f20aa04b4f317d9e94c..c269f5e417f25e98aecbe09c93175174
              updateMessage = text("You are running a development version without access to version information", color(0xFF5300));
          } else {
 -            updateMessage = getUpdateStatusMessage("PurpurMC/Purpur", build); // Purpur - Rebrand
-+            updateMessage = getUpdateStatusMessage("PurpurMC/Pulvinar", build); // Purpur - Rebrand // Pulvinar
++            updateMessage = getUpdateStatusMessage("KissenPvP/Pulvinar", build); // Purpur - Rebrand // Pulvinar
          }
          final @Nullable Component history = this.getHistory();
  
-@@ -62,16 +62,18 @@ public class PaperVersionFetcher implements VersionFetcher {
+@@ -62,16 +62,17 @@ public class PaperVersionFetcher implements VersionFetcher {
      private static Component getUpdateStatusMessage(final String repo, final ServerBuildInfo build) {
          //int distance = DISTANCE_ERROR; // Purpur - use field - Rebrand
  
-+        /* // Pulvinar start
++        // Pulvinar start - Rebrand
          final OptionalInt buildNumber = build.buildNumber();
-         if (buildNumber.isPresent()) {
+-        if (buildNumber.isPresent()) {
++        /*if (buildNumber.isPresent()) {
              distance = fetchDistanceFromSiteApi(build, buildNumber.getAsInt());
-         } else {
-+        */ // Pulvinar end
+-        } else {
++        } else {*/
              final Optional<String> gitBranch = build.gitBranch();
              final Optional<String> gitCommit = build.gitCommit();
              if (gitBranch.isPresent() && gitCommit.isPresent()) {
                  distance = fetchDistanceFromGitHub(repo, gitBranch.get(), gitCommit.get());
              }
 -        }
-+        //} // Pulvinar
++        //} // Pulvinar end - Rebrand
  
          return switch (distance) {
              case DISTANCE_ERROR -> text("* Error obtaining version information", NamedTextColor.RED); // Purpur - Rebrand
-@@ -89,7 +91,7 @@ public class PaperVersionFetcher implements VersionFetcher {
-     private static int fetchDistanceFromSiteApi(final ServerBuildInfo build, final int jenkinsBuild) {
-         try {
-             try (final BufferedReader reader = Resources.asCharSource(
--                URI.create("https://api.purpurmc.org/v2/purpur/" + build.minecraftVersionId()).toURL(), // Purpur - Rebrand
-+                URI.create("https://api.example.com/nonexistent/" + build.minecraftVersionId()).toURL(), // Purpur - Rebrand // Pulvinar
-                 StandardCharsets.UTF_8
-             ).openBufferedStream()) {
-                 final JsonObject json = new Gson().fromJson(reader, JsonObject.class);
-@@ -97,7 +99,7 @@ public class PaperVersionFetcher implements VersionFetcher {
-                 final int latest = json.getAsJsonObject("builds").getAsJsonPrimitive("latest").getAsInt(); // Purpur - Rebrand
-                 return latest - jenkinsBuild;
-             } catch (final JsonSyntaxException ex) {
--                LOGGER.error("Error parsing json from Purpur's downloads API", ex); // Purpur - Rebrand
-+                LOGGER.error("Error parsing json from nonexistent downloads API", ex); // Purpur - Rebrand // Pulvinar
-                 return DISTANCE_ERROR;
-             }
-         } catch (final IOException e) {
 diff --git a/src/main/java/com/destroystokyo/paper/console/PaperConsole.java b/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
-index bc7e4e5560708fea89c584b1d8b471f4966f311a..af2f3775610f896675372f110038c229f27316f4 100644
+index bc7e4e5560708fea89c584b1d8b471f4966f311a..37f011eb4b4ce8119048c21b842342cbbc3f2f1e 100644
 --- a/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
 +++ b/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
 @@ -20,7 +20,7 @@ public final class PaperConsole extends SimpleTerminalConsole {
@@ -73,19 +56,19 @@ index bc7e4e5560708fea89c584b1d8b471f4966f311a..af2f3775610f896675372f110038c229
      protected LineReader buildReader(LineReaderBuilder builder) {
          builder
 -                .appName("Purpur") // Purpur - Rebrand
-+                .appName("Pulvinar") // Purpur - Rebrand // Pulvinar
++                .appName("Pulvinar") // Purpur - Rebrand // Pulvinar - Rebrand
                  .variable(LineReader.HISTORY_FILE, java.nio.file.Paths.get(".console_history"))
                  .completer(new ConsoleCommandCompleter(this.server))
                  .option(LineReader.Option.COMPLETE_IN_WORD, true);
 diff --git a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
-index 1b0ee48e28aaa68ddb1f28c23d3c5f5f40505c98..4977567ee506576e69b90aae6539e55f07ce660c 100644
+index 1b0ee48e28aaa68ddb1f28c23d3c5f5f40505c98..e1ae7f66a41247bb820be577a9b90b5e08261942 100644
 --- a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
 +++ b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
 @@ -32,6 +32,7 @@ public record ServerBuildInfoImpl(
  
      private static final String BRAND_PAPER_NAME = "Paper";
      private static final String BRAND_PURPUR_NAME = "Purpur"; // Purpur - Rebrand
-+    private static final String BRAND_PULVINAR_NAME = "Pulvinar"; // Pulvinar
++    private static final String BRAND_PULVINAR_NAME = "Pulvinar"; // Pulvinar - Rebrand
  
      private static final String BUILD_DEV = "DEV";
  
@@ -94,10 +77,10 @@ index 1b0ee48e28aaa68ddb1f28c23d3c5f5f40505c98..4977567ee506576e69b90aae6539e55f
              getManifestAttribute(manifest, ATTRIBUTE_BRAND_ID)
                  .map(Key::key)
 -                .orElse(BRAND_PURPUR_ID), // Purpur - Rebrand
-+                .orElse(BRAND_PULVINAR_ID), // Purpur - Rebrand // Pulvinar
++                .orElse(BRAND_PULVINAR_ID), // Purpur - Rebrand // Pulvinar - Rebrand
              getManifestAttribute(manifest, ATTRIBUTE_BRAND_NAME)
 -                .orElse(BRAND_PURPUR_NAME), // Purpur - Rebrand
-+                .orElse(BRAND_PULVINAR_NAME), // Purpur - Rebrand // Pulvinar
++                .orElse(BRAND_PURPUR_NAME), // Purpur - Rebrand // Pulvinar - Rebrand
              SharedConstants.getCurrentVersion().id(),
              SharedConstants.getCurrentVersion().name(),
              getManifestAttribute(manifest, ATTRIBUTE_BUILD_NUMBER)
@@ -106,12 +89,12 @@ index 1b0ee48e28aaa68ddb1f28c23d3c5f5f40505c98..4977567ee506576e69b90aae6539e55f
      @Override
      public boolean isBrandCompatible(final @NotNull Key brandId) {
 -        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID); // Purpur - Fix pufferfish issues // Purpur - Rebrand
-+        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID) || brandId.equals(BRAND_PURPUR_ID); // Purpur - Fix pufferfish issues // Purpur - Rebrand // Pulvinar
++        return brandId.equals(this.brandId) || brandId.equals(BRAND_PAPER_ID) || brandId.equals(BRAND_PURPUR_ID); // Purpur - Fix pufferfish issues // Purpur - Rebrand // Pulvinar - Rebrand
      }
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
-index 2e7c3d4befeb6256ce81ecaa9ed4e8fbcb21651e..c1e65fcf2198bb562d9b811baba7336ee13048de 100644
+index 2e7c3d4befeb6256ce81ecaa9ed4e8fbcb21651e..52b99c5804c7b1c501e1ef049334107ce852a4b6 100644
 --- a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 +++ b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 @@ -491,7 +491,7 @@ public class CraftScheduler implements BukkitScheduler {
@@ -119,25 +102,25 @@ index 2e7c3d4befeb6256ce81ecaa9ed4e8fbcb21651e..c1e65fcf2198bb562d9b811baba7336e
              } else {
                  // this.debugTail = this.debugTail.setNext(new CraftAsyncDebugger(this.currentTick + CraftScheduler.RECENT_TICKS, task.getOwner(), task.getTaskClass())); // Paper
 -                task.getOwner().getLogger().log(Level.SEVERE, "Unexpected Async Task in the Sync Scheduler. Report this to Purpur"); // Paper // Purpur - Rebrand
-+                task.getOwner().getLogger().log(Level.SEVERE, "Unexpected Async Task in the Sync Scheduler. Report this to Pulvinar"); // Paper // Purpur - Rebrand // Pulvinar
++                task.getOwner().getLogger().log(Level.SEVERE, "Unexpected Async Task in the Sync Scheduler. Report this to Pulvinar"); // Paper // Purpur - Rebrand // Pulvinar - Rebrand
                  // We don't need to parse pending
                  // (async tasks must live with race-conditions if they attempt to cancel between these few lines of code)
              }
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
-index 99eb04643fce44c37fd96c99756837ccafe7b559..80a285848e1edfe2a0b819abf25abe74f4b4118c 100644
+index e34ceaa77c7e538c8d6bc341c4c6f450488ce426..01a609f9065c6003914f02545228b57d128f164e 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 @@ -11,7 +11,7 @@ public final class Versioning {
      public static String getBukkitVersion() {
          String result = "Unknown-Version";
  
--        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Pufferfish // Purpur - Rebrand
-+        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/net.kissenpvp.pulvinar/pulvinar-api/pom.properties"); // Pufferfish // Purpur - Rebrand // Pulvinar
+-        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Purpur - Rebrand
++        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/net.kissenpvp.pulvinar/pulvinar-api/pom.properties"); // Purpur - Rebrand // Pulvinar - Rebrand
          Properties properties = new Properties();
  
          if (stream != null) {
 diff --git a/src/main/java/org/spigotmc/WatchdogThread.java b/src/main/java/org/spigotmc/WatchdogThread.java
-index 39493810336442e74c0fc99fdeb5e073a8f4e95e..d495e158f08f3497fa1db77c5427c076284be597 100644
+index bf0cda94d87e46149a21505fc67ddb9ad9af0838..7b57aa64b797170cfa0dd1cbc29385b23a0b6780 100644
 --- a/src/main/java/org/spigotmc/WatchdogThread.java
 +++ b/src/main/java/org/spigotmc/WatchdogThread.java
 @@ -75,14 +75,14 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
@@ -145,34 +128,40 @@ index 39493810336442e74c0fc99fdeb5e073a8f4e95e..d495e158f08f3497fa1db77c5427c076
                  if (isLongTimeout) {
                      logger.log(Level.SEVERE, "------------------------------");
 -                    logger.log(Level.SEVERE, "The server has stopped responding! This is (probably) not a Purpur bug."); // Paper // Purpur - Rebrand
-+                    logger.log(Level.SEVERE, "The server has stopped responding! This is (probably) not a Pulvinar bug."); // Paper // Purpur - Rebrand // Pulvinar
++                    logger.log(Level.SEVERE, "The server has stopped responding! This is (probably) not a Pulvinar bug."); // Paper // Purpur - Rebrand // Pulvinar - Rebrand
                      logger.log(Level.SEVERE, "If you see a plugin in the Server thread dump below, then please report it to that author");
                      logger.log(Level.SEVERE, "\t *Especially* if it looks like HTTP or MySQL operations are occurring");
                      logger.log(Level.SEVERE, "If you see a world save or edit, then it means you did far more than your server can handle at once");
                      logger.log(Level.SEVERE, "\t If this is the case, consider increasing timeout-time in spigot.yml but note that this will replace the crash with LARGE lag spikes");
 -                    logger.log(Level.SEVERE, "If you are unsure or still think this is a Purpur bug, please report this to https://github.com/PurpurMC/Purpur/issues"); // Purpur - Rebrand
-+                    logger.log(Level.SEVERE, "If you are unsure or still think this is a Pulvinar bug, please report this to https://github.com/KissenPvP/Pulvinar/issues"); // Purpur - Rebrand // Pulvinar
++                    logger.log(Level.SEVERE, "If you are unsure or still think this is a Pulvinar bug, please report this to https://github.com/KissenPvP/Pulvinar/issues"); // Purpur - Rebrand // Pulvinar - Rebrand
                      logger.log(Level.SEVERE, "Be sure to include ALL relevant console errors and Minecraft crash reports");
 -                    logger.log(Level.SEVERE, "Purpur version: " + Bukkit.getServer().getVersion()); // Purpur - Rebrand
-+                    logger.log(Level.SEVERE, "Pulvinar version: " + Bukkit.getServer().getVersion()); // Purpur - Rebrand // Pulvinar
++                    logger.log(Level.SEVERE, "Pulvinar version: " + Bukkit.getServer().getVersion()); // Purpur - Rebrand // Pulvinar - Rebrand
  
                      if (net.minecraft.world.level.Level.lastPhysicsProblem != null) {
                          logger.log(Level.SEVERE, "------------------------------");
-@@ -102,7 +102,7 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
+@@ -102,12 +102,12 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
                      }
                      // Paper end
                  } else {
 -                    logger.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PURPUR - THIS IS NOT A BUG OR A CRASH  - " + Bukkit.getServer().getVersion() + " ---"); // Purpur - Rebrand
-+                    logger.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PULVINAR - THIS IS NOT A BUG OR A CRASH  - " + Bukkit.getServer().getVersion() + " ---"); // Purpur - Rebrand // Pulvinar
++                    logger.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PULVINAR - THIS IS NOT A BUG OR A CRASH  - " + Bukkit.getServer().getVersion() + " ---"); // Purpur - Rebrand // Pulvinar - Rebrand
                      logger.log(Level.SEVERE, "The server has not responded for " + (currentTime - lastTick) / 1000 + " seconds! Creating thread dump");
                  }
                  // Paper end - Different message for short timeout
+                 logger.log(Level.SEVERE, "------------------------------");
+-                logger.log(Level.SEVERE, "Server thread dump (Look for plugins here before reporting to Purpur!):"); // Paper // Purpur - Rebrand
++                logger.log(Level.SEVERE, "Server thread dump (Look for plugins here before reporting to Pulvinar!):"); // Paper // Purpur - Rebrand // Pulvinar - Rebrand
+                 FeatureHooks.dumpAllChunkLoadInfo(MinecraftServer.getServer(), isLongTimeout); // Paper - log detailed tick information
+                 WatchdogThread.dumpThread(ManagementFactory.getThreadMXBean().getThreadInfo(MinecraftServer.getServer().serverThread.threadId(), Integer.MAX_VALUE), logger);
+                 logger.log(Level.SEVERE, "------------------------------");
 @@ -120,7 +120,7 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
                          WatchdogThread.dumpThread(thread, logger);
                      }
                  } else {
 -                    logger.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PURPUR - THIS IS NOT A BUG OR A CRASH ---"); // Purpur - Rebrand
-+                    logger.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PULVINAR - THIS IS NOT A BUG OR A CRASH ---"); // Purpur - Rebrand // Pulvinar
++                    logger.log(Level.SEVERE, "--- DO NOT REPORT THIS TO PULVINAR - THIS IS NOT A BUG OR A CRASH ---"); // Purpur - Rebrand // Pulvinar - Rebrand
                  }
  
                  logger.log(Level.SEVERE, "------------------------------");
