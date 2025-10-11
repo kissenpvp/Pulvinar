@@ -32,7 +32,7 @@
 +    // Pulvinar end - Rebrand
  
      spigot {
-         enabled = false
+         enabled = true
 @@ -125,10 +_,14 @@
      main {
          java { srcDir("../paper-server/src/main/java") }
