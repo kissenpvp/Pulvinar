@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Fri, 24 Oct 2025 21:50:19 +0200
+Subject: [PATCH] Implement Kissen Plugin Api
+
+
+diff --git a/src/main/java/org/bukkit/plugin/Plugin.java b/src/main/java/org/bukkit/plugin/Plugin.java
+index 95d2ada67d86bc9d764d4455f4ef74ce88621695..70e56a29e1769344afd64ea6d3334ea66deeef2b 100644
+--- a/src/main/java/org/bukkit/plugin/Plugin.java
++++ b/src/main/java/org/bukkit/plugin/Plugin.java
+@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
+  * <p>
+  * The use of {@link PluginBase} is recommended for actual Implementation
+  */
+-public interface Plugin extends TabExecutor, io.papermc.paper.plugin.lifecycle.event.LifecycleEventOwner, Namespaced { // Paper
++public interface Plugin extends TabExecutor, io.papermc.paper.plugin.lifecycle.event.LifecycleEventOwner, Namespaced, net.kissenpvp.api.base.KissenPlugin { // Paper // Pulvinar - add kissen plugin interface
+     /**
+      * Returns the folder that the plugin data files are located in. The
+      * folder may not yet exist.

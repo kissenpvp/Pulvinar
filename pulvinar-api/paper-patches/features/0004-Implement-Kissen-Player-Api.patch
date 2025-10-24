@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Fri, 24 Oct 2025 21:53:57 +0200
+Subject: [PATCH] Implement Kissen Player Api
+
+
+diff --git a/src/main/java/org/bukkit/OfflinePlayer.java b/src/main/java/org/bukkit/OfflinePlayer.java
+index 28ebe77719afcc6b975def6b9d89f469173396f0..0ef04641f4de4707faad5cdc79b88a3aa306ff58 100644
+--- a/src/main/java/org/bukkit/OfflinePlayer.java
++++ b/src/main/java/org/bukkit/OfflinePlayer.java
+@@ -22,7 +22,7 @@ import org.jspecify.annotations.Nullable;
+  * player needing to be online.
+  */
+ @NullMarked
+-public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable, io.papermc.paper.persistence.PersistentDataViewHolder, PlayerHeadObjectContents.SkinSource { // Paper - Add Offline PDC API
++public interface OfflinePlayer extends ServerOperator, AnimalTamer, ConfigurationSerializable, io.papermc.paper.persistence.PersistentDataViewHolder, PlayerHeadObjectContents.SkinSource, net.kissenpvp.api.network.actor.PlayerClient { // Paper - Add Offline PDC API // Pulvinar - implement kissen player api
+ 
+     /**
+      * Checks if this player is currently online
+diff --git a/src/main/java/org/bukkit/command/ConsoleCommandSender.java b/src/main/java/org/bukkit/command/ConsoleCommandSender.java
+index f309c2ed39bcc700e5b491ff549bf0608a07aab8..b5e3caddd7cd4dc9ecacf5495940980fb905c994 100644
+--- a/src/main/java/org/bukkit/command/ConsoleCommandSender.java
++++ b/src/main/java/org/bukkit/command/ConsoleCommandSender.java
+@@ -2,5 +2,5 @@ package org.bukkit.command;
+ 
+ import org.bukkit.conversations.Conversable;
+ 
+-public interface ConsoleCommandSender extends CommandSender, Conversable {
++public interface ConsoleCommandSender extends CommandSender, Conversable, net.kissenpvp.api.network.actor.ConsoleClient { // Pulvinar - implement player api
+ }
+diff --git a/src/main/java/org/bukkit/entity/HumanEntity.java b/src/main/java/org/bukkit/entity/HumanEntity.java
+index f2a1693a1ef03dafa33442d61f73f91bd6202370..be05e7de7769b2b7c1f47f67d21b7cd9ac1cb8e9 100644
+--- a/src/main/java/org/bukkit/entity/HumanEntity.java
++++ b/src/main/java/org/bukkit/entity/HumanEntity.java
+@@ -29,7 +29,7 @@ import org.jspecify.annotations.Nullable;
+  * Represents a human entity, such as an NPC or a player
+  */
+ @NullMarked
+-public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder {
++public interface HumanEntity extends LivingEntity, AnimalTamer, InventoryHolder, net.kissenpvp.api.network.actor.Actor { // Pulvinar - implement player api
+ 
+     // Paper start
+     @Override
+diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
+index b221735602f669ef984b44d73605095460316753..a1cbb28e9a599e1c916bbf108bbf0d6ee84e2a4f 100644
+--- a/src/main/java/org/bukkit/entity/Player.java
++++ b/src/main/java/org/bukkit/entity/Player.java
+@@ -64,7 +64,7 @@ import org.jspecify.annotations.Nullable;
+  * Represents a player, connected or not
+  */
+ @NullMarked
+-public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginMessageRecipient, net.kyori.adventure.identity.Identified, net.kyori.adventure.bossbar.BossBarViewer, com.destroystokyo.paper.network.NetworkClient { // Paper
++public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginMessageRecipient, net.kyori.adventure.identity.Identified, net.kyori.adventure.bossbar.BossBarViewer, com.destroystokyo.paper.network.NetworkClient, net.kissenpvp.api.network.actor.ReachablePlayerClient { // Paper // Pulvinar - implement kissen player api
+ 
+     // Paper start
+     @Override

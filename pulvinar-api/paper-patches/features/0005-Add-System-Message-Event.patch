@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Fri, 24 Oct 2025 22:04:16 +0200
+Subject: [PATCH] Add System Message Event
+
+
+diff --git a/src/main/java/net/kissenpvp/api/event/SystemMessageEvent.java b/src/main/java/net/kissenpvp/api/event/SystemMessageEvent.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..4b35e5def2c99431e27f34ed7210fed55a0cde0f
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/api/event/SystemMessageEvent.java
+@@ -0,0 +1,52 @@
++package net.kissenpvp.api.event;
++
++import net.kyori.adventure.text.Component;
++import org.bukkit.event.Cancellable;
++import org.bukkit.event.Event;
++import org.bukkit.event.HandlerList;
++import org.jetbrains.annotations.NotNull;
++
++public class SystemMessageEvent extends Event implements Cancellable
++{
++    private static final HandlerList HANDLER_LIST = new HandlerList();
++
++    private Component message;
++    private boolean cancelled;
++
++    public SystemMessageEvent(@NotNull Component message)
++    {
++        this.message = message;
++        cancelled = false;
++    }
++
++    public @NotNull Component getMessage()
++    {
++        return message;
++    }
++
++    public void setMessage(@NotNull Component message)
++    {
++        this.message = message;
++    }
++
++    @Override public @NotNull HandlerList getHandlers()
++    {
++        return HANDLER_LIST;
++    }
++
++    @NotNull
++    public static HandlerList getHandlerList()
++    {
++        return HANDLER_LIST;
++    }
++
++    @Override public boolean isCancelled()
++    {
++        return cancelled;
++    }
++
++    @Override public void setCancelled(boolean cancel)
++    {
++        cancelled = cancel;
++    }
++}
