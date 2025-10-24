@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Fri, 24 Oct 2025 22:14:07 +0200
+Subject: [PATCH] Add Kissen Base
+
+
+diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
+index 42841fdc7e64311ba9217789a3dc758a351cf674..6539406dc8fc8499060ff3b419d91c84e298f2ea 100644
+--- a/net/minecraft/server/Main.java
++++ b/net/minecraft/server/Main.java
+@@ -173,6 +173,13 @@ public class Main {
+ 
+             org.spigotmc.SpigotConfig.disabledAdvancements = spigotConfiguration.getStringList("advancements.disabled"); // Paper - fix SPIGOT-5885, must be set early in init
+ 
++            // Pulvinar start - add kissen base
++            LOGGER.info("Pulvinar is now going to hook in pulvinar.");
++            java.io.File pulvinarSettings = (java.io.File) optionSet.valueOf("pulvinar-settings");
++            net.kissenpvp.api.base.Pulvinar pulvinar = new net.kissenpvp.base.PulvinarCore(pulvinarSettings);
++            org.bukkit.Bukkit.setPulvinar(pulvinar);
++            // Pulvinar end - add kissen base
++
+             // Paper start - fix SPIGOT-5824
+             File file;
+             File userCacheFile = new File(Services.USERID_CACHE_FILE);
