@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Sun, 2 Nov 2025 15:32:43 +0100
+Subject: [PATCH] Allow Access To Stored User List Map
+
+
+diff --git a/net/minecraft/server/players/StoredUserList.java b/net/minecraft/server/players/StoredUserList.java
+index 106f79a52c601638569266ece9db01482751e33f..fb657b078135a8919447410928407c4fa2f70709 100644
+--- a/net/minecraft/server/players/StoredUserList.java
++++ b/net/minecraft/server/players/StoredUserList.java
+@@ -159,4 +159,11 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
+             // Spigot end
+         }
+     }
++
++    // Pulvinar start - allow protected access to map
++    protected Map<String, V> getMap()
++    {
++        return map;
++    }
++    // Pulvinar end - allow protected access to map
+ }

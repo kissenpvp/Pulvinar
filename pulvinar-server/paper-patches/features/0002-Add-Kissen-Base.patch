@@ -117,20 +117,16 @@ index 0000000000000000000000000000000000000000..80881cb8f73a6f8c40a2546b69b61ef6
 +}
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..f8bcd31f59e99d99c3599994fbab05c1da3da3d4
+index 0000000000000000000000000000000000000000..597a4ba2c5a0ca4a7bde8bfc8c8f952f15450a24
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,88 @@
+@@ -0,0 +1,84 @@
 +package net.kissenpvp.base;
 +
 +import net.kissenpvp.api.base.Pulvinar;
 +import net.kissenpvp.api.database.ConnectionProvider;
 +import net.kissenpvp.api.network.actor.ConsoleClient;
 +import net.kissenpvp.database.InternalConnectionProvider;
-+import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
-+import net.kissenpvp.network.actor.rank.repository.InternalRankSubscriptionRepository;
-+import net.kissenpvp.punishment.repository.InternalPunishmentRepository;
-+import net.kissenpvp.punishment.repository.InternalPunishmentSubscriptionRepository;
 +import org.bukkit.Bukkit;
 +import org.bukkit.configuration.InvalidConfigurationException;
 +import org.jspecify.annotations.NonNull;
@@ -178,14 +174,14 @@ index 0000000000000000000000000000000000000000..f8bcd31f59e99d99c3599994fbab05c1
 +        DataSource dataSource = provider.dataSource().get();
 +        InternalRepositoryHolder.RepositoryHolderBuilder builder = InternalRepositoryHolder.builder();
 +
-+        createRepositories(builder);
++        createRepositories(builder, dataSource);
 +
 +        log.debug("Proceeding to populate core instance...");
 +        databaseModule(builder.build());
 +        init();
 +    }
 +
-+    private void createRepositories(InternalRepositoryHolder.RepositoryHolderBuilder builder)
++    private void createRepositories(InternalRepositoryHolder.RepositoryHolderBuilder builder, DataSource dataSource)
 +    {
 +
 +    }

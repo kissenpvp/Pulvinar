@@ -1,0 +1,114 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Sun, 2 Nov 2025 15:56:26 +0100
+Subject: [PATCH] Overhaul Operator Database
+
+
+diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+index 597a4ba2c5a0ca4a7bde8bfc8c8f952f15450a24..c5ca85bd6e4311fb1d3d641df50460c303ac0874 100644
+--- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
++++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+@@ -60,7 +60,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+ 
+     private void createRepositories(InternalRepositoryHolder.RepositoryHolderBuilder builder, DataSource dataSource)
+     {
+-
++        builder.operatorRepository(new net.kissenpvp.network.actor.operator.PulvinarOperatorRepository(dataSource));
+     }
+ 
+     public void shutdown()
+diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..24847bd1eb2e0a35f3cdd91781a5cf277d9dec5f
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
+@@ -0,0 +1,53 @@
++package net.kissenpvp.network.actor.operator;
++
++import net.kissenpvp.api.database.Repository;
++import net.kissenpvp.api.network.actor.OperatorInfo;
++import net.minecraft.server.notifications.NotificationService;
++import net.minecraft.server.players.ServerOpList;
++import net.minecraft.server.players.ServerOpListEntry;
++import org.jspecify.annotations.NonNull;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++import java.io.IOException;
++import java.util.Collection;
++import java.util.Objects;
++import java.util.UUID;
++
++public class PulvinarOperatorList extends ServerOpList
++{
++    private static final Logger log = LoggerFactory.getLogger(PulvinarOperatorList.class);
++    private final Repository<UUID, OperatorInfo> repository;
++
++    public PulvinarOperatorList(@NonNull Repository<UUID, OperatorInfo> repository, NotificationService notificationService)
++    {
++        super(null, notificationService);
++        this.repository = repository;
++    }
++
++    @Override
++    public void load() throws IOException {
++        Collection<OperatorInfo> operators = repository.findAll().join();
++
++        for(OperatorInfo operator : operators)
++        {
++            ServerOpListEntry entry = (ServerOpListEntry) operator;
++            if(Objects.isNull(entry.getUser()))
++            {
++                log.warn("Discarding operator entry {} due to missing user.", operator);
++                continue;
++            }
++
++            String key = getKeyForUser(entry.getUser());
++            getMap().put(key, entry);
++        }
++    }
++
++    @Override
++    public void save() throws IOException {
++        Collection<? extends OperatorInfo> ops = getMap().values();
++
++        //noinspection unchecked
++        repository.saveAll((Iterable<OperatorInfo>) ops); // look. I know this is stupid. But just accept that this is java
++    }
++}
+diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..29118b4a2920fa47eb7829692fce37667e8e7fb2
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
+@@ -0,0 +1,30 @@
++package net.kissenpvp.network.actor.operator;
++
++import net.kissenpvp.api.network.actor.OperatorInfo;
++import net.kissenpvp.network.actor.InternalOperatorRepository;
++import net.minecraft.server.players.NameAndId;
++import net.minecraft.server.players.ServerOpListEntry;
++import org.jspecify.annotations.NonNull;
++
++import javax.sql.DataSource;
++import java.sql.ResultSet;
++import java.sql.SQLException;
++import java.util.UUID;
++
++public class PulvinarOperatorRepository extends InternalOperatorRepository
++{
++    public PulvinarOperatorRepository(@NonNull DataSource dataSource) throws NullPointerException
++    {
++        super(dataSource);
++    }
++
++    @Override
++    public @NonNull OperatorInfo toEntity(@NonNull UUID uuid, @NonNull ResultSet resultSet) throws SQLException, NullPointerException
++    {
++        NameAndId profile = new NameAndId(uuid, resultSet.getString("username"));
++        int level = resultSet.getInt("operator_level");
++        boolean canBypass = resultSet.getBoolean("can_bypass_player_limit");
++
++        return new ServerOpListEntry(profile, level, canBypass);
++    }
++}
