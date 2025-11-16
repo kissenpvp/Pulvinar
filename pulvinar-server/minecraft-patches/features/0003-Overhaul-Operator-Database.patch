@@ -27,7 +27,7 @@ index 1328cc6402134042d5890bedaaacf6e9807eb5ec..2df687cf52458b67fb26d603e54f0d0a
          this.ipBans = new IpBanList(IPBANLIST_FILE, notificationService);
      }
 diff --git a/net/minecraft/server/players/ServerOpListEntry.java b/net/minecraft/server/players/ServerOpListEntry.java
-index 2013f5c2fd114819258cb34199665e6632efcdf9..c76c0a33397d8569646fd6968a890ced4d6a21b0 100644
+index 2013f5c2fd114819258cb34199665e6632efcdf9..823dfa6da8928915c06574a02f68e2ad1bd4712d 100644
 --- a/net/minecraft/server/players/ServerOpListEntry.java
 +++ b/net/minecraft/server/players/ServerOpListEntry.java
 @@ -2,7 +2,7 @@ package net.minecraft.server.players;
@@ -39,18 +39,12 @@ index 2013f5c2fd114819258cb34199665e6632efcdf9..c76c0a33397d8569646fd6968a890ced
      private final int level;
      private final boolean bypassesPlayerLimit;
  
-@@ -34,4 +34,40 @@ public class ServerOpListEntry extends StoredUserEntry<NameAndId> {
+@@ -34,4 +34,18 @@ public class ServerOpListEntry extends StoredUserEntry<NameAndId> {
              data.addProperty("bypassesPlayerLimit", this.bypassesPlayerLimit);
          }
      }
 +
 +    // Pulvinar start - overhaul operator database
-+    @Override
-+    public String name() {
-+        com.google.common.base.Preconditions.checkNotNull(getUser());
-+        return getUser().name();
-+    }
-+
 +    @Override
 +    public java.util.UUID id() {
 +        com.google.common.base.Preconditions.checkNotNull(getUser());
@@ -58,25 +52,9 @@ index 2013f5c2fd114819258cb34199665e6632efcdf9..c76c0a33397d8569646fd6968a890ced
 +    }
 +
 +    @Override
-+    public int signature() {
-+        return java.util.Objects.hash(id(), name(), level, bypassesPlayerLimit);
-+    }
-+
-+    @Override
-+    public boolean unsaved() {
-+        return false;
-+    }
-+
-+    @Override
-+    public boolean equals(Object o) {
-+        if (o == null || getClass() != o.getClass()) return false;
-+        ServerOpListEntry that = (ServerOpListEntry) o;
-+        return id() == that.id();
-+    }
-+
-+    @Override
-+    public int hashCode() {
-+        return java.util.Objects.hashCode(level);
++    public String name() {
++        com.google.common.base.Preconditions.checkNotNull(getUser());
++        return getUser().name();
 +    }
 +    // Pulvinar end - overhaul operator database
  }

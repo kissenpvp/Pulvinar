@@ -18,7 +18,7 @@ index 2df687cf52458b67fb26d603e54f0d0a51485125..3de6f96644801ea6a3e4ded8788e0ee7
          this.bans = new UserBanList(USERBANLIST_FILE, notificationService);
          this.ipBans = new IpBanList(IPBANLIST_FILE, notificationService);
 diff --git a/net/minecraft/server/players/UserWhiteListEntry.java b/net/minecraft/server/players/UserWhiteListEntry.java
-index 7fd16aa326324e787182637141af28f8bb1ac354..4bbb027e6fe335f101eef82f7e6947cbae7294ef 100644
+index 7fd16aa326324e787182637141af28f8bb1ac354..b3679541bf22fa400b862ce37a45694af2559450 100644
 --- a/net/minecraft/server/players/UserWhiteListEntry.java
 +++ b/net/minecraft/server/players/UserWhiteListEntry.java
 @@ -1,8 +1,9 @@
@@ -32,7 +32,7 @@ index 7fd16aa326324e787182637141af28f8bb1ac354..4bbb027e6fe335f101eef82f7e6947cb
      public UserWhiteListEntry(NameAndId user) {
          super(user);
      }
-@@ -17,4 +18,23 @@ public class UserWhiteListEntry extends StoredUserEntry<NameAndId> {
+@@ -17,4 +18,13 @@ public class UserWhiteListEntry extends StoredUserEntry<NameAndId> {
              this.getUser().appendTo(data);
          }
      }
@@ -43,16 +43,6 @@ index 7fd16aa326324e787182637141af28f8bb1ac354..4bbb027e6fe335f101eef82f7e6947cb
 +        com.google.common.base.Preconditions.checkNotNull(getUser(), "User must not be null.");
 +
 +        return getUser().id();
-+    }
-+
-+    @Override
-+    public int signature() {
-+        return 0;
-+    }
-+
-+    @Override
-+    public boolean unsaved() {
-+        return false;
 +    }
 +    // Pulvinar end - overhaul whitelist database
  }
