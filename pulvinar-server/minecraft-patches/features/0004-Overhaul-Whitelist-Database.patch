@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Sun, 16 Nov 2025 19:01:56 +0100
+Subject: [PATCH] Overhaul Whitelist Database
+
+
+diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
+index 2df687cf52458b67fb26d603e54f0d0a51485125..3de6f96644801ea6a3e4ded8788e0ee7b7f002d6 100644
+--- a/net/minecraft/server/players/PlayerList.java
++++ b/net/minecraft/server/players/PlayerList.java
+@@ -143,7 +143,7 @@ public abstract class PlayerList {
+         this.server = server;
+         this.registries = registries;
+         this.playerIo = playerIo;
+-        this.whitelist = new UserWhiteList(WHITELIST_FILE, notificationService);
++        this.whitelist = new net.kissenpvp.network.actor.whitelist.PulvinarWhiteList(WHITELIST_FILE,  ((net.kissenpvp.base.PulvinarCore) org.bukkit.Bukkit.getPulvinar()).whiteListRepository(), notificationService); // new UserWhiteList(WHITELIST_FILE, notificationService); // Pulvinar - overhaul whitelist database
+         this.ops = new net.kissenpvp.network.actor.operator.PulvinarOperatorList(OPLIST_FILE, ((net.kissenpvp.base.PulvinarCore) org.bukkit.Bukkit.getPulvinar()).operatorRepository(), notificationService); // new ServerOpList(OPLIST_FILE, notificationService); // Pulvinar - overhaul operator database
+         this.bans = new UserBanList(USERBANLIST_FILE, notificationService);
+         this.ipBans = new IpBanList(IPBANLIST_FILE, notificationService);
+diff --git a/net/minecraft/server/players/UserWhiteListEntry.java b/net/minecraft/server/players/UserWhiteListEntry.java
+index 7fd16aa326324e787182637141af28f8bb1ac354..4bbb027e6fe335f101eef82f7e6947cbae7294ef 100644
+--- a/net/minecraft/server/players/UserWhiteListEntry.java
++++ b/net/minecraft/server/players/UserWhiteListEntry.java
+@@ -1,8 +1,9 @@
+ package net.minecraft.server.players;
+ 
+ import com.google.gson.JsonObject;
++import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListEntry;
+ 
+-public class UserWhiteListEntry extends StoredUserEntry<NameAndId> {
++public class UserWhiteListEntry extends StoredUserEntry<NameAndId> implements PulvinarWhiteListEntry { // Pulvinar - Overhaul Whitelist Database
+     public UserWhiteListEntry(NameAndId user) {
+         super(user);
+     }
+@@ -17,4 +18,23 @@ public class UserWhiteListEntry extends StoredUserEntry<NameAndId> {
+             this.getUser().appendTo(data);
+         }
+     }
++
++    // Pulvinar start - overhaul whitelist database
++    @Override
++    public java.util.UUID id() {
++        com.google.common.base.Preconditions.checkNotNull(getUser(), "User must not be null.");
++
++        return getUser().id();
++    }
++
++    @Override
++    public int signature() {
++        return 0;
++    }
++
++    @Override
++    public boolean unsaved() {
++        return false;
++    }
++    // Pulvinar end - overhaul whitelist database
+ }

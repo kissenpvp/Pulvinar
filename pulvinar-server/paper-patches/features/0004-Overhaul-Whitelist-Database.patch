@@ -1,0 +1,241 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Sun, 16 Nov 2025 19:01:52 +0100
+Subject: [PATCH] Overhaul Whitelist Database
+
+
+diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+index 0df8d54000fff963a70358aad8f2d29f26deb726..4381e65cdc728c9eefe1cd49c575e3918fef24c4 100644
+--- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
++++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+@@ -5,6 +5,7 @@ import net.kissenpvp.api.database.ConnectionProvider;
+ import net.kissenpvp.api.network.actor.ConsoleClient;
+ import net.kissenpvp.database.InternalConnectionProvider;
+ import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
++import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
+ import org.bukkit.Bukkit;
+ import org.bukkit.configuration.InvalidConfigurationException;
+ import org.jspecify.annotations.NonNull;
+@@ -26,6 +27,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+ 
+     private final ConnectionProvider provider;
+     private PulvinarOperatorRepository operatorRepository;
++    private PulvinarWhiteListRepository whiteListRepository;
+ 
+     public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
+         config = new PulvinarConfig();
+@@ -63,6 +65,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     private void createRepositories(InternalRepositoryHolder.RepositoryHolderBuilder builder, DataSource dataSource)
+     {
+         operatorRepository = new PulvinarOperatorRepository(dataSource);
++        whiteListRepository = new PulvinarWhiteListRepository(dataSource);
+     }
+ 
+     public void shutdown()
+@@ -87,4 +90,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     public @NonNull PulvinarOperatorRepository operatorRepository() {
+         return operatorRepository;
+     }
++
++    public @NonNull PulvinarWhiteListRepository whiteListRepository() {
++        return whiteListRepository;
++    }
+ }
+diff --git a/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteList.java b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteList.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..869f450f693ec6b73084d25b6954f38dad38f3cf
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteList.java
+@@ -0,0 +1,49 @@
++package net.kissenpvp.network.actor.whitelist;
++
++import net.minecraft.server.notifications.NotificationService;
++import net.minecraft.server.players.UserWhiteList;
++import net.minecraft.server.players.UserWhiteListEntry;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++import java.io.File;
++import java.io.IOException;
++import java.util.Collection;
++import java.util.Objects;
++
++public class PulvinarWhiteList extends UserWhiteList {
++
++    private static final Logger log = LoggerFactory.getLogger(PulvinarWhiteList.class);
++    private final PulvinarWhiteListRepository repository;
++
++    public PulvinarWhiteList(File file, PulvinarWhiteListRepository repository, NotificationService notificationService) {
++        super(file, notificationService);
++        this.repository = repository;
++    }
++
++    @Override
++    public void load() throws IOException {
++        Collection<PulvinarWhiteListEntry> whiteListed = repository.findAll().join();
++
++        for(PulvinarWhiteListEntry whiteListEntry : whiteListed)
++        {
++            UserWhiteListEntry entry = (UserWhiteListEntry) whiteListEntry;
++            if(Objects.isNull(entry.getUser()))
++            {
++                log.warn("Discarding whitelist entry {} due to missing user.", entry);
++                continue;
++            }
++
++            String key = getKeyForUser(entry.getUser());
++            getMap().put(key, entry);
++        }
++    }
++
++    @Override
++    public void save() throws IOException {
++        Collection<? extends PulvinarWhiteListEntry> ops = getMap().values();
++
++        //noinspection unchecked
++        repository.saveAll((Iterable<PulvinarWhiteListEntry>) ops);
++    }
++}
+diff --git a/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListEntry.java b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListEntry.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..a93d0eb776b177dd3bf3c3e7b17a12a8c91a721e
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListEntry.java
+@@ -0,0 +1,7 @@
++package net.kissenpvp.network.actor.whitelist;
++
++import net.kissenpvp.api.database.PersistableEntity;
++
++import java.util.UUID;
++
++public interface PulvinarWhiteListEntry extends PersistableEntity<UUID> { }
+diff --git a/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListRepository.java b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListRepository.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..0701d8ab1d327ce64101922f24cc890c805ffc19
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListRepository.java
+@@ -0,0 +1,124 @@
++package net.kissenpvp.network.actor.whitelist;
++
++import com.google.common.base.Preconditions;
++import net.kissenpvp.api.database.KissenRepository;
++import net.minecraft.server.players.NameAndId;
++import net.minecraft.server.players.UserWhiteListEntry;
++import org.jspecify.annotations.NonNull;
++
++import javax.sql.DataSource;
++import java.sql.ResultSet;
++import java.sql.SQLException;
++import java.util.*;
++import java.util.concurrent.CompletableFuture;
++
++public class PulvinarWhiteListRepository extends KissenRepository<UUID, PulvinarWhiteListEntry> {
++
++    public PulvinarWhiteListRepository(@NonNull DataSource dataSource) throws NullPointerException {
++        super(dataSource);
++    }
++
++    private static @NonNull PulvinarWhiteListEntry toEntity(@NonNull UUID id, @NonNull ResultSet resultSet) throws SQLException {
++        Preconditions.checkNotNull(id, "Id must not be null.");
++        Preconditions.checkNotNull(resultSet, "ResultSet must not be null.");
++
++        String name = resultSet.getString("username");
++        return new UserWhiteListEntry(new NameAndId(id, name));
++    }
++
++    private static @NonNull Collection<PulvinarWhiteListEntry> collectResults(@NonNull ResultSet resultSet) throws SQLException {
++        Preconditions.checkNotNull(resultSet, "ResultSet must not be null.");
++        Collection<PulvinarWhiteListEntry> entries = new HashSet<>();
++
++        while(resultSet.next())
++        {
++            UUID id = UUID.fromString(resultSet.getString("id"));
++            entries.add(toEntity(id, resultSet));
++        }
++        return Collections.unmodifiableCollection(entries);
++    }
++
++    @Override
++    public @NonNull CompletableFuture<@NonNull Optional<PulvinarWhiteListEntry>> find(@NonNull UUID uuid) throws NullPointerException {
++        String sql = "SELECT p.username AS username FROM ksvp_whitelist w JOIN ksvp_player p ON w.id = p.id WHERE w.id = ?;";
++
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
++            statement.setString(1, String.valueOf(uuid));
++            try (ResultSet resultSet = statement.executeQuery()) {
++
++                if(!resultSet.next())
++                {
++                    return Optional.empty();
++                }
++
++                return Optional.of(toEntity(uuid, resultSet));
++            }
++        })));
++    }
++
++    @Override
++    public @NonNull CompletableFuture<@NonNull Collection<PulvinarWhiteListEntry>> findAll(@NonNull Iterable<UUID> iterable) throws NullPointerException {
++        int size = computeIterableSize(iterable);
++        if(size == 0)
++        {
++            return CompletableFuture.completedFuture(Collections.emptyList());
++        }
++
++        String placeholders = String.join(", ", Collections.nCopies(size, "?"));
++        String sql = "SELECT w.id, p.username AS username FROM ksvp_whitelist w JOIN ksvp_player p ON w.id = p.id WHERE w.id IN (" + placeholders + ")";
++
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) ->
++        {
++            int index = 1;
++
++            for (UUID current : iterable) {
++                statement.setString(index++, String.valueOf(current));
++            }
++
++            try (ResultSet resultSet = statement.executeQuery()) {
++                return collectResults(resultSet);
++            }
++        })));
++    }
++
++    @Override
++    public @NonNull CompletableFuture<@NonNull Collection<PulvinarWhiteListEntry>> findAll() {
++        String sql = "SELECT w.id, p.username AS username FROM ksvp_whitelist w JOIN ksvp_player p ON w.id = p.id";
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
++            try (ResultSet resultSet = statement.executeQuery()) {
++                return collectResults(resultSet);
++            }
++        })));
++    }
++
++    @Override
++    public @NonNull CompletableFuture<@NonNull Boolean> has(@NonNull UUID uuid) throws NullPointerException {
++        Preconditions.checkNotNull(uuid, "Uuid must not be null.");
++
++        String sql = "SELECT id FROM ksvp_whitelist WHERE id = ?;";
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
++            statement.setString(1, String.valueOf(uuid));
++
++            try (ResultSet resultSet = statement.executeQuery()) {
++                return resultSet.next();
++            }
++        })));
++    }
++
++    @Override
++    public @NonNull CompletableFuture<Void> saveAll(@NonNull Iterable<PulvinarWhiteListEntry> iterable) throws NullPointerException {
++        String sql = "INSERT INTO ksvp_whitelist (id) VALUES (?) ON DUPLICATE KEY UPDATE id = ?;";
++        return CompletableFuture.supplyAsync(() -> query(sql, (statement) -> {
++            for(PulvinarWhiteListEntry entry : iterable)
++            {
++                String uuid = String.valueOf(entry.id());
++                statement.setString(1, uuid);
++                statement.setString(2, uuid);
++                statement.addBatch();
++            }
++
++            statement.executeBatch();
++            return null;
++        }));
++    }
++}
