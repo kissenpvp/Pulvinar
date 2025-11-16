@@ -5,28 +5,76 @@ Subject: [PATCH] Overhaul Operator Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 597a4ba2c5a0ca4a7bde8bfc8c8f952f15450a24..c5ca85bd6e4311fb1d3d641df50460c303ac0874 100644
+index 597a4ba2c5a0ca4a7bde8bfc8c8f952f15450a24..0df8d54000fff963a70358aad8f2d29f26deb726 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -60,7 +60,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -4,6 +4,7 @@ import net.kissenpvp.api.base.Pulvinar;
+ import net.kissenpvp.api.database.ConnectionProvider;
+ import net.kissenpvp.api.network.actor.ConsoleClient;
+ import net.kissenpvp.database.InternalConnectionProvider;
++import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
+ import org.bukkit.Bukkit;
+ import org.bukkit.configuration.InvalidConfigurationException;
+ import org.jspecify.annotations.NonNull;
+@@ -24,6 +25,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     private final PulvinarConfig config;
+ 
+     private final ConnectionProvider provider;
++    private PulvinarOperatorRepository operatorRepository;
+ 
+     public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
+         config = new PulvinarConfig();
+@@ -60,7 +62,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
  
      private void createRepositories(InternalRepositoryHolder.RepositoryHolderBuilder builder, DataSource dataSource)
      {
 -
-+        builder.operatorRepository(new net.kissenpvp.network.actor.operator.PulvinarOperatorRepository(dataSource));
++        operatorRepository = new PulvinarOperatorRepository(dataSource);
      }
  
      public void shutdown()
+@@ -81,4 +83,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     public @NonNull ConnectionProvider connectionProvider() {
+         return provider;
+     }
++
++    public @NonNull PulvinarOperatorRepository operatorRepository() {
++        return operatorRepository;
++    }
+ }
+diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorInfo.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorInfo.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..e1686de9702b07475edfa2b2c794ff216a298b63
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorInfo.java
+@@ -0,0 +1,18 @@
++package net.kissenpvp.network.actor.operator;
++
++import net.kissenpvp.api.database.PersistableEntity;
++import org.jspecify.annotations.NonNull;
++
++import java.util.UUID;
++
++public interface PulvinarOperatorInfo extends PersistableEntity<UUID> {
++
++    @NonNull UUID id();
++
++    @NonNull String name();
++
++    int getLevel();
++
++    boolean getBypassesPlayerLimit();
++
++}
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..24847bd1eb2e0a35f3cdd91781a5cf277d9dec5f
+index 0000000000000000000000000000000000000000..89cd7dc5d06b8f9c609ab5c0b588f5705254acfb
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
 @@ -0,0 +1,53 @@
 +package net.kissenpvp.network.actor.operator;
 +
 +import net.kissenpvp.api.database.Repository;
-+import net.kissenpvp.api.network.actor.OperatorInfo;
 +import net.minecraft.server.notifications.NotificationService;
 +import net.minecraft.server.players.ServerOpList;
 +import net.minecraft.server.players.ServerOpListEntry;
@@ -34,6 +82,7 @@ index 0000000000000000000000000000000000000000..24847bd1eb2e0a35f3cdd91781a5cf27
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
 +
++import java.io.File;
 +import java.io.IOException;
 +import java.util.Collection;
 +import java.util.Objects;
@@ -42,19 +91,19 @@ index 0000000000000000000000000000000000000000..24847bd1eb2e0a35f3cdd91781a5cf27
 +public class PulvinarOperatorList extends ServerOpList
 +{
 +    private static final Logger log = LoggerFactory.getLogger(PulvinarOperatorList.class);
-+    private final Repository<UUID, OperatorInfo> repository;
++    private final Repository<UUID, PulvinarOperatorInfo> repository;
 +
-+    public PulvinarOperatorList(@NonNull Repository<UUID, OperatorInfo> repository, NotificationService notificationService)
++    public PulvinarOperatorList(@NonNull File file, @NonNull Repository<UUID, PulvinarOperatorInfo> repository, NotificationService notificationService)
 +    {
-+        super(null, notificationService);
++        super(file, notificationService);
 +        this.repository = repository;
 +    }
 +
 +    @Override
 +    public void load() throws IOException {
-+        Collection<OperatorInfo> operators = repository.findAll().join();
++        Collection<PulvinarOperatorInfo> operators = repository.findAll().join();
 +
-+        for(OperatorInfo operator : operators)
++        for(PulvinarOperatorInfo operator : operators)
 +        {
 +            ServerOpListEntry entry = (ServerOpListEntry) operator;
 +            if(Objects.isNull(entry.getUser()))
@@ -70,45 +119,140 @@ index 0000000000000000000000000000000000000000..24847bd1eb2e0a35f3cdd91781a5cf27
 +
 +    @Override
 +    public void save() throws IOException {
-+        Collection<? extends OperatorInfo> ops = getMap().values();
++        Collection<? extends PulvinarOperatorInfo> ops = getMap().values();
 +
 +        //noinspection unchecked
-+        repository.saveAll((Iterable<OperatorInfo>) ops); // look. I know this is stupid. But just accept that this is java
++        repository.saveAll((Iterable<PulvinarOperatorInfo>) ops); // look. I know this is stupid. But just accept that this is java
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..29118b4a2920fa47eb7829692fce37667e8e7fb2
+index 0000000000000000000000000000000000000000..e73b78bdceab79f4482ca9f9ed2a2a460d29bbab
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,125 @@
 +package net.kissenpvp.network.actor.operator;
 +
-+import net.kissenpvp.api.network.actor.OperatorInfo;
-+import net.kissenpvp.network.actor.InternalOperatorRepository;
++import com.google.common.base.Preconditions;
++import net.kissenpvp.api.database.KissenRepository;
 +import net.minecraft.server.players.NameAndId;
 +import net.minecraft.server.players.ServerOpListEntry;
 +import org.jspecify.annotations.NonNull;
 +
 +import javax.sql.DataSource;
++import java.sql.PreparedStatement;
 +import java.sql.ResultSet;
 +import java.sql.SQLException;
-+import java.util.UUID;
++import java.util.*;
++import java.util.concurrent.CompletableFuture;
 +
-+public class PulvinarOperatorRepository extends InternalOperatorRepository
-+{
-+    public PulvinarOperatorRepository(@NonNull DataSource dataSource) throws NullPointerException
-+    {
++public class PulvinarOperatorRepository extends KissenRepository<UUID, PulvinarOperatorInfo> {
++    public PulvinarOperatorRepository(@NonNull DataSource dataSource) throws NullPointerException {
 +        super(dataSource);
 +    }
 +
-+    @Override
-+    public @NonNull OperatorInfo toEntity(@NonNull UUID uuid, @NonNull ResultSet resultSet) throws SQLException, NullPointerException
-+    {
-+        NameAndId profile = new NameAndId(uuid, resultSet.getString("username"));
-+        int level = resultSet.getInt("operator_level");
-+        boolean canBypass = resultSet.getBoolean("can_bypass_player_limit");
++    private static @NonNull PulvinarOperatorInfo toEntity(@NonNull UUID id, @NonNull ResultSet resultSet) throws SQLException {
++        Preconditions.checkNotNull(id, "Id must not be null.");
++        Preconditions.checkNotNull(resultSet, "Resultset must not be null.");
 +
-+        return new ServerOpListEntry(profile, level, canBypass);
++        String username = resultSet.getString("username");
++
++        NameAndId identify = new NameAndId(id, username);
++        int level = resultSet.getInt("operator_level");
++        boolean canBypassPlayerLimit = resultSet.getBoolean("can_bypass_player_limit");
++
++        return new ServerOpListEntry(identify, level, canBypassPlayerLimit);
++    }
++
++
++    private static @NonNull Collection<PulvinarOperatorInfo> collectResults(@NonNull PreparedStatement statement) throws SQLException {
++        Preconditions.checkNotNull(statement, "statement must not be null.");
++
++        Collection<PulvinarOperatorInfo> collection = new HashSet<>();
++
++        try (ResultSet resultSet = statement.executeQuery()) {
++            while (resultSet.next()) {
++                UUID uuid = UUID.fromString(resultSet.getString("id"));
++                collection.add(toEntity(uuid, resultSet));
++            }
++        }
++
++        return Collections.unmodifiableCollection(collection);
++    }
++
++    @Override
++    public @NonNull CompletableFuture<@NonNull Optional<PulvinarOperatorInfo>> find(@NonNull UUID id) throws NullPointerException {
++        Preconditions.checkNotNull(id, "Id cannot be null.");
++
++        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN ksvp_player p ON o.id = p.id WHERE o.id = ?;";
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(this.query(sql, (statement) -> {
++            statement.setString(1, String.valueOf(id));
++            try (ResultSet resultSet = statement.executeQuery()) {
++                if (!resultSet.next()) {
++                    return Optional.empty();
++                }
++
++                UUID uuid = UUID.fromString(resultSet.getString("id"));
++                return Optional.of(toEntity(uuid, resultSet));
++            }
++        })));
++    }
++
++    @Override
++    public @NonNull CompletableFuture<@NonNull Collection<PulvinarOperatorInfo>> findAll(@NonNull Iterable<UUID> id) throws NullPointerException {
++        Preconditions.checkNotNull(id, "Iterable cannot be null.");
++
++        String placeHolders = String.join(", ", Collections.nCopies(this.computeIterableSize(id), "?"));
++        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN ksvp_player p ON o.id = p.id WHERE o.id IN (" + placeHolders + ");";
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
++            int index = 1;
++
++            for (UUID current : id) {
++                statement.setString(index++, String.valueOf(current));
++            }
++
++            return collectResults(statement);
++        })));
++    }
++
++    @Override
++    public @NonNull CompletableFuture<@NonNull Collection<PulvinarOperatorInfo>> findAll() {
++        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN ksvp_player p ON o.id = p.id;";
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> collectResults(statement))));
++    }
++
++    @Override
++    public @NonNull CompletableFuture<@NonNull Boolean> has(@NonNull UUID id) throws NullPointerException {
++        Preconditions.checkNotNull(id, "id must not be null.");
++
++        String sql = "SELECT id FROM ksvp_operators WHERE id = ?;";
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
++            statement.setString(1, String.valueOf(id));
++            try (ResultSet resultSet = statement.executeQuery()) {
++                return resultSet.next();
++            }
++        })));
++    }
++
++    @Override
++    public @NonNull CompletableFuture<Void> saveAll(@NonNull Iterable<PulvinarOperatorInfo> id) throws NullPointerException {
++        Preconditions.checkNotNull(id, "Iterable must not be null.");
++
++        String sql = "INSERT INTO ksvp_operators (id, operator_level, can_bypass_player_limit) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE operator_level = ?, can_bypass_player_limit = ?;";
++        return CompletableFuture.supplyAsync(() -> query(sql, (statement) -> {
++            for (PulvinarOperatorInfo pulvinarOperatorInfo : id) {
++                statement.setString(1, String.valueOf(pulvinarOperatorInfo.id()));
++
++                statement.setInt(2, pulvinarOperatorInfo.getLevel());
++                statement.setInt(4, pulvinarOperatorInfo.getLevel());
++
++                statement.setBoolean(3, pulvinarOperatorInfo.getBypassesPlayerLimit());
++                statement.setBoolean(5, pulvinarOperatorInfo.getBypassesPlayerLimit());
++                statement.addBatch();
++            }
++
++            statement.executeBatch();
++            return null;
++        }));
 +    }
 +}
