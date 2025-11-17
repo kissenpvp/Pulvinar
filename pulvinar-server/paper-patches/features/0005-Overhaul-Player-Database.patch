@@ -1,0 +1,362 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Mon, 17 Nov 2025 15:51:29 +0100
+Subject: [PATCH] Overhaul Player Database
+
+
+diff --git a/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java b/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
+index 58c1ff58e58e969a88b929663dfff785843dc1b2..f7a056fee14ed797eb284e68d1387089bbc1a425 100644
+--- a/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
++++ b/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
+@@ -31,6 +31,10 @@ public class PaperGameProfileRepository extends YggdrasilGameProfileRepository {
+             }
+         }
+ 
++        // Pulvinar start - overhaul player database
++        unfoundNames = databaseLookup(unfoundNames, callback);
++        // Pulvinar end - overhaul player database
++
+         // Some things were not found.... Proceed to look up.
+         if (!unfoundNames.isEmpty()) {
+             String[] namesArr = unfoundNames.toArray(new String[unfoundNames.size()]);
+@@ -62,4 +66,8 @@ public class PaperGameProfileRepository extends YggdrasilGameProfileRepository {
+             this.callback.onProfileLookupFailed(profileName, exception);
+         }
+     }
++
++    // Pulvinar start - overhaul player database
++    protected Set<String> databaseLookup(Set<String> unfound, ProfileLookupCallback callback) { return unfound; }
++    // Pulvinar end - overhaul player database
+ }
+diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..13013bc080f644f4847b4c3375b1069d43e9a942
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
+@@ -0,0 +1,79 @@
++package net.kissenpvp.network.actor;
++
++import com.mojang.authlib.ProfileLookupCallback;
++import net.kissenpvp.api.network.actor.PlayerClient;
++import net.minecraft.server.players.NameAndId;
++import org.bukkit.Bukkit;
++import org.jspecify.annotations.NonNull;
++
++import javax.sql.DataSource;
++import java.sql.ResultSet;
++import java.util.*;
++import java.util.concurrent.CompletableFuture;
++
++public class PulvinarPlayerRepository extends InternalPlayerRepository {
++
++    public PulvinarPlayerRepository(@NonNull DataSource dataSource) throws NullPointerException {
++        super(dataSource);
++    }
++
++    @Override
++    protected @NonNull PlayerClient toCachedEntity(@NonNull UUID uuid, @NonNull ResultSet resultSet) throws NullPointerException {
++        return Bukkit.getOfflinePlayer(uuid);
++    }
++
++    public @NonNull CompletableFuture<Collection<NameAndId>> findAllProfiles()
++    {
++        String sql = "SELECT id, username FROM ksvp_player;";
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
++            try (ResultSet resultSet = statement.executeQuery()) {
++                Collection<NameAndId> profile = new HashSet<>();
++                while(resultSet.next())
++                {
++                    UUID id = UUID.fromString(resultSet.getString("id"));
++                    String username = resultSet.getString("username");
++
++                    profile.add(new NameAndId(id, username));
++                }
++                return Collections.unmodifiableCollection(profile);
++            }
++        })));
++    }
++
++    public void findProfilesByNames(@NonNull String[] names, @NonNull ProfileLookupCallback callback) {
++        Set<String> undiscovered = new HashSet<>(Set.of(names));
++
++        for(PlayerClient cachedPlayerClient : cachedEntries().values())
++        {
++            if(!undiscovered.contains(cachedPlayerClient.username()))
++            {
++                continue;
++            }
++            undiscovered.remove(cachedPlayerClient.username());
++            callback.onProfileLookupSucceeded(cachedPlayerClient.username(), cachedPlayerClient.id());
++        }
++
++        String placeholders = String.join(", ", Collections.nCopies(undiscovered.size(), "?"));
++        String sql = "SELECT id, username FROM ksvp_player WHERE username IN (" + placeholders + ");";
++        query(sql, (statement) -> {
++            int index = 1;
++            for(String argument : undiscovered)
++            {
++                statement.setString(index++, argument);
++            }
++
++            try(ResultSet resultSet = statement.executeQuery())
++            {
++                while(resultSet.next())
++                {
++                    UUID id = UUID.fromString(resultSet.getString("id"));
++                    String username = resultSet.getString("username");
++
++                    callback.onProfileLookupSucceeded(username, id);
++                }
++            }
++
++            return null;
++        });
++    }
++}
+diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..06219661b3fa22113e7517cfedbe0a72fc3d557c
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
+@@ -0,0 +1,46 @@
++package net.kissenpvp.network.actor;
++
++import com.mojang.authlib.GameProfileRepository;
++import net.minecraft.server.players.CachedUserNameToIdResolver;
++import org.jetbrains.annotations.NotNull;
++
++import java.io.File;
++import java.util.Calendar;
++import java.util.Date;
++import java.util.List;
++
++public class PulvinarProfileCache extends CachedUserNameToIdResolver {
++
++    public PulvinarProfileCache(GameProfileRepository profileRepository, File file) {
++        super(profileRepository, file);
++    }
++
++    @Override
++    protected @NotNull List<CachedUserNameToIdResolver.GameProfileInfo> load() {
++        if(getRepository() instanceof PulvinarProfileRepository profileRepository)
++        {
++            return profileRepository.findAllProfiles().stream().map(nameAndId ->
++            {
++                Calendar instance = Calendar.getInstance();
++                instance.setTime(new Date());
++                instance.add(Calendar.MONTH, 1);
++                Date time = instance.getTime(); //TODO maybe completely remove this
++
++                return new GameProfileInfo(nameAndId, time);
++            }).toList();
++        }
++
++        return super.load();
++    }
++
++    @Override public void save(boolean asyncSave)
++    {
++        if(getRepository() instanceof PulvinarProfileRepository)
++        {
++            // this can be skipped, profiles are automatically saved when they are updated
++            return;
++        }
++
++        super.save(asyncSave);
++    }
++}
+diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileRepository.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..86275fd7631790b947b64e1ec29dd0c56fa1887f
+--- /dev/null
++++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileRepository.java
+@@ -0,0 +1,44 @@
++package net.kissenpvp.network.actor;
++
++import com.destroystokyo.paper.profile.PaperGameProfileRepository;
++import com.mojang.authlib.Environment;
++import com.mojang.authlib.ProfileLookupCallback;
++import net.minecraft.server.players.NameAndId;
++import org.jspecify.annotations.NonNull;
++
++import java.net.Proxy;
++import java.util.Collection;
++import java.util.HashSet;
++import java.util.Set;
++import java.util.UUID;
++
++public class PulvinarProfileRepository extends PaperGameProfileRepository {
++
++    private final PulvinarPlayerRepository repository;
++
++    public PulvinarProfileRepository(Proxy proxy, Environment environment, PulvinarPlayerRepository repository) {
++        super(proxy, environment);
++        this.repository = repository;
++    }
++
++    @Override
++    protected Set<String> databaseLookup(Set<String> unfound, ProfileLookupCallback callback) {
++        Set<String> newUnfound = new HashSet<>(unfound);
++        repository.findProfilesByNames(unfound.toArray(new String[0]), new ProfileLookupCallback() {
++            @Override
++            public void onProfileLookupSucceeded(String profileName, UUID profileId) {
++                newUnfound.remove(profileName);
++                callback.onProfileLookupSucceeded(profileName, profileId);
++            }
++
++            @Override
++            public void onProfileLookupFailed(String profileName, Exception exception) { /* won't happen */ }
++        });
++        return newUnfound;
++    }
++
++    public @NonNull Collection<NameAndId> findAllProfiles()
++    {
++        return repository.findAllProfiles().join();
++    }
++}
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
+index 81684971a194a3b1f56b8d812b2e96bcfcd3860b..0ea79de334ae814b723f60a7628c3e576723e98c 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
+@@ -764,4 +764,47 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
+         }
+     }
+     // Purpur end - OfflinePlayer API
++
++    // Pulvinar start - overhaul player database
++    @Override
++    public @org.jspecify.annotations.NonNull UUID id() {
++        return getUniqueId();
++    }
++
++    @Override
++    public @org.jspecify.annotations.NonNull UUID linkId() {
++        return getUniqueId(); // TODO
++    }
++
++    @Override
++    public net.kissenpvp.api.punishment.@org.jspecify.annotations.NonNull PunishmentSubscription punish(net.kissenpvp.api.punishment.@org.jspecify.annotations.NonNull Punishment punishment) {
++        return null;
++    }
++
++    @Override
++    public net.kissenpvp.api.punishment.@org.jspecify.annotations.NonNull PunishmentSubscription punish(net.kissenpvp.api.punishment.@org.jspecify.annotations.NonNull Punishment punishment, net.kyori.adventure.text.@org.jspecify.annotations.Nullable Component component) {
++        return null;
++    }
++
++    @Override
++    public java.util.@org.jspecify.annotations.NonNull List<net.kissenpvp.api.network.actor.rank.RankSubscription> rankHistory() {
++        return java.util.List.of();
++    }
++
++    @Override
++    public net.kissenpvp.api.network.actor.rank.@org.jspecify.annotations.NonNull RankSubscription rank() {
++        return null;
++    }
++
++    @Override
++    public @org.jspecify.annotations.NonNull String username() {
++        java.util.Objects.requireNonNull(getName(), "Username cannot be null.");
++        return getName();
++    }
++
++    @Override
++    public final boolean isClient() {
++        return false;
++    }
++    // Pulvinar end - overhaul player database
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
+index 15ae2653c1809041b7ab7cb67015e82c226e9f77..1f26e86d5d2ce8f46bd09ce70b4d3de1078af104 100644
+--- a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
++++ b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
+@@ -105,4 +105,21 @@ public class CraftConsoleCommandSender extends ServerCommandSender implements Co
+     public boolean hasPermission(org.bukkit.permissions.Permission perm) {
+         return io.papermc.paper.configuration.GlobalConfiguration.get().console.hasAllPermissions || super.hasPermission(perm);
+     }
++
++    // Pulvinar start - overhaul player database
++    @Override
++    public @org.jetbrains.annotations.NotNull String username() {
++        return getName();
++    }
++
++    @Override
++    public boolean isClient() {
++        return false;
++    }
++
++    @Override
++    public net.kyori.adventure.audience.@org.jetbrains.annotations.NotNull Audience audience() {
++        return this;
++    }
++    // Pulvinar end - overhaul player database
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
+index aa32df881a5bfccd58d2a3b25cb4ee7373234879..4af7236f607029c4c1e027683db7e455b1c6b115 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
+@@ -906,4 +906,16 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+     public org.bukkit.entity.Entity copy(Location location) {
+         throw new UnsupportedOperationException("Cannot copy human entities");
+     }
++
++    // Pulvinar start - overhaul player database
++    @Override
++    public @org.jspecify.annotations.NonNull String username() {
++        return getName();
++    }
++
++    @Override
++    public final boolean isClient() {
++        return true;
++    }
++    // Pulvinar end - overhaul player database
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+index 87407e6aa56840614a4ebf931a65103c7b4cf9aa..24ea578ee0aefc25918ad6e4abe8d719fba36de1 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+@@ -3444,4 +3444,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+             entity.remove();
+         }
+     }
++
++    // Pulvinar start - overhaul player database
++    @Override
++    public @NonNull UUID id() {
++        return getUniqueId();
++    }
++
++    @Override
++    public net.kyori.adventure.audience.@NonNull Audience audience() {
++        return this;
++    }
++
++    @Override
++    public @NonNull UUID linkId() {
++        return getUniqueId(); // TODO
++    }
++
++    @Override
++    public net.kissenpvp.api.punishment.@NonNull PunishmentSubscription punish(net.kissenpvp.api.punishment.@NonNull Punishment punishment) {
++        return null;
++    }
++
++    @Override
++    public net.kissenpvp.api.punishment.@NonNull PunishmentSubscription punish(net.kissenpvp.api.punishment.@NonNull Punishment punishment, net.kyori.adventure.text.@Nullable Component component) {
++        return null;
++    }
++
++    @Override
++    public @NonNull List<net.kissenpvp.api.network.actor.rank.RankSubscription> rankHistory() {
++        return List.of();
++    }
++
++    @Override
++    public net.kissenpvp.api.network.actor.rank.@NonNull RankSubscription rank() {
++        return null;
++    }
++    // Pulvinar end - overhaul player database
+ }

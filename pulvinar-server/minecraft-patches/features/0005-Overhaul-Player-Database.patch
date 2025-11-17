@@ -1,0 +1,46 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Mon, 17 Nov 2025 15:50:46 +0100
+Subject: [PATCH] Overhaul Player Database
+
+
+diff --git a/net/minecraft/server/players/CachedUserNameToIdResolver.java b/net/minecraft/server/players/CachedUserNameToIdResolver.java
+index 3dc78b91cc853cfa6dce69979273b5f35b5f87f1..8de2058515bdd8759158ccdee278551fd8e227ba 100644
+--- a/net/minecraft/server/players/CachedUserNameToIdResolver.java
++++ b/net/minecraft/server/players/CachedUserNameToIdResolver.java
+@@ -176,7 +176,7 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
+         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", Locale.ROOT);
+     }
+ 
+-    private List<CachedUserNameToIdResolver.GameProfileInfo> load() {
++    protected List<CachedUserNameToIdResolver.GameProfileInfo> load() { // Pulvinar - overhaul player database - allow to override
+         List<CachedUserNameToIdResolver.GameProfileInfo> list = Lists.newArrayList();
+ 
+         try {
+@@ -283,12 +283,12 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
+         return Optional.empty();
+     }
+ 
+-    static class GameProfileInfo {
++    protected static class GameProfileInfo { // Pulvinar - overhaul player database - allow children to access
+         private final NameAndId nameAndId;
+         final Date expirationDate;
+         private volatile long lastAccess;
+ 
+-        GameProfileInfo(NameAndId nameAndId, Date expirationDate) {
++        public GameProfileInfo(NameAndId nameAndId, Date expirationDate) { // Pulvinar - overhaul player database - allow children to access
+             this.nameAndId = nameAndId;
+             this.expirationDate = expirationDate;
+         }
+@@ -309,4 +309,11 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
+             return this.lastAccess;
+         }
+     }
++
++    // Pulvinar start - overhaul player data
++    protected GameProfileRepository getRepository()
++    {
++        return profileRepository;
++    }
++    // Pulvinar end - overhaul player data
+ }
