@@ -4,6 +4,19 @@ Date: Mon, 17 Nov 2025 15:50:46 +0100
 Subject: [PATCH] Overhaul Player Database
 
 
+diff --git a/net/minecraft/server/Services.java b/net/minecraft/server/Services.java
+index 94ea277d53c97d6518265c25411b908659f2c9f9..6648c30acf9843b6c4f7803f03f856eda01eefaf 100644
+--- a/net/minecraft/server/Services.java
++++ b/net/minecraft/server/Services.java
+@@ -41,7 +41,7 @@ public record Services(
+     public static Services create(YggdrasilAuthenticationService authenticationService, File profileRepository, File userCacheFile, joptsimple.OptionSet optionSet) throws Exception { // Paper - add optionset to load paper config files; add userCacheFile parameter
+         MinecraftSessionService minecraftSessionService = authenticationService.createMinecraftSessionService();
+         GameProfileRepository gameProfileRepository = authenticationService.createProfileRepository();
+-        UserNameToIdResolver userNameToIdResolver = new CachedUserNameToIdResolver(gameProfileRepository, userCacheFile); // Paper
++        UserNameToIdResolver userNameToIdResolver = new net.kissenpvp.network.actor.PulvinarProfileCache(gameProfileRepository, userCacheFile); // new CachedUserNameToIdResolver(gameProfileRepository, userCacheFile); // Paper // Pulvinar - overhaul player database
+         // Paper start - load paper config files from cli options
+         final java.nio.file.Path legacyConfigPath = ((File) optionSet.valueOf("paper-settings")).toPath();
+         final java.nio.file.Path configDirPath = ((File) optionSet.valueOf("paper-settings-directory")).toPath();
 diff --git a/net/minecraft/server/players/CachedUserNameToIdResolver.java b/net/minecraft/server/players/CachedUserNameToIdResolver.java
 index 3dc78b91cc853cfa6dce69979273b5f35b5f87f1..8de2058515bdd8759158ccdee278551fd8e227ba 100644
 --- a/net/minecraft/server/players/CachedUserNameToIdResolver.java

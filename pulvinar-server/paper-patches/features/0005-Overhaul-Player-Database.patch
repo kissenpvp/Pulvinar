@@ -4,6 +4,25 @@ Date: Mon, 17 Nov 2025 15:51:29 +0100
 Subject: [PATCH] Overhaul Player Database
 
 
+diff --git a/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java b/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
+index 48e774677edf17d4a99ae9ed23d1b371dab41abb..8b002f246d17c0e00f9b8ca1405e6f1254b9ba54 100644
+--- a/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
++++ b/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
+@@ -25,6 +25,13 @@ public class PaperAuthenticationService extends YggdrasilAuthenticationService {
+ 
+     @Override
+     public GameProfileRepository createProfileRepository() {
+-        return new PaperGameProfileRepository(this.getProxy(), this.environment);
++        // Pulvinar start - overhaul player database
++        //return new PaperGameProfileRepository(this.getProxy(), this.environment);
++        return new net.kissenpvp.network.actor.PulvinarProfileRepository(
++                getProxy(),
++                environment,
++                (net.kissenpvp.network.actor.PulvinarPlayerRepository) (org.bukkit.Bukkit.getPulvinar()).playerRepository()
++        );
++        // Pulvinar end - overhaul player database
+     }
+ }
 diff --git a/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java b/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
 index 58c1ff58e58e969a88b929663dfff785843dc1b2..f7a056fee14ed797eb284e68d1387089bbc1a425 100644
 --- a/src/main/java/com/destroystokyo/paper/profile/PaperGameProfileRepository.java
@@ -28,15 +47,54 @@ index 58c1ff58e58e969a88b929663dfff785843dc1b2..f7a056fee14ed797eb284e68d1387089
 +    protected Set<String> databaseLookup(Set<String> unfound, ProfileLookupCallback callback) { return unfound; }
 +    // Pulvinar end - overhaul player database
  }
+diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+index c452e513430136af203a62755af86b36474ac05c..9810b6db789ae4ad76464d87f4ee31e58408e62d 100644
+--- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
++++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+@@ -3,7 +3,9 @@ package net.kissenpvp.base;
+ import net.kissenpvp.api.base.Pulvinar;
+ import net.kissenpvp.api.database.ConnectionProvider;
+ import net.kissenpvp.api.network.actor.ConsoleClient;
++import net.kissenpvp.api.network.actor.PlayerRepository;
+ import net.kissenpvp.database.InternalConnectionProvider;
++import net.kissenpvp.network.actor.PulvinarPlayerRepository;
+ import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
+ import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
+ import org.bukkit.Bukkit;
+@@ -28,6 +30,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     private final ConnectionProvider provider;
+     private PulvinarOperatorRepository operatorRepository;
+     private PulvinarWhiteListRepository whiteListRepository;
++    private PlayerRepository playerRepository;
+ 
+     public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
+         config = new PulvinarConfig();
+@@ -61,6 +64,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     {
+         operatorRepository = new PulvinarOperatorRepository(dataSource);
+         whiteListRepository = new PulvinarWhiteListRepository(dataSource);
++        playerRepository = new PulvinarPlayerRepository(dataSource);
+     }
+ 
+     public void shutdown()
+@@ -89,4 +93,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     public @NonNull PulvinarWhiteListRepository whiteListRepository() {
+         return whiteListRepository;
+     }
++
++    @Override
++    public PlayerRepository playerRepository() {
++        return playerRepository;
++    }
+ }
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..13013bc080f644f4847b4c3375b1069d43e9a942
+index 0000000000000000000000000000000000000000..01640749ab425874452f037419d854126e95c665
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,82 @@
 +package net.kissenpvp.network.actor;
 +
-+import com.mojang.authlib.ProfileLookupCallback;
 +import net.kissenpvp.api.network.actor.PlayerClient;
 +import net.minecraft.server.players.NameAndId;
 +import org.bukkit.Bukkit;
@@ -46,6 +104,7 @@ index 0000000000000000000000000000000000000000..13013bc080f644f4847b4c3375b1069d
 +import java.sql.ResultSet;
 +import java.util.*;
 +import java.util.concurrent.CompletableFuture;
++import java.util.function.Consumer;
 +
 +public class PulvinarPlayerRepository extends InternalPlayerRepository {
 +
@@ -76,7 +135,8 @@ index 0000000000000000000000000000000000000000..13013bc080f644f4847b4c3375b1069d
 +        })));
 +    }
 +
-+    public void findProfilesByNames(@NonNull String[] names, @NonNull ProfileLookupCallback callback) {
++    public @NonNull Collection<NameAndId> findProfilesByNames(@NonNull String[] names) {
++        Set<NameAndId> discovered = new HashSet<>();
 +        Set<String> undiscovered = new HashSet<>(Set.of(names));
 +
 +        for(PlayerClient cachedPlayerClient : cachedEntries().values())
@@ -86,7 +146,7 @@ index 0000000000000000000000000000000000000000..13013bc080f644f4847b4c3375b1069d
 +                continue;
 +            }
 +            undiscovered.remove(cachedPlayerClient.username());
-+            callback.onProfileLookupSucceeded(cachedPlayerClient.username(), cachedPlayerClient.id());
++            discovered.add(new NameAndId(cachedPlayerClient.id(), cachedPlayerClient.username()));
 +        }
 +
 +        String placeholders = String.join(", ", Collections.nCopies(undiscovered.size(), "?"));
@@ -105,12 +165,14 @@ index 0000000000000000000000000000000000000000..13013bc080f644f4847b4c3375b1069d
 +                    UUID id = UUID.fromString(resultSet.getString("id"));
 +                    String username = resultSet.getString("username");
 +
-+                    callback.onProfileLookupSucceeded(username, id);
++                    discovered.add(new NameAndId(id, username));
 +                }
 +            }
 +
 +            return null;
 +        });
++
++        return discovered;
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
@@ -167,10 +229,10 @@ index 0000000000000000000000000000000000000000..06219661b3fa22113e7517cfedbe0a72
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..86275fd7631790b947b64e1ec29dd0c56fa1887f
+index 0000000000000000000000000000000000000000..d1e60abecb4c9dbeb3586d5774be003d1e398b37
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileRepository.java
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,41 @@
 +package net.kissenpvp.network.actor;
 +
 +import com.destroystokyo.paper.profile.PaperGameProfileRepository;
@@ -196,18 +258,15 @@ index 0000000000000000000000000000000000000000..86275fd7631790b947b64e1ec29dd0c5
 +
 +    @Override
 +    protected Set<String> databaseLookup(Set<String> unfound, ProfileLookupCallback callback) {
-+        Set<String> newUnfound = new HashSet<>(unfound);
-+        repository.findProfilesByNames(unfound.toArray(new String[0]), new ProfileLookupCallback() {
-+            @Override
-+            public void onProfileLookupSucceeded(String profileName, UUID profileId) {
-+                newUnfound.remove(profileName);
-+                callback.onProfileLookupSucceeded(profileName, profileId);
-+            }
++        Set<String> stillUndiscovered = new HashSet<>(unfound);
 +
-+            @Override
-+            public void onProfileLookupFailed(String profileName, Exception exception) { /* won't happen */ }
-+        });
-+        return newUnfound;
++        for(NameAndId current : repository.findProfilesByNames(unfound.toArray(new String[0])))
++        {
++            stillUndiscovered.remove(current.name());
++            callback.onProfileLookupSucceeded(current.name(), current.id());
++        }
++
++        return stillUndiscovered;
 +    }
 +
 +    public @NonNull Collection<NameAndId> findAllProfiles()
