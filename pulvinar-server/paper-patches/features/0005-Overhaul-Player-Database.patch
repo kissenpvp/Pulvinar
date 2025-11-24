@@ -374,10 +374,10 @@ index aa32df881a5bfccd58d2a3b25cb4ee7373234879..4af7236f607029c4c1e027683db7e455
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 87407e6aa56840614a4ebf931a65103c7b4cf9aa..24ea578ee0aefc25918ad6e4abe8d719fba36de1 100644
+index bc5fac66b3c4ebce77b0b84e0ec5a525e2efec62..2972d156ed21d424472616cc01e3990078fea343 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -3444,4 +3444,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3453,4 +3453,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
              entity.remove();
          }
      }
