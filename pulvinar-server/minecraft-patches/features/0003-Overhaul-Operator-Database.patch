@@ -5,19 +5,10 @@ Subject: [PATCH] Overhaul Operator Database
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 1328cc6402134042d5890bedaaacf6e9807eb5ec..2df687cf52458b67fb26d603e54f0d0a51485125 100644
+index 1328cc6402134042d5890bedaaacf6e9807eb5ec..cbb1e01d8e12cc97dc85cc6bf80df5e3fe0419e4 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -19,6 +19,8 @@ import java.util.UUID;
- import java.util.function.Function;
- import java.util.function.Predicate;
- import javax.annotation.Nullable;
-+
-+import net.kissenpvp.api.database.RepositoryHolder;
- import net.minecraft.ChatFormatting;
- import net.minecraft.FileUtil;
- import net.minecraft.commands.CommandSourceStack;
-@@ -142,7 +144,7 @@ public abstract class PlayerList {
+@@ -142,7 +142,7 @@ public abstract class PlayerList {
          this.registries = registries;
          this.playerIo = playerIo;
          this.whitelist = new UserWhiteList(WHITELIST_FILE, notificationService);

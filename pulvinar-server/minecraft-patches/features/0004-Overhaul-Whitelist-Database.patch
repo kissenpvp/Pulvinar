@@ -5,10 +5,10 @@ Subject: [PATCH] Overhaul Whitelist Database
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 2df687cf52458b67fb26d603e54f0d0a51485125..3de6f96644801ea6a3e4ded8788e0ee7b7f002d6 100644
+index cbb1e01d8e12cc97dc85cc6bf80df5e3fe0419e4..6f3e457b35c4c7e4f884319d15c000f374dedb41 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -143,7 +143,7 @@ public abstract class PlayerList {
+@@ -141,7 +141,7 @@ public abstract class PlayerList {
          this.server = server;
          this.registries = registries;
          this.playerIo = playerIo;
