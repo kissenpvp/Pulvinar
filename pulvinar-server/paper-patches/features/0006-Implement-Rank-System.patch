@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Sat, 29 Nov 2025 09:49:20 +0100
+Subject: [PATCH] Implement Rank System
+
+
+diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+index 9810b6db789ae4ad76464d87f4ee31e58408e62d..d93c9c9b45bbeaa37e8c48adedf4031159218197 100644
+--- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
++++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+@@ -2,11 +2,15 @@ package net.kissenpvp.base;
+ 
+ import net.kissenpvp.api.base.Pulvinar;
+ import net.kissenpvp.api.database.ConnectionProvider;
++import net.kissenpvp.api.database.Repository;
+ import net.kissenpvp.api.network.actor.ConsoleClient;
+ import net.kissenpvp.api.network.actor.PlayerRepository;
++import net.kissenpvp.api.network.actor.rank.Rank;
++import net.kissenpvp.api.network.actor.rank.RankSubscriptionRepository;
+ import net.kissenpvp.database.InternalConnectionProvider;
+ import net.kissenpvp.network.actor.PulvinarPlayerRepository;
+ import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
++import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
+ import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
+ import org.bukkit.Bukkit;
+ import org.bukkit.configuration.InvalidConfigurationException;
+@@ -31,6 +35,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     private PulvinarOperatorRepository operatorRepository;
+     private PulvinarWhiteListRepository whiteListRepository;
+     private PlayerRepository playerRepository;
++    private Repository<String, Rank> rankRepository;
+ 
+     public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
+         config = new PulvinarConfig();
+@@ -65,6 +70,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+         operatorRepository = new PulvinarOperatorRepository(dataSource);
+         whiteListRepository = new PulvinarWhiteListRepository(dataSource);
+         playerRepository = new PulvinarPlayerRepository(dataSource);
++        rankRepository = new InternalRankRepository(dataSource);
+     }
+ 
+     public void shutdown()
+@@ -98,4 +104,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     public PlayerRepository playerRepository() {
+         return playerRepository;
+     }
++
++    @Override
++    public Repository<String, Rank> rankRepository() {
++        return rankRepository;
++    }
+ }

@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Sat, 29 Nov 2025 09:50:40 +0100
+Subject: [PATCH] Overhaul Ban Database
+
+
+diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+index d93c9c9b45bbeaa37e8c48adedf4031159218197..91f97e70f88af0d34dd082da744d83189d2f5ee7 100644
+--- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
++++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
+@@ -7,11 +7,15 @@ import net.kissenpvp.api.network.actor.ConsoleClient;
+ import net.kissenpvp.api.network.actor.PlayerRepository;
+ import net.kissenpvp.api.network.actor.rank.Rank;
+ import net.kissenpvp.api.network.actor.rank.RankSubscriptionRepository;
++import net.kissenpvp.api.punishment.Punishment;
++import net.kissenpvp.api.punishment.PunishmentSubscriptionRepository;
+ import net.kissenpvp.database.InternalConnectionProvider;
+ import net.kissenpvp.network.actor.PulvinarPlayerRepository;
+ import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
+ import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
+ import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
++import net.kissenpvp.punishment.repository.InternalPunishmentRepository;
++import net.kissenpvp.punishment.repository.InternalPunishmentSubscriptionRepository;
+ import org.bukkit.Bukkit;
+ import org.bukkit.configuration.InvalidConfigurationException;
+ import org.jspecify.annotations.NonNull;
+@@ -36,6 +40,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     private PulvinarWhiteListRepository whiteListRepository;
+     private PlayerRepository playerRepository;
+     private Repository<String, Rank> rankRepository;
++    private Repository<Integer, Punishment> punishmentRepository;
++    private PunishmentSubscriptionRepository punishmentSubscriptionRepository;
+ 
+     public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
+         config = new PulvinarConfig();
+@@ -71,6 +77,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+         whiteListRepository = new PulvinarWhiteListRepository(dataSource);
+         playerRepository = new PulvinarPlayerRepository(dataSource);
+         rankRepository = new InternalRankRepository(dataSource);
++        punishmentRepository = new InternalPunishmentRepository(dataSource);
++        punishmentSubscriptionRepository = new InternalPunishmentSubscriptionRepository(dataSource);
+     }
+ 
+     public void shutdown()
+@@ -109,4 +117,14 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     public Repository<String, Rank> rankRepository() {
+         return rankRepository;
+     }
++
++    @Override
++    public Repository<Integer, Punishment> punishmentRepository() {
++        return punishmentRepository;
++    }
++
++    @Override
++    public PunishmentSubscriptionRepository punishmentSubscriptionRepository() {
++        return punishmentSubscriptionRepository;
++    }
+ }
