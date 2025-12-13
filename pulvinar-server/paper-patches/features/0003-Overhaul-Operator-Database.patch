@@ -127,14 +127,16 @@ index 0000000000000000000000000000000000000000..89cd7dc5d06b8f9c609ab5c0b588f570
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..e73b78bdceab79f4482ca9f9ed2a2a460d29bbab
+index 0000000000000000000000000000000000000000..f28718c735e8d39de37913d9c283d4ee99202897
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
-@@ -0,0 +1,125 @@
+@@ -0,0 +1,128 @@
 +package net.kissenpvp.network.actor.operator;
 +
 +import com.google.common.base.Preconditions;
 +import net.kissenpvp.api.database.KissenRepository;
++import net.minecraft.server.permissions.LevelBasedPermissionSet;
++import net.minecraft.server.permissions.PermissionLevel;
 +import net.minecraft.server.players.NameAndId;
 +import net.minecraft.server.players.ServerOpListEntry;
 +import org.jspecify.annotations.NonNull;
@@ -161,7 +163,8 @@ index 0000000000000000000000000000000000000000..e73b78bdceab79f4482ca9f9ed2a2a46
 +        int level = resultSet.getInt("operator_level");
 +        boolean canBypassPlayerLimit = resultSet.getBoolean("can_bypass_player_limit");
 +
-+        return new ServerOpListEntry(identify, level, canBypassPlayerLimit);
++        LevelBasedPermissionSet permissionSet = LevelBasedPermissionSet.forLevel(PermissionLevel.byId(level));
++        return new ServerOpListEntry(identify, permissionSet, canBypassPlayerLimit);
 +    }
 +
 +

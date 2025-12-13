@@ -5,10 +5,10 @@ Subject: [PATCH] Allow Access To Stored User List Map
 
 
 diff --git a/net/minecraft/server/players/StoredUserList.java b/net/minecraft/server/players/StoredUserList.java
-index 106f79a52c601638569266ece9db01482751e33f..fb657b078135a8919447410928407c4fa2f70709 100644
+index 9ee855c0d1a30b3c83e0e9e93f1a561ac462bc49..dc2c85db9cdfc1202b4c7772001783680ebfe2b5 100644
 --- a/net/minecraft/server/players/StoredUserList.java
 +++ b/net/minecraft/server/players/StoredUserList.java
-@@ -159,4 +159,11 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
+@@ -158,4 +158,11 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
              // Spigot end
          }
      }

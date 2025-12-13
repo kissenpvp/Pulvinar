@@ -5,10 +5,10 @@ Subject: [PATCH] Overhaul Operator Database
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 1328cc6402134042d5890bedaaacf6e9807eb5ec..cbb1e01d8e12cc97dc85cc6bf80df5e3fe0419e4 100644
+index 3ad9b41704349838cc9d672b4ae6ac1b3a7cfa7f..fe2f58b43d0feac3b0f0b287994104dc603ae3a6 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -142,7 +142,7 @@ public abstract class PlayerList {
+@@ -146,7 +146,7 @@ public abstract class PlayerList {
          this.registries = registries;
          this.playerIo = playerIo;
          this.whitelist = new UserWhiteList(WHITELIST_FILE, notificationService);
@@ -18,24 +18,30 @@ index 1328cc6402134042d5890bedaaacf6e9807eb5ec..cbb1e01d8e12cc97dc85cc6bf80df5e3
          this.ipBans = new IpBanList(IPBANLIST_FILE, notificationService);
      }
 diff --git a/net/minecraft/server/players/ServerOpListEntry.java b/net/minecraft/server/players/ServerOpListEntry.java
-index 2013f5c2fd114819258cb34199665e6632efcdf9..823dfa6da8928915c06574a02f68e2ad1bd4712d 100644
+index fc82ed9132c684434df44a6bb0683d86486abc56..ec63e2e9df6461253bb502d142bde78b840d9a4b 100644
 --- a/net/minecraft/server/players/ServerOpListEntry.java
 +++ b/net/minecraft/server/players/ServerOpListEntry.java
-@@ -2,7 +2,7 @@ package net.minecraft.server.players;
- 
- import com.google.gson.JsonObject;
+@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
+ import net.minecraft.server.permissions.LevelBasedPermissionSet;
+ import net.minecraft.server.permissions.PermissionLevel;
  
 -public class ServerOpListEntry extends StoredUserEntry<NameAndId> {
 +public class ServerOpListEntry extends StoredUserEntry<NameAndId> implements net.kissenpvp.network.actor.operator.PulvinarOperatorInfo { // Pulvinar - overhaul operator database
-     private final int level;
+     private final LevelBasedPermissionSet permissions;
      private final boolean bypassesPlayerLimit;
  
-@@ -34,4 +34,18 @@ public class ServerOpListEntry extends StoredUserEntry<NameAndId> {
+@@ -37,4 +37,24 @@ public class ServerOpListEntry extends StoredUserEntry<NameAndId> {
              data.addProperty("bypassesPlayerLimit", this.bypassesPlayerLimit);
          }
      }
 +
 +    // Pulvinar start - overhaul operator database
++    @Override
++    public int getLevel() {
++        // TODO: Correctly implement the new permission system
++        return this.permissions.level().id();
++    }
++
 +    @Override
 +    public java.util.UUID id() {
 +        com.google.common.base.Preconditions.checkNotNull(getUser());

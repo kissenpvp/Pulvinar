@@ -94,7 +94,7 @@ index 1b0ee48e28aaa68ddb1f28c23d3c5f5f40505c98..59d3c0d787521622b61ff19237462e2a
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
-index 2e7c3d4befeb6256ce81ecaa9ed4e8fbcb21651e..52b99c5804c7b1c501e1ef049334107ce852a4b6 100644
+index 554fc2c53b5028c8f89a0ae69a75e075ba4f4435..369272dd4e41aec11bf7f13bc3088523f3851ed4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 +++ b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 @@ -491,7 +491,7 @@ public class CraftScheduler implements BukkitScheduler {
@@ -106,19 +106,6 @@ index 2e7c3d4befeb6256ce81ecaa9ed4e8fbcb21651e..52b99c5804c7b1c501e1ef049334107c
                  // We don't need to parse pending
                  // (async tasks must live with race-conditions if they attempt to cancel between these few lines of code)
              }
-diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
-index e34ceaa77c7e538c8d6bc341c4c6f450488ce426..01a609f9065c6003914f02545228b57d128f164e 100644
---- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
-+++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
-@@ -11,7 +11,7 @@ public final class Versioning {
-     public static String getBukkitVersion() {
-         String result = "Unknown-Version";
- 
--        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Purpur - Rebrand
-+        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/net.kissenpvp.pulvinar/pulvinar-api/pom.properties"); // Purpur - Rebrand // Pulvinar - Rebrand
-         Properties properties = new Properties();
- 
-         if (stream != null) {
 diff --git a/src/main/java/org/spigotmc/WatchdogThread.java b/src/main/java/org/spigotmc/WatchdogThread.java
 index bf0cda94d87e46149a21505fc67ddb9ad9af0838..7b57aa64b797170cfa0dd1cbc29385b23a0b6780 100644
 --- a/src/main/java/org/spigotmc/WatchdogThread.java
