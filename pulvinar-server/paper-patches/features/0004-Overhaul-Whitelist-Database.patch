@@ -239,3 +239,21 @@ index 0000000000000000000000000000000000000000..0701d8ab1d327ce64101922f24cc890c
 +        }));
 +    }
 +}
+diff --git a/src/main/resources/migrations/mariadb/V1_1__Pulvinar_tables.sql b/src/main/resources/migrations/mariadb/V1_1__Pulvinar_tables.sql
+index 1db0299e7ed43dfa1eb6c3adf688f209a22a6404..ba66fac4190809c4ef2f1af4934c8d808ec36a9b 100644
+--- a/src/main/resources/migrations/mariadb/V1_1__Pulvinar_tables.sql
++++ b/src/main/resources/migrations/mariadb/V1_1__Pulvinar_tables.sql
+@@ -4,4 +4,10 @@ CREATE TABLE IF NOT EXISTS ksvp_operators (
+     can_bypass_player_limit BOOLEAN NOT NULL,
+     PRIMARY KEY (id),
+     FOREIGN KEY (id) REFERENCES ksvp_player(id) ON DELETE CASCADE
+-) COMMENT = "This table stores operators and their permissions.";
+\ No newline at end of file
++) COMMENT = "This table stores operators and their permissions.";
++
++CREATE TABLE IF NOT EXISTS ksvp_whitelist (
++    id UUID NOT NULL,
++    PRIMARY KEY (id),
++    FOREIGN KEY (id) REFERENCES ksvp_player(id) ON DELETE CASCADE
++) COMMENT = "This table stores who is on the whitelist.";
+\ No newline at end of file
