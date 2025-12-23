@@ -48,7 +48,7 @@ index 58c1ff58e58e969a88b929663dfff785843dc1b2..f7a056fee14ed797eb284e68d1387089
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index c452e513430136af203a62755af86b36474ac05c..9810b6db789ae4ad76464d87f4ee31e58408e62d 100644
+index eabbb58d73a0f4a1e51a5e66eb0db4b55b31c016..4b1fe13ae92ed5c1d9d1d2f00e393034963096a8 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -3,7 +3,9 @@ package net.kissenpvp.base;
@@ -61,23 +61,23 @@ index c452e513430136af203a62755af86b36474ac05c..9810b6db789ae4ad76464d87f4ee31e5
  import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
  import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
  import org.bukkit.Bukkit;
-@@ -28,6 +30,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
-     private final ConnectionProvider provider;
+@@ -31,6 +33,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+ 
      private PulvinarOperatorRepository operatorRepository;
      private PulvinarWhiteListRepository whiteListRepository;
 +    private PlayerRepository playerRepository;
  
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -61,6 +64,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -76,6 +79,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      {
-         operatorRepository = new PulvinarOperatorRepository(dataSource);
-         whiteListRepository = new PulvinarWhiteListRepository(dataSource);
-+        playerRepository = new PulvinarPlayerRepository(dataSource);
+         operatorRepository = new PulvinarOperatorRepository(privateDatasource);
+         whiteListRepository = new PulvinarWhiteListRepository(privateDatasource);
++        playerRepository = new PulvinarPlayerRepository(globalDatasource);
      }
  
      public void shutdown()
-@@ -89,4 +93,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -108,4 +112,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull PulvinarWhiteListRepository whiteListRepository() {
          return whiteListRepository;
      }

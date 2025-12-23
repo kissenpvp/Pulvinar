@@ -6,12 +6,13 @@ Subject: [PATCH] Add Kissen Base
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarConfig.java b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..80881cb8f73a6f8c40a2546b69b61ef6e463b413
+index 0000000000000000000000000000000000000000..4ba304ce4a66649f1626bdf820b22b189d95397f
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,135 @@
 +package net.kissenpvp.base;
 +
++import com.google.common.base.Preconditions;
 +import org.bukkit.configuration.InvalidConfigurationException;
 +import org.bukkit.configuration.file.YamlConfiguration;
 +import org.jspecify.annotations.NonNull;
@@ -20,7 +21,6 @@ index 0000000000000000000000000000000000000000..80881cb8f73a6f8c40a2546b69b61ef6
 +import java.io.FileNotFoundException;
 +import java.io.IOException;
 +import java.util.List;
-+import java.util.Objects;
 +
 +public class PulvinarConfig {
 +
@@ -40,7 +40,11 @@ index 0000000000000000000000000000000000000000..80881cb8f73a6f8c40a2546b69b61ef6
 +    private int version;
 +
 +    private boolean databaseConfigured;
-+    private String databaseUrl;
++    private String databaseAddress;
++
++    private String databaseGlobal;
++    private String databasePrivate;
++
 +    private String databaseUser;
 +    private String databasePassword;
 +
@@ -58,14 +62,19 @@ index 0000000000000000000000000000000000000000..80881cb8f73a6f8c40a2546b69b61ef6
 +        version = config.getInt("config-version");
 +        config.set("config-version", 1);
 +
-+
 +        config.addDefault("database.configured", false);
 +        config.addDefault("database.url", "jdbc:mysql://<url>:<port>/<database>");
++
++        config.addDefault("database.global", "kissen_global");
++        config.addDefault("database.private", "kissen_local");
++
 +        config.addDefault("database.user", "user");
 +        config.addDefault("database.password", "password");
 +
 +        databaseConfigured = config.getBoolean("database.configured");
-+        databaseUrl = config.getString("database.url");
++        databaseAddress = config.getString("database.url");
++        databaseGlobal = config.getString("database.global");
++        databasePrivate = config.getString("database.private");
 +        databaseUser = config.getString("database.user");
 +        databasePassword = config.getString("database.password");
 +
@@ -80,8 +89,16 @@ index 0000000000000000000000000000000000000000..80881cb8f73a6f8c40a2546b69b61ef6
 +        return databaseConfigured;
 +    }
 +
-+    public @NonNull String databaseUrl() {
-+        return databaseUrl;
++    public @NonNull String databaseAddress() {
++        return databaseAddress;
++    }
++
++    public @NonNull String databaseGlobal() {
++        return databaseGlobal;
++    }
++
++    public @NonNull String databasePrivate() {
++        return databasePrivate;
 +    }
 +
 +    public @NonNull String databaseUser() {
@@ -97,30 +114,43 @@ index 0000000000000000000000000000000000000000..80881cb8f73a6f8c40a2546b69b61ef6
 +        config.save(file);
 +    }
 +
-+    public void databaseUrl(@NonNull String url) throws IOException, NullPointerException {
-+        Objects.requireNonNull(url, "url cannot be null");
-+        databaseUrl = url;
++    public void databaseAddress(@NonNull String url) throws IOException, NullPointerException {
++        Preconditions.checkNotNull(url, "Url must be not null.");
++        databaseAddress = url;
 +        config.save(file);
 +    }
 +
++    public void databaseGlobal(@NonNull String global) throws IOException, NullPointerException {
++        Preconditions.checkNotNull(global, "Global database must not be null.");
++        databaseGlobal = global;
++        config.save(file);
++    }
++
++    public void databasePrivate(@NonNull String privateDatabase) throws IOException, NullPointerException {
++        Preconditions.checkNotNull(privateDatabase, "Private database must not be null.");
++        databaseGlobal = privateDatabase;
++        config.save(file);
++    }
++
++
 +    public void databaseUser(@NonNull String user) throws IOException, NullPointerException {
-+        Objects.requireNonNull(user, "user cannot be null");
++        Preconditions.checkNotNull(user, "User must be be not null.");
 +        databaseUser = user;
 +        config.save(file);
 +    }
 +
 +    public void databasePassword(@NonNull String password) throws IOException, NullPointerException {
-+        Objects.requireNonNull(password, "password cannot be null");
++        Preconditions.checkNotNull(password, "Password must be not null.");
 +        databasePassword = password;
 +        config.save(file);
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..557dd5fb3228e889ab8f4bc03c7ece05d7ba834f
+index 0000000000000000000000000000000000000000..05875053aeb12c30722e32ac06aa65ba033c6dde
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,97 @@
 +package net.kissenpvp.base;
 +
 +import net.kissenpvp.api.base.Pulvinar;
@@ -129,6 +159,7 @@ index 0000000000000000000000000000000000000000..557dd5fb3228e889ab8f4bc03c7ece05
 +import net.kissenpvp.database.InternalConnectionProvider;
 +import org.bukkit.Bukkit;
 +import org.bukkit.configuration.InvalidConfigurationException;
++import org.flywaydb.core.Flyway;
 +import org.jspecify.annotations.NonNull;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
@@ -147,6 +178,7 @@ index 0000000000000000000000000000000000000000..557dd5fb3228e889ab8f4bc03c7ece05
 +    private final PulvinarConfig config;
 +
 +    private final ConnectionProvider provider;
++    private final ConnectionProvider privateProvider;
 +
 +    public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
 +        config = new PulvinarConfig();
@@ -164,19 +196,31 @@ index 0000000000000000000000000000000000000000..557dd5fb3228e889ab8f4bc03c7ece05
 +        }
 +
 +        provider = new InternalConnectionProvider();
-+        provider.connect(config.databaseUrl(), config.databaseUser(), config.databasePassword());
++        privateProvider = new InternalConnectionProvider();
++
++        DataSource dataSource = connect(provider, config.databaseGlobal(), "classpath:migrations/mariadb");
++        DataSource privateDatasource = connect(privateProvider, config.databasePrivate(), "classpath:migrations/private/mariadb");
++
++        createRepositories(dataSource, privateDatasource);
++        init();
++    }
++
++    private @NonNull DataSource connect(@NonNull ConnectionProvider provider, @NonNull String database, @NonNull String location) throws SQLException {
++        String url = String.format("jdbc:mysql://%s/%s", config.databaseAddress(), database);
++        provider.connect(url, config.databaseUser(), config.databasePassword());
++
++        DataSource dataSource = provider.dataSource().get();
 +
 +        if(provider.dataSource().isEmpty())
 +        {
 +            throw new SQLException("The providers dataSource is not present. Couldn't it connect?");
 +        }
 +
-+        DataSource dataSource = provider.dataSource().get();
-+        createRepositories(dataSource);
-+        init();
++        provider.setupFlyway(Flyway.configure().dataSource(dataSource).locations(location).load(), true);
++        return provider.dataSource().get();
 +    }
 +
-+    private void createRepositories(DataSource dataSource)
++    private void createRepositories(@NonNull DataSource globalDatasource, @NonNull DataSource privateDatasource)
 +    {
 +
 +    }
@@ -198,6 +242,10 @@ index 0000000000000000000000000000000000000000..557dd5fb3228e889ab8f4bc03c7ece05
 +    @Override
 +    public @NonNull ConnectionProvider connectionProvider() {
 +        return provider;
++    }
++
++    public @NonNull ConnectionProvider privateConnectionProvider() {
++        return privateProvider;
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java

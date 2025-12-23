@@ -5,7 +5,7 @@ Subject: [PATCH] Overhaul Operator Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 557dd5fb3228e889ab8f4bc03c7ece05d7ba834f..640f681efc882a903c1764aeadf882146bf8e15f 100644
+index 05875053aeb12c30722e32ac06aa65ba033c6dde..082566cf67769d2aaf488a3c515b1b61189964ce 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -4,6 +4,7 @@ import net.kissenpvp.api.base.Pulvinar;
@@ -15,27 +15,28 @@ index 557dd5fb3228e889ab8f4bc03c7ece05d7ba834f..640f681efc882a903c1764aeadf88214
 +import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
  import org.bukkit.Bukkit;
  import org.bukkit.configuration.InvalidConfigurationException;
- import org.jspecify.annotations.NonNull;
-@@ -24,6 +25,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
-     private final PulvinarConfig config;
- 
+ import org.flywaydb.core.Flyway;
+@@ -27,6 +28,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      private final ConnectionProvider provider;
-+    private PulvinarOperatorRepository operatorRepository;
+     private final ConnectionProvider privateProvider;
  
++    private PulvinarOperatorRepository operatorRepository;
++
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -55,7 +57,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+         config.init(optionsFile);
+@@ -69,7 +72,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
  
-     private void createRepositories(DataSource dataSource)
+     private void createRepositories(@NonNull DataSource globalDatasource, @NonNull DataSource privateDatasource)
      {
 -
-+        operatorRepository = new PulvinarOperatorRepository(dataSource);
++        operatorRepository = new PulvinarOperatorRepository(privateDatasource);
      }
  
      public void shutdown()
-@@ -76,4 +78,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
-     public @NonNull ConnectionProvider connectionProvider() {
-         return provider;
+@@ -94,4 +97,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     public @NonNull ConnectionProvider privateConnectionProvider() {
+         return privateProvider;
      }
 +
 +    public @NonNull PulvinarOperatorRepository operatorRepository() {
@@ -187,7 +188,7 @@ index 0000000000000000000000000000000000000000..f28718c735e8d39de37913d9c283d4ee
 +    public @NonNull CompletableFuture<@NonNull Optional<PulvinarOperatorInfo>> find(@NonNull UUID id) throws NullPointerException {
 +        Preconditions.checkNotNull(id, "Id cannot be null.");
 +
-+        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN ksvp_player p ON o.id = p.id WHERE o.id = ?;";
++        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN kissen.ksvp_player p ON o.id = p.id WHERE o.id = ?;";
 +        return CompletableFuture.supplyAsync(() -> assumeNotNull(this.query(sql, (statement) -> {
 +            statement.setString(1, String.valueOf(id));
 +            try (ResultSet resultSet = statement.executeQuery()) {
@@ -206,7 +207,7 @@ index 0000000000000000000000000000000000000000..f28718c735e8d39de37913d9c283d4ee
 +        Preconditions.checkNotNull(id, "Iterable cannot be null.");
 +
 +        String placeHolders = String.join(", ", Collections.nCopies(this.computeIterableSize(id), "?"));
-+        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN ksvp_player p ON o.id = p.id WHERE o.id IN (" + placeHolders + ");";
++        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN kissen.ksvp_player p ON o.id = p.id WHERE o.id IN (" + placeHolders + ");";
 +        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
 +            int index = 1;
 +
@@ -220,7 +221,7 @@ index 0000000000000000000000000000000000000000..f28718c735e8d39de37913d9c283d4ee
 +
 +    @Override
 +    public @NonNull CompletableFuture<@NonNull Collection<PulvinarOperatorInfo>> findAll() {
-+        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN ksvp_player p ON o.id = p.id;";
++        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN kissen.ksvp_player p ON o.id = p.id;";
 +        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> collectResults(statement))));
 +    }
 +
@@ -259,17 +260,17 @@ index 0000000000000000000000000000000000000000..f28718c735e8d39de37913d9c283d4ee
 +        }));
 +    }
 +}
-diff --git a/src/main/resources/migrations/mariadb/V1_1__Pulvinar_tables.sql b/src/main/resources/migrations/mariadb/V1_1__Pulvinar_tables.sql
+diff --git a/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
 new file mode 100644
 index 0000000000000000000000000000000000000000..1db0299e7ed43dfa1eb6c3adf688f209a22a6404
 --- /dev/null
-+++ b/src/main/resources/migrations/mariadb/V1_1__Pulvinar_tables.sql
++++ b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
 @@ -0,0 +1,7 @@
 +CREATE TABLE IF NOT EXISTS ksvp_operators (
 +    id UUID NOT NULL,
 +    operator_level INT NOT NULL,
 +    can_bypass_player_limit BOOLEAN NOT NULL,
 +    PRIMARY KEY (id),
-+    FOREIGN KEY (id) REFERENCES ksvp_player(id) ON DELETE CASCADE
++    FOREIGN KEY (id) REFERENCES ${global_schema}.ksvp_player(id) ON DELETE CASCADE
 +) COMMENT = "This table stores operators and their permissions.";
 \ No newline at end of file
