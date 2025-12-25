@@ -89,10 +89,10 @@ index b77c1f144473808c1bcf77a0f0e4252b4c2a0959..8c5f401fc9dce754ee32e2243a603f2a
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..6948cc64e7f96a5f7eaa12d7f2dc1bf4eb0413e0
+index 0000000000000000000000000000000000000000..2cd70f7de4b255ca59a2e454d6f1e89d70188060
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-@@ -0,0 +1,126 @@
+@@ -0,0 +1,130 @@
 +package net.kissenpvp.network.actor;
 +
 +import net.kissenpvp.api.network.actor.PlayerClient;
@@ -179,8 +179,8 @@ index 0000000000000000000000000000000000000000..6948cc64e7f96a5f7eaa12d7f2dc1bf4
 +    {
 +        String globalDatabase = ((PulvinarCore) Bukkit.getPulvinar()).config().databaseGlobal();
 +
-+        String sql = "INSERT INTO %s.ksvp_identity (link_id) VALUES (?);";
-+        String sql2 = "INSERT INTO %s.ksvp_player (id, link_id, username) VALUES (?, ?, ?);";
++        String sql = "INSERT INTO %s.ksvp_identity (link_id) VALUES (?) ON DUPLICATE KEY UPDATE link_id = link_id;";
++        String sql2 = "INSERT INTO %s.ksvp_player (id, link_id, username) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id, link_id = link_id, username = ?;";
 +
 +        return CompletableFuture.supplyAsync(() -> {
 +            query(String.format(sql, globalDatabase), (statement) -> {
@@ -207,9 +207,13 @@ index 0000000000000000000000000000000000000000..6948cc64e7f96a5f7eaa12d7f2dc1bf4
 +                    }
 +
 +                    String id = String.valueOf(player.id());
++
 +                    statement.setString(1, id);
 +                    statement.setString(2, id);
++
 +                    statement.setString(3, player.name());
++                    statement.setString(4, player.name());
++                    statement.addBatch();
 +                }
 +                statement.executeBatch();
 +                return null;
