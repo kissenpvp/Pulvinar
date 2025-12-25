@@ -5,7 +5,7 @@ Subject: [PATCH] Implement Rank System
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 4b1fe13ae92ed5c1d9d1d2f00e393034963096a8..375a00e8024873cea7d4fbb32b6a80a921e75f1f 100644
+index 8c5f401fc9dce754ee32e2243a603f2a1bcc2a7f..90ade9391e213d54172cc1f3ecaca8a6ea5a5305 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -2,11 +2,15 @@ package net.kissenpvp.base;
@@ -24,7 +24,7 @@ index 4b1fe13ae92ed5c1d9d1d2f00e393034963096a8..375a00e8024873cea7d4fbb32b6a80a9
  import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
  import org.bukkit.Bukkit;
  import org.bukkit.configuration.InvalidConfigurationException;
-@@ -34,6 +38,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -36,6 +40,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      private PulvinarOperatorRepository operatorRepository;
      private PulvinarWhiteListRepository whiteListRepository;
      private PlayerRepository playerRepository;
@@ -32,7 +32,7 @@ index 4b1fe13ae92ed5c1d9d1d2f00e393034963096a8..375a00e8024873cea7d4fbb32b6a80a9
  
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -80,6 +85,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -86,6 +91,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
          operatorRepository = new PulvinarOperatorRepository(privateDatasource);
          whiteListRepository = new PulvinarWhiteListRepository(privateDatasource);
          playerRepository = new PulvinarPlayerRepository(globalDatasource);
@@ -40,7 +40,7 @@ index 4b1fe13ae92ed5c1d9d1d2f00e393034963096a8..375a00e8024873cea7d4fbb32b6a80a9
      }
  
      public void shutdown()
-@@ -117,4 +123,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -123,4 +129,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public PlayerRepository playerRepository() {
          return playerRepository;
      }

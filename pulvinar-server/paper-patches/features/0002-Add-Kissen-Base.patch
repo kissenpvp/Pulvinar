@@ -63,18 +63,18 @@ index 0000000000000000000000000000000000000000..4ba304ce4a66649f1626bdf820b22b18
 +        config.set("config-version", 1);
 +
 +        config.addDefault("database.configured", false);
-+        config.addDefault("database.url", "jdbc:mysql://<url>:<port>/<database>");
++        config.addDefault("database.url", "<url>:<port>");
 +
-+        config.addDefault("database.global", "kissen_global");
-+        config.addDefault("database.private", "kissen_local");
++        config.addDefault("database.global.database", "kissen_global");
++        config.addDefault("database.private.database", "kissen_local");
 +
 +        config.addDefault("database.user", "user");
 +        config.addDefault("database.password", "password");
 +
 +        databaseConfigured = config.getBoolean("database.configured");
 +        databaseAddress = config.getString("database.url");
-+        databaseGlobal = config.getString("database.global");
-+        databasePrivate = config.getString("database.private");
++        databaseGlobal = config.getString("database.global.database");
++        databasePrivate = config.getString("database.private.database");
 +        databaseUser = config.getString("database.user");
 +        databasePassword = config.getString("database.password");
 +
@@ -147,10 +147,10 @@ index 0000000000000000000000000000000000000000..4ba304ce4a66649f1626bdf820b22b18
 +}
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..05875053aeb12c30722e32ac06aa65ba033c6dde
+index 0000000000000000000000000000000000000000..5bb00abe99474c3ee0ad71c93e6c9ee8497437a3
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,103 @@
 +package net.kissenpvp.base;
 +
 +import net.kissenpvp.api.base.Pulvinar;
@@ -168,6 +168,8 @@ index 0000000000000000000000000000000000000000..05875053aeb12c30722e32ac06aa65ba
 +import java.io.File;
 +import java.io.IOException;
 +import java.sql.SQLException;
++import java.util.Collections;
++import java.util.Map;
 +
 +/**
 + * Allows access to the kissen api
@@ -198,14 +200,17 @@ index 0000000000000000000000000000000000000000..05875053aeb12c30722e32ac06aa65ba
 +        provider = new InternalConnectionProvider();
 +        privateProvider = new InternalConnectionProvider();
 +
-+        DataSource dataSource = connect(provider, config.databaseGlobal(), "classpath:migrations/mariadb");
-+        DataSource privateDatasource = connect(privateProvider, config.databasePrivate(), "classpath:migrations/private/mariadb");
++        String globalDatabase = config.databaseGlobal();
++        DataSource dataSource = connect(provider, config.databaseGlobal(), "classpath:migrations/mariadb", Collections.emptyMap());
++
++        Map<String, String> placeholders = Collections.singletonMap("global_database", globalDatabase);
++        DataSource privateDatasource = connect(privateProvider, config.databasePrivate(), "classpath:migrations/private/mariadb", placeholders);
 +
 +        createRepositories(dataSource, privateDatasource);
 +        init();
 +    }
 +
-+    private @NonNull DataSource connect(@NonNull ConnectionProvider provider, @NonNull String database, @NonNull String location) throws SQLException {
++    private @NonNull DataSource connect(@NonNull ConnectionProvider provider, @NonNull String database, @NonNull String location, @NonNull Map<String, String> placeholders) throws SQLException {
 +        String url = String.format("jdbc:mysql://%s/%s", config.databaseAddress(), database);
 +        provider.connect(url, config.databaseUser(), config.databasePassword());
 +
@@ -216,7 +221,8 @@ index 0000000000000000000000000000000000000000..05875053aeb12c30722e32ac06aa65ba
 +            throw new SQLException("The providers dataSource is not present. Couldn't it connect?");
 +        }
 +
-+        provider.setupFlyway(Flyway.configure().dataSource(dataSource).locations(location).load(), true);
++        Flyway flyway = Flyway.configure().dataSource(dataSource).locations(location).placeholders(placeholders).load();
++        provider.setupFlyway(flyway, true);
 +        return provider.dataSource().get();
 +    }
 +

@@ -5,7 +5,7 @@ Subject: [PATCH] Overhaul Ban Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 375a00e8024873cea7d4fbb32b6a80a921e75f1f..3effbe8015c391798530bcfd60ec27313fae7161 100644
+index 90ade9391e213d54172cc1f3ecaca8a6ea5a5305..ce4a58a891b97d39a1b698587cd0a00e57c6e04a 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -7,11 +7,15 @@ import net.kissenpvp.api.network.actor.ConsoleClient;
@@ -24,7 +24,7 @@ index 375a00e8024873cea7d4fbb32b6a80a921e75f1f..3effbe8015c391798530bcfd60ec2731
  import org.bukkit.Bukkit;
  import org.bukkit.configuration.InvalidConfigurationException;
  import org.flywaydb.core.Flyway;
-@@ -39,6 +43,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -41,6 +45,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      private PulvinarWhiteListRepository whiteListRepository;
      private PlayerRepository playerRepository;
      private Repository<String, Rank> rankRepository;
@@ -33,7 +33,7 @@ index 375a00e8024873cea7d4fbb32b6a80a921e75f1f..3effbe8015c391798530bcfd60ec2731
  
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -86,6 +92,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -92,6 +98,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
          whiteListRepository = new PulvinarWhiteListRepository(privateDatasource);
          playerRepository = new PulvinarPlayerRepository(globalDatasource);
          rankRepository = new InternalRankRepository(globalDatasource);
@@ -42,7 +42,7 @@ index 375a00e8024873cea7d4fbb32b6a80a921e75f1f..3effbe8015c391798530bcfd60ec2731
      }
  
      public void shutdown()
-@@ -128,4 +136,14 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -134,4 +142,14 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public Repository<String, Rank> rankRepository() {
          return rankRepository;
      }

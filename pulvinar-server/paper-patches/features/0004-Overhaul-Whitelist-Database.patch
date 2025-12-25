@@ -5,7 +5,7 @@ Subject: [PATCH] Overhaul Whitelist Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 082566cf67769d2aaf488a3c515b1b61189964ce..eabbb58d73a0f4a1e51a5e66eb0db4b55b31c016 100644
+index 0bbd671fa09db023f89cfb8a50098498900caaf3..b77c1f144473808c1bcf77a0f0e4252b4c2a0959 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -5,6 +5,7 @@ import net.kissenpvp.api.database.ConnectionProvider;
@@ -16,7 +16,7 @@ index 082566cf67769d2aaf488a3c515b1b61189964ce..eabbb58d73a0f4a1e51a5e66eb0db4b5
  import org.bukkit.Bukkit;
  import org.bukkit.configuration.InvalidConfigurationException;
  import org.flywaydb.core.Flyway;
-@@ -29,6 +30,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -31,6 +32,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      private final ConnectionProvider privateProvider;
  
      private PulvinarOperatorRepository operatorRepository;
@@ -24,7 +24,7 @@ index 082566cf67769d2aaf488a3c515b1b61189964ce..eabbb58d73a0f4a1e51a5e66eb0db4b5
  
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -73,6 +75,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -79,6 +81,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      private void createRepositories(@NonNull DataSource globalDatasource, @NonNull DataSource privateDatasource)
      {
          operatorRepository = new PulvinarOperatorRepository(privateDatasource);
@@ -32,7 +32,7 @@ index 082566cf67769d2aaf488a3c515b1b61189964ce..eabbb58d73a0f4a1e51a5e66eb0db4b5
      }
  
      public void shutdown()
-@@ -101,4 +104,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -107,4 +110,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull PulvinarOperatorRepository operatorRepository() {
          return operatorRepository;
      }
@@ -111,16 +111,18 @@ index 0000000000000000000000000000000000000000..a93d0eb776b177dd3bf3c3e7b17a12a8
 +public interface PulvinarWhiteListEntry extends PersistableEntity<UUID> { }
 diff --git a/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListRepository.java b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..0701d8ab1d327ce64101922f24cc890c805ffc19
+index 0000000000000000000000000000000000000000..7ad867e08ba9657cda809c718b89ab36535328a3
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListRepository.java
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,130 @@
 +package net.kissenpvp.network.actor.whitelist;
 +
 +import com.google.common.base.Preconditions;
 +import net.kissenpvp.api.database.KissenRepository;
++import net.kissenpvp.base.PulvinarCore;
 +import net.minecraft.server.players.NameAndId;
 +import net.minecraft.server.players.UserWhiteListEntry;
++import org.bukkit.Bukkit;
 +import org.jspecify.annotations.NonNull;
 +
 +import javax.sql.DataSource;
@@ -133,6 +135,10 @@ index 0000000000000000000000000000000000000000..0701d8ab1d327ce64101922f24cc890c
 +
 +    public PulvinarWhiteListRepository(@NonNull DataSource dataSource) throws NullPointerException {
 +        super(dataSource);
++    }
++
++    private static @NonNull String globalDatabase() {
++        return ((PulvinarCore) Bukkit.getPulvinar()).config().databaseGlobal();
 +    }
 +
 +    private static @NonNull PulvinarWhiteListEntry toEntity(@NonNull UUID id, @NonNull ResultSet resultSet) throws SQLException {
@@ -157,9 +163,9 @@ index 0000000000000000000000000000000000000000..0701d8ab1d327ce64101922f24cc890c
 +
 +    @Override
 +    public @NonNull CompletableFuture<@NonNull Optional<PulvinarWhiteListEntry>> find(@NonNull UUID uuid) throws NullPointerException {
-+        String sql = "SELECT p.username AS username FROM ksvp_whitelist w JOIN kissen.ksvp_player p ON w.id = p.id WHERE w.id = ?;";
++        String sql = "SELECT p.username AS username FROM ksvp_whitelist w JOIN %s.ksvp_player p ON w.id = p.id WHERE w.id = ?;";
 +
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) -> {
 +            statement.setString(1, String.valueOf(uuid));
 +            try (ResultSet resultSet = statement.executeQuery()) {
 +
@@ -182,9 +188,9 @@ index 0000000000000000000000000000000000000000..0701d8ab1d327ce64101922f24cc890c
 +        }
 +
 +        String placeholders = String.join(", ", Collections.nCopies(size, "?"));
-+        String sql = "SELECT w.id, p.username AS username FROM ksvp_whitelist w JOIN kissen.ksvp_player p ON w.id = p.id WHERE w.id IN (" + placeholders + ")";
++        String sql = "SELECT w.id, p.username AS username FROM ksvp_whitelist w JOIN %s.ksvp_player p ON w.id = p.id WHERE w.id IN (" + placeholders + ")";
 +
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) ->
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) ->
 +        {
 +            int index = 1;
 +
@@ -200,8 +206,8 @@ index 0000000000000000000000000000000000000000..0701d8ab1d327ce64101922f24cc890c
 +
 +    @Override
 +    public @NonNull CompletableFuture<@NonNull Collection<PulvinarWhiteListEntry>> findAll() {
-+        String sql = "SELECT w.id, p.username AS username FROM ksvp_whitelist w JOIN kissen.ksvp_player p ON w.id = p.id";
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
++        String sql = "SELECT w.id, p.username AS username FROM ksvp_whitelist w JOIN %s.ksvp_player p ON w.id = p.id";
++        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) -> {
 +            try (ResultSet resultSet = statement.executeQuery()) {
 +                return collectResults(resultSet);
 +            }
@@ -240,13 +246,13 @@ index 0000000000000000000000000000000000000000..0701d8ab1d327ce64101922f24cc890c
 +    }
 +}
 diff --git a/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
-index 1db0299e7ed43dfa1eb6c3adf688f209a22a6404..ba66fac4190809c4ef2f1af4934c8d808ec36a9b 100644
+index 2ccc7c0adb50c56458f4f5d529d040719f814534..08088126c0f12f0eab8e3e812d537e71a07c397f 100644
 --- a/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
 +++ b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
 @@ -4,4 +4,10 @@ CREATE TABLE IF NOT EXISTS ksvp_operators (
      can_bypass_player_limit BOOLEAN NOT NULL,
      PRIMARY KEY (id),
-     FOREIGN KEY (id) REFERENCES ksvp_player(id) ON DELETE CASCADE
+     FOREIGN KEY (id) REFERENCES ${global_database}.ksvp_player(id) ON DELETE CASCADE
 -) COMMENT = "This table stores operators and their permissions.";
 \ No newline at end of file
 +) COMMENT = "This table stores operators and their permissions.";
@@ -254,6 +260,6 @@ index 1db0299e7ed43dfa1eb6c3adf688f209a22a6404..ba66fac4190809c4ef2f1af4934c8d80
 +CREATE TABLE IF NOT EXISTS ksvp_whitelist (
 +    id UUID NOT NULL,
 +    PRIMARY KEY (id),
-+    FOREIGN KEY (id) REFERENCES ${global_schema}.ksvp_player(id) ON DELETE CASCADE
++    FOREIGN KEY (id) REFERENCES ${global_database}.ksvp_player(id) ON DELETE CASCADE
 +) COMMENT = "This table stores who is on the whitelist.";
 \ No newline at end of file

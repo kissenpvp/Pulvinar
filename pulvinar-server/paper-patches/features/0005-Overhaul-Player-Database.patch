@@ -48,7 +48,7 @@ index 58c1ff58e58e969a88b929663dfff785843dc1b2..f7a056fee14ed797eb284e68d1387089
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index eabbb58d73a0f4a1e51a5e66eb0db4b55b31c016..4b1fe13ae92ed5c1d9d1d2f00e393034963096a8 100644
+index b77c1f144473808c1bcf77a0f0e4252b4c2a0959..8c5f401fc9dce754ee32e2243a603f2a1bcc2a7f 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -3,7 +3,9 @@ package net.kissenpvp.base;
@@ -61,7 +61,7 @@ index eabbb58d73a0f4a1e51a5e66eb0db4b55b31c016..4b1fe13ae92ed5c1d9d1d2f00e393034
  import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
  import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
  import org.bukkit.Bukkit;
-@@ -31,6 +33,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -33,6 +35,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
  
      private PulvinarOperatorRepository operatorRepository;
      private PulvinarWhiteListRepository whiteListRepository;
@@ -69,7 +69,7 @@ index eabbb58d73a0f4a1e51a5e66eb0db4b55b31c016..4b1fe13ae92ed5c1d9d1d2f00e393034
  
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -76,6 +79,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -82,6 +85,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      {
          operatorRepository = new PulvinarOperatorRepository(privateDatasource);
          whiteListRepository = new PulvinarWhiteListRepository(privateDatasource);
@@ -77,7 +77,7 @@ index eabbb58d73a0f4a1e51a5e66eb0db4b55b31c016..4b1fe13ae92ed5c1d9d1d2f00e393034
      }
  
      public void shutdown()
-@@ -108,4 +112,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -114,4 +118,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull PulvinarWhiteListRepository whiteListRepository() {
          return whiteListRepository;
      }
