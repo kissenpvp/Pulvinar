@@ -89,13 +89,14 @@ index b77c1f144473808c1bcf77a0f0e4252b4c2a0959..8c5f401fc9dce754ee32e2243a603f2a
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..01640749ab425874452f037419d854126e95c665
+index 0000000000000000000000000000000000000000..6948cc64e7f96a5f7eaa12d7f2dc1bf4eb0413e0
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-@@ -0,0 +1,82 @@
+@@ -0,0 +1,126 @@
 +package net.kissenpvp.network.actor;
 +
 +import net.kissenpvp.api.network.actor.PlayerClient;
++import net.kissenpvp.base.PulvinarCore;
 +import net.minecraft.server.players.NameAndId;
 +import org.bukkit.Bukkit;
 +import org.jspecify.annotations.NonNull;
@@ -104,7 +105,6 @@ index 0000000000000000000000000000000000000000..01640749ab425874452f037419d85412
 +import java.sql.ResultSet;
 +import java.util.*;
 +import java.util.concurrent.CompletableFuture;
-+import java.util.function.Consumer;
 +
 +public class PulvinarPlayerRepository extends InternalPlayerRepository {
 +
@@ -174,18 +174,64 @@ index 0000000000000000000000000000000000000000..01640749ab425874452f037419d85412
 +
 +        return discovered;
 +    }
++
++    public @NonNull CompletableFuture<Void> generateProfileIfAbsent(@NonNull NameAndId[] nameAndId)
++    {
++        String globalDatabase = ((PulvinarCore) Bukkit.getPulvinar()).config().databaseGlobal();
++
++        String sql = "INSERT INTO %s.ksvp_identity (link_id) VALUES (?);";
++        String sql2 = "INSERT INTO %s.ksvp_player (id, link_id, username) VALUES (?, ?, ?);";
++
++        return CompletableFuture.supplyAsync(() -> {
++            query(String.format(sql, globalDatabase), (statement) -> {
++                for(NameAndId player : nameAndId)
++                {
++                    if(cached(player.id()))
++                    {
++                        continue;
++                    }
++
++                    statement.setString(1, String.valueOf(player.id()));
++                    statement.addBatch();
++                }
++                statement.executeBatch();
++                return null;
++            });
++
++            query(String.format(sql2, globalDatabase), (statement) -> {
++                for(NameAndId player : nameAndId)
++                {
++                    if(cached(player.id()))
++                    {
++                        continue;
++                    }
++
++                    String id = String.valueOf(player.id());
++                    statement.setString(1, id);
++                    statement.setString(2, id);
++                    statement.setString(3, player.name());
++                }
++                statement.executeBatch();
++                return null;
++            });
++
++            return null;
++        });
++    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..06219661b3fa22113e7517cfedbe0a72fc3d557c
+index 0000000000000000000000000000000000000000..0953215e5e4188c1badb1e9259433326ad1d9c7d
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
-@@ -0,0 +1,46 @@
+@@ -0,0 +1,59 @@
 +package net.kissenpvp.network.actor;
 +
 +import com.mojang.authlib.GameProfileRepository;
 +import net.minecraft.server.players.CachedUserNameToIdResolver;
++import net.minecraft.server.players.NameAndId;
 +import org.jetbrains.annotations.NotNull;
++import org.jspecify.annotations.NonNull;
 +
 +import java.io.File;
 +import java.util.Calendar;
@@ -196,6 +242,17 @@ index 0000000000000000000000000000000000000000..06219661b3fa22113e7517cfedbe0a72
 +
 +    public PulvinarProfileCache(GameProfileRepository profileRepository, File file) {
 +        super(profileRepository, file);
++    }
++
++    @Override
++    protected @NonNull GameProfileInfo addInternal(@NonNull NameAndId nameAndId) {
++
++        if(getRepository() instanceof PulvinarProfileRepository profileRepository)
++        {
++            profileRepository.generateProfiles(nameAndId);
++        }
++
++        return super.addInternal(nameAndId);
 +    }
 +
 +    @Override
@@ -229,10 +286,10 @@ index 0000000000000000000000000000000000000000..06219661b3fa22113e7517cfedbe0a72
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d1e60abecb4c9dbeb3586d5774be003d1e398b37
+index 0000000000000000000000000000000000000000..b4301a1e85a9cbd9def40a872adcf2af8da4765c
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileRepository.java
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,45 @@
 +package net.kissenpvp.network.actor;
 +
 +import com.destroystokyo.paper.profile.PaperGameProfileRepository;
@@ -245,7 +302,6 @@ index 0000000000000000000000000000000000000000..d1e60abecb4c9dbeb3586d5774be003d
 +import java.util.Collection;
 +import java.util.HashSet;
 +import java.util.Set;
-+import java.util.UUID;
 +
 +public class PulvinarProfileRepository extends PaperGameProfileRepository {
 +
@@ -267,6 +323,11 @@ index 0000000000000000000000000000000000000000..d1e60abecb4c9dbeb3586d5774be003d
 +        }
 +
 +        return stillUndiscovered;
++    }
++
++    public void generateProfiles(NameAndId... nameAndIds)
++    {
++        repository.generateProfileIfAbsent(nameAndIds).join();
 +    }
 +
 +    public @NonNull Collection<NameAndId> findAllProfiles()
@@ -374,10 +435,10 @@ index e24eb67ad0742ac6116e7a5b84998db61dc0fc93..bbffe713655b4c5c941fefa1a78afa9a
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 365894ad23c0fe47fc643ca1a7478b242210ea43..7fe5d5fa888af23ee7d4b91601113fc4e22ba406 100644
+index dd0dcc6ae5cfb72df0483417b22eddd90febc9e6..cfa61480fd1a8208846f9c6fd28a8faad81a2152 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -3466,4 +3466,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3467,4 +3467,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
              entity.remove();
          }
      }
