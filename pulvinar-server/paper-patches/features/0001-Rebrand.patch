@@ -5,48 +5,81 @@ Subject: [PATCH] Rebrand
 
 
 diff --git a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
-index a5a7334f7a1f147945079f20aa04b4f317d9e94c..822c0e35a59dcb0e39430c4ba8c0d0423a6987b2 100644
+index 9a26749302c2b9a1dd247bfd4ea9332428bfbf77..c058e22e7224ea6313905efef4e17a51c33a6c9b 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
-@@ -36,7 +36,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+@@ -40,15 +40,15 @@ public class PaperVersionFetcher implements VersionFetcher {
+     private static final ComponentLogger COMPONENT_LOGGER = ComponentLogger.logger(LogManager.getRootLogger().getName());
      private static final int DISTANCE_ERROR = -1;
      private static final int DISTANCE_UNKNOWN = -2;
-     // Purpur start - Rebrand
--    private static final String DOWNLOAD_PAGE = "https://purpurmc.org/downloads";
-+    private static final String DOWNLOAD_PAGE = "https://api.example.com/nonexistent/downloads"; // Pulvinar
-     private static int distance = DISTANCE_UNKNOWN; public int distance() { return distance; }
-     // Purpur end - Rebrand
+-    private static final String DOWNLOAD_PAGE = "https://papermc.io/downloads/paper";
+-    private static final String REPOSITORY = "PaperMC/Paper";
++    private static final String DOWNLOAD_PAGE = "https://pulvinar.io/downloads/pulvinar"; // Pulvinar - Rebrand
++    private static final String REPOSITORY = "KissenPvP/Pulvinar"; // Pulvinar - Rebrand
+     private static final ServerBuildInfo BUILD_INFO;
+     private static final String USER_AGENT;
+     private static final Gson GSON = new Gson();
  
-@@ -52,7 +52,7 @@ public class PaperVersionFetcher implements VersionFetcher {
-         if (build.buildNumber().isEmpty() && build.gitCommit().isEmpty()) {
-             updateMessage = text("You are running a development version without access to version information", color(0xFF5300));
-         } else {
--            updateMessage = getUpdateStatusMessage("PurpurMC/Purpur", build); // Purpur - Rebrand
-+            updateMessage = getUpdateStatusMessage("KissenPvP/Pulvinar", build); // Purpur - Rebrand // Pulvinar
-         }
-         final @Nullable Component history = this.getHistory();
+     static {
+         BUILD_INFO = ServerBuildInfo.buildInfo();
+-        USER_AGENT = BUILD_INFO.brandName() + "/" + BUILD_INFO.asString(VERSION_SIMPLE) + " (https://papermc.io)";
++        USER_AGENT = BUILD_INFO.brandName() + "/" + BUILD_INFO.asString(VERSION_SIMPLE) + " (https://pulvinar.io)"; // Pulvinar - Rebrand
+     }
  
-@@ -62,16 +62,17 @@ public class PaperVersionFetcher implements VersionFetcher {
-     private static Component getUpdateStatusMessage(final String repo, final ServerBuildInfo build) {
-         //int distance = DISTANCE_ERROR; // Purpur - use field - Rebrand
+     @Override
+@@ -144,7 +144,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+         final String currentVersion = PaperVersionFetcher.BUILD_INFO.minecraftVersionId();
  
-+        // Pulvinar start - Rebrand
-         final OptionalInt buildNumber = build.buildNumber();
--        if (buildNumber.isPresent()) {
-+        /*if (buildNumber.isPresent()) {
-             distance = fetchDistanceFromSiteApi(build, buildNumber.getAsInt());
--        } else {
-+        } else {*/
-             final Optional<String> gitBranch = build.gitBranch();
-             final Optional<String> gitCommit = build.gitCommit();
-             if (gitBranch.isPresent() && gitCommit.isPresent()) {
-                 distance = fetchDistanceFromGitHub(repo, gitBranch.get(), gitCommit.get());
+         try {
+-            final URL versionsUrl = URI.create("https://fill.papermc.io/v3/projects/paper").toURL();
++            final URL versionsUrl = URI.create("https://fill.pulvinar.io/v3/projects/pulvinar").toURL(); // Pulvinar - Rebrand TODO
+             final HttpURLConnection connection = (HttpURLConnection) versionsUrl.openConnection();
+             connection.setConnectTimeout(5000);
+             connection.setReadTimeout(5000);
+@@ -166,7 +166,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+                     }
+ 
+                     try {
+-                        final URL buildsUrl = URI.create("https://fill.papermc.io/v3/projects/paper/versions/" + latestVersion + "/builds/latest").toURL();
++                        final URL buildsUrl = URI.create("https://fill.pulvinar.io/v3/projects/pulvinar/versions/" + latestVersion + "/builds/latest").toURL(); // Pulvinar - Rebrand TODO
+                         final HttpURLConnection connection2 = (HttpURLConnection) buildsUrl.openConnection();
+                         connection2.setConnectTimeout(5000);
+                         connection2.setReadTimeout(5000);
+@@ -182,14 +182,14 @@ public class PaperVersionFetcher implements VersionFetcher {
+                                 return Optional.of(new MinecraftVersionFetcher(latestVersion, distance));
+                             }
+                         } catch (final JsonSyntaxException ex) {
+-                            LOGGER.error("Error parsing json from Paper's downloads API", ex);
++                            LOGGER.error("Error parsing json from Pulvinar's downloads API", ex); // Pulvinar - Rebrand
+                         }
+                     } catch (final IOException e) {
+                         LOGGER.error("Error while parsing latest build", e);
+                     }
+                 }
+             } catch (final JsonSyntaxException ex) {
+-                LOGGER.error("Error parsing json from Paper's downloads API", ex);
++                LOGGER.error("Error parsing json from Pulvinar's downloads API", ex); // Pulvinar - Rebrand
              }
--        }
-+        //} // Pulvinar end - Rebrand
+         } catch (final IOException e) {
+             LOGGER.error("Error while parsing version list", e);
+@@ -199,7 +199,7 @@ public class PaperVersionFetcher implements VersionFetcher {
  
-         return switch (distance) {
-             case DISTANCE_ERROR -> text("* Error obtaining version information", NamedTextColor.RED); // Purpur - Rebrand
+     private static int fetchDistanceFromSiteApi(final int jenkinsBuild) {
+         try {
+-            final URL buildsUrl = URI.create("https://fill.papermc.io/v3/projects/paper/versions/" + PaperVersionFetcher.BUILD_INFO.minecraftVersionId()).toURL();
++            final URL buildsUrl = URI.create("https://fill.pulvinar.io/v3/projects/pulvinar/versions/" + PaperVersionFetcher.BUILD_INFO.minecraftVersionId()).toURL(); // Pulvinar - Rebrand TODO
+             final HttpURLConnection connection = (HttpURLConnection) buildsUrl.openConnection();
+             connection.setConnectTimeout(5000);
+             connection.setReadTimeout(5000);
+@@ -214,7 +214,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+                     .orElseThrow();
+                 return latest - jenkinsBuild;
+             } catch (final JsonSyntaxException ex) {
+-                LOGGER.error("Error parsing json from Paper's downloads API", ex);
++                LOGGER.error("Error parsing json from Pulvinar's downloads API", ex); // Pulvinar - Rebrand
+                 return DISTANCE_ERROR;
+             }
+         } catch (final IOException e) {
 diff --git a/src/main/java/com/destroystokyo/paper/console/PaperConsole.java b/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
 index bc7e4e5560708fea89c584b1d8b471f4966f311a..37f011eb4b4ce8119048c21b842342cbbc3f2f1e 100644
 --- a/src/main/java/com/destroystokyo/paper/console/PaperConsole.java

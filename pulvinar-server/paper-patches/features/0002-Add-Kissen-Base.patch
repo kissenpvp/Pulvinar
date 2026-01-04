@@ -6,7 +6,7 @@ Subject: [PATCH] Add Kissen Base
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarConfig.java b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..4ba304ce4a66649f1626bdf820b22b189d95397f
+index 0000000000000000000000000000000000000000..f334b84cb4b5576b51ef65ceb6e9d1b711d652fe
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
 @@ -0,0 +1,135 @@
@@ -255,10 +255,10 @@ index 0000000000000000000000000000000000000000..5bb00abe99474c3ee0ad71c93e6c9ee8
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
-index 7e99752be20868606ab31b9db831c9940f970c9b..da41504c93eec5873fbe0eb20a77d6872ca95d29 100644
+index 612bb96d16deb9da8f85355612b0cd2341eb9b9c..e1743925e1f6b7bd75d96d0a01a3967f20772760 100644
 --- a/src/main/java/org/bukkit/craftbukkit/Main.java
 +++ b/src/main/java/org/bukkit/craftbukkit/Main.java
-@@ -172,6 +172,14 @@ public class Main {
+@@ -170,6 +170,14 @@ public class Main {
                      .describedAs("Yml file");
                  // Purpur end - Purpur config files
  
