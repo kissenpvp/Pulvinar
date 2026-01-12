@@ -5,10 +5,10 @@ Subject: [PATCH] Rebrand
 
 
 diff --git a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
-index 9a26749302c2b9a1dd247bfd4ea9332428bfbf77..c058e22e7224ea6313905efef4e17a51c33a6c9b 100644
+index 602d3ce2cd16405f35453ce12a207b70312a4a8a..41cf77383602ffc9f0e2f8614a1c2ccc2ff6302b 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
-@@ -40,15 +40,15 @@ public class PaperVersionFetcher implements VersionFetcher {
+@@ -40,8 +40,8 @@ public class PaperVersionFetcher implements VersionFetcher {
      private static final ComponentLogger COMPONENT_LOGGER = ComponentLogger.logger(LogManager.getRootLogger().getName());
      private static final int DISTANCE_ERROR = -1;
      private static final int DISTANCE_UNKNOWN = -2;
@@ -16,18 +16,10 @@ index 9a26749302c2b9a1dd247bfd4ea9332428bfbf77..c058e22e7224ea6313905efef4e17a51
 -    private static final String REPOSITORY = "PaperMC/Paper";
 +    private static final String DOWNLOAD_PAGE = "https://pulvinar.io/downloads/pulvinar"; // Pulvinar - Rebrand
 +    private static final String REPOSITORY = "KissenPvP/Pulvinar"; // Pulvinar - Rebrand
-     private static final ServerBuildInfo BUILD_INFO;
-     private static final String USER_AGENT;
+     private static final ServerBuildInfo BUILD_INFO = ServerBuildInfo.buildInfo();
+     private static final String USER_AGENT = BUILD_INFO.brandName() + "/" + BUILD_INFO.asString(VERSION_SIMPLE) + " (https://papermc.io)";
      private static final Gson GSON = new Gson();
- 
-     static {
-         BUILD_INFO = ServerBuildInfo.buildInfo();
--        USER_AGENT = BUILD_INFO.brandName() + "/" + BUILD_INFO.asString(VERSION_SIMPLE) + " (https://papermc.io)";
-+        USER_AGENT = BUILD_INFO.brandName() + "/" + BUILD_INFO.asString(VERSION_SIMPLE) + " (https://pulvinar.io)"; // Pulvinar - Rebrand
-     }
- 
-     @Override
-@@ -144,7 +144,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+@@ -139,7 +139,7 @@ public class PaperVersionFetcher implements VersionFetcher {
          final String currentVersion = PaperVersionFetcher.BUILD_INFO.minecraftVersionId();
  
          try {
@@ -36,7 +28,7 @@ index 9a26749302c2b9a1dd247bfd4ea9332428bfbf77..c058e22e7224ea6313905efef4e17a51
              final HttpURLConnection connection = (HttpURLConnection) versionsUrl.openConnection();
              connection.setConnectTimeout(5000);
              connection.setReadTimeout(5000);
-@@ -166,7 +166,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+@@ -161,7 +161,7 @@ public class PaperVersionFetcher implements VersionFetcher {
                      }
  
                      try {
@@ -45,7 +37,7 @@ index 9a26749302c2b9a1dd247bfd4ea9332428bfbf77..c058e22e7224ea6313905efef4e17a51
                          final HttpURLConnection connection2 = (HttpURLConnection) buildsUrl.openConnection();
                          connection2.setConnectTimeout(5000);
                          connection2.setReadTimeout(5000);
-@@ -182,14 +182,14 @@ public class PaperVersionFetcher implements VersionFetcher {
+@@ -177,14 +177,14 @@ public class PaperVersionFetcher implements VersionFetcher {
                                  return Optional.of(new MinecraftVersionFetcher(latestVersion, distance));
                              }
                          } catch (final JsonSyntaxException ex) {
@@ -62,18 +54,18 @@ index 9a26749302c2b9a1dd247bfd4ea9332428bfbf77..c058e22e7224ea6313905efef4e17a51
              }
          } catch (final IOException e) {
              LOGGER.error("Error while parsing version list", e);
-@@ -199,7 +199,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+@@ -194,7 +194,7 @@ public class PaperVersionFetcher implements VersionFetcher {
  
      private static int fetchDistanceFromSiteApi(final int jenkinsBuild) {
          try {
--            final URL buildsUrl = URI.create("https://fill.papermc.io/v3/projects/paper/versions/" + PaperVersionFetcher.BUILD_INFO.minecraftVersionId()).toURL();
-+            final URL buildsUrl = URI.create("https://fill.pulvinar.io/v3/projects/pulvinar/versions/" + PaperVersionFetcher.BUILD_INFO.minecraftVersionId()).toURL(); // Pulvinar - Rebrand TODO
+-            final URL buildsUrl = URI.create("https://fill.papermc.io/v3/projects/paper/versions/" + PaperVersionFetcher.BUILD_INFO.minecraftVersionId() + "/builds").toURL();
++            final URL buildsUrl = URI.create("https://fill.pulvinar.io/v3/projects/pulvinar/versions/" + PaperVersionFetcher.BUILD_INFO.minecraftVersionId() + "/builds").toURL();
              final HttpURLConnection connection = (HttpURLConnection) buildsUrl.openConnection();
              connection.setConnectTimeout(5000);
              connection.setReadTimeout(5000);
-@@ -214,7 +214,7 @@ public class PaperVersionFetcher implements VersionFetcher {
+@@ -208,7 +208,7 @@ public class PaperVersionFetcher implements VersionFetcher {
                      .orElseThrow();
-                 return latest - jenkinsBuild;
+                 return Math.max(latest - jenkinsBuild, 0);
              } catch (final JsonSyntaxException ex) {
 -                LOGGER.error("Error parsing json from Paper's downloads API", ex);
 +                LOGGER.error("Error parsing json from Pulvinar's downloads API", ex); // Pulvinar - Rebrand
