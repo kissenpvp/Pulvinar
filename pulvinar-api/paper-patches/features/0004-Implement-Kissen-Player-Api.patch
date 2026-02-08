@@ -5,10 +5,10 @@ Subject: [PATCH] Implement Kissen Player Api
 
 
 diff --git a/src/main/java/org/bukkit/OfflinePlayer.java b/src/main/java/org/bukkit/OfflinePlayer.java
-index 28ebe77719afcc6b975def6b9d89f469173396f0..0ef04641f4de4707faad5cdc79b88a3aa306ff58 100644
+index 31ce15fa8cc6b4c79f6be4cbb4be5d9e6a9d7536..1535447c9191ead0dee39204b185627548678e82 100644
 --- a/src/main/java/org/bukkit/OfflinePlayer.java
 +++ b/src/main/java/org/bukkit/OfflinePlayer.java
-@@ -22,7 +22,7 @@ import org.jspecify.annotations.Nullable;
+@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
   * player needing to be online.
   */
  @NullMarked
@@ -42,10 +42,10 @@ index f2a1693a1ef03dafa33442d61f73f91bd6202370..be05e7de7769b2b7c1f47f67d21b7cd9
      // Paper start
      @Override
 diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
-index b221735602f669ef984b44d73605095460316753..a1cbb28e9a599e1c916bbf108bbf0d6ee84e2a4f 100644
+index 7efe22484451a756f0a5b85db5ca86aae1fd4b03..e03dad3d861af75c407f721244df249cd96f0f74 100644
 --- a/src/main/java/org/bukkit/entity/Player.java
 +++ b/src/main/java/org/bukkit/entity/Player.java
-@@ -64,7 +64,7 @@ import org.jspecify.annotations.Nullable;
+@@ -66,7 +66,7 @@ import org.jspecify.annotations.Nullable;
   * Represents a player, connected or not
   */
  @NullMarked
