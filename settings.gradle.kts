@@ -20,8 +20,8 @@ if (!file(".git").exists()) {
          In order to build Pulvinar from source you must clone
          the repository using Git, not download a code zip from GitHub.
          
-         See https://github.com/PurpurMC/Purpur/blob/HEAD/CONTRIBUTING.md
-         for further information on building and modifying Purpur.
+         See https://github.com/KissenPvP/Pulvinar/blob/HEAD/CONTRIBUTING.md
+         for further information on building and modifying Pulvinar.
         ===================================================
     """.trimIndent()
     error(errorText)
