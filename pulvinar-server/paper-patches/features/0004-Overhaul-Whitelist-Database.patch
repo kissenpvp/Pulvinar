@@ -5,12 +5,12 @@ Subject: [PATCH] Overhaul Whitelist Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 0bbd671fa09db023f89cfb8a50098498900caaf3..b77c1f144473808c1bcf77a0f0e4252b4c2a0959 100644
+index 0a49568ddd0f94d62a891a5b8769d4f1b79a1da8..83221ff75544acaaf8301d5ae8bc00bc4f1119ee 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -5,6 +5,7 @@ import net.kissenpvp.api.database.ConnectionProvider;
  import net.kissenpvp.api.network.actor.ConsoleClient;
- import net.kissenpvp.database.InternalConnectionProvider;
+ import net.kissenpvp.database.mariadb.InternalConnectionProvider;
  import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
 +import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
  import org.bukkit.Bukkit;

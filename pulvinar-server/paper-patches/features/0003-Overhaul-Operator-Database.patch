@@ -5,13 +5,13 @@ Subject: [PATCH] Overhaul Operator Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 5bb00abe99474c3ee0ad71c93e6c9ee8497437a3..0bbd671fa09db023f89cfb8a50098498900caaf3 100644
+index 8fceefa7bd4b536c972fc20241e1610aa6d9a2c6..0a49568ddd0f94d62a891a5b8769d4f1b79a1da8 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -4,6 +4,7 @@ import net.kissenpvp.api.base.Pulvinar;
  import net.kissenpvp.api.database.ConnectionProvider;
  import net.kissenpvp.api.network.actor.ConsoleClient;
- import net.kissenpvp.database.InternalConnectionProvider;
+ import net.kissenpvp.database.mariadb.InternalConnectionProvider;
 +import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
  import org.bukkit.Bukkit;
  import org.bukkit.configuration.InvalidConfigurationException;

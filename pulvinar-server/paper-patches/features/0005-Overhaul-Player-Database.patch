@@ -48,7 +48,7 @@ index 58c1ff58e58e969a88b929663dfff785843dc1b2..f7a056fee14ed797eb284e68d1387089
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index b77c1f144473808c1bcf77a0f0e4252b4c2a0959..8c5f401fc9dce754ee32e2243a603f2a1bcc2a7f 100644
+index 83221ff75544acaaf8301d5ae8bc00bc4f1119ee..26d70ba4c6fad6de2b752f9b49a83a1309a9829c 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -3,7 +3,9 @@ package net.kissenpvp.base;
@@ -56,7 +56,7 @@ index b77c1f144473808c1bcf77a0f0e4252b4c2a0959..8c5f401fc9dce754ee32e2243a603f2a
  import net.kissenpvp.api.database.ConnectionProvider;
  import net.kissenpvp.api.network.actor.ConsoleClient;
 +import net.kissenpvp.api.network.actor.PlayerRepository;
- import net.kissenpvp.database.InternalConnectionProvider;
+ import net.kissenpvp.database.mariadb.InternalConnectionProvider;
 +import net.kissenpvp.network.actor.PulvinarPlayerRepository;
  import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
  import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
@@ -83,7 +83,7 @@ index b77c1f144473808c1bcf77a0f0e4252b4c2a0959..8c5f401fc9dce754ee32e2243a603f2a
      }
 +
 +    @Override
-+    public PlayerRepository playerRepository() {
++    public @NonNull PlayerRepository playerRepository() {
 +        return playerRepository;
 +    }
  }

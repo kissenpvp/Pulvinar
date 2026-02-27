@@ -5,10 +5,10 @@ Subject: [PATCH] Implement Rank System
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 8c5f401fc9dce754ee32e2243a603f2a1bcc2a7f..90ade9391e213d54172cc1f3ecaca8a6ea5a5305 100644
+index 26d70ba4c6fad6de2b752f9b49a83a1309a9829c..5eaa45298b37d9a2135152ab16b9328075c2f656 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -2,11 +2,15 @@ package net.kissenpvp.base;
+@@ -2,11 +2,14 @@ package net.kissenpvp.base;
  
  import net.kissenpvp.api.base.Pulvinar;
  import net.kissenpvp.api.database.ConnectionProvider;
@@ -16,15 +16,14 @@ index 8c5f401fc9dce754ee32e2243a603f2a1bcc2a7f..90ade9391e213d54172cc1f3ecaca8a6
  import net.kissenpvp.api.network.actor.ConsoleClient;
  import net.kissenpvp.api.network.actor.PlayerRepository;
 +import net.kissenpvp.api.network.actor.rank.Rank;
-+import net.kissenpvp.api.network.actor.rank.RankSubscriptionRepository;
- import net.kissenpvp.database.InternalConnectionProvider;
+ import net.kissenpvp.database.mariadb.InternalConnectionProvider;
  import net.kissenpvp.network.actor.PulvinarPlayerRepository;
  import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
 +import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
  import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
  import org.bukkit.Bukkit;
  import org.bukkit.configuration.InvalidConfigurationException;
-@@ -36,6 +40,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -36,6 +39,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      private PulvinarOperatorRepository operatorRepository;
      private PulvinarWhiteListRepository whiteListRepository;
      private PlayerRepository playerRepository;
@@ -32,7 +31,7 @@ index 8c5f401fc9dce754ee32e2243a603f2a1bcc2a7f..90ade9391e213d54172cc1f3ecaca8a6
  
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -86,6 +91,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -86,6 +90,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
          operatorRepository = new PulvinarOperatorRepository(privateDatasource);
          whiteListRepository = new PulvinarWhiteListRepository(privateDatasource);
          playerRepository = new PulvinarPlayerRepository(globalDatasource);
@@ -40,13 +39,13 @@ index 8c5f401fc9dce754ee32e2243a603f2a1bcc2a7f..90ade9391e213d54172cc1f3ecaca8a6
      }
  
      public void shutdown()
-@@ -123,4 +129,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
-     public PlayerRepository playerRepository() {
+@@ -123,4 +128,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+     public @NonNull PlayerRepository playerRepository() {
          return playerRepository;
      }
 +
 +    @Override
-+    public Repository<String, Rank> rankRepository() {
++    public @NonNull Repository<String, Rank> rankRepository() {
 +        return rankRepository;
 +    }
  }
