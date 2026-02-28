@@ -69,10 +69,10 @@ index 0000000000000000000000000000000000000000..e1686de9702b07475edfa2b2c794ff21
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..89cd7dc5d06b8f9c609ab5c0b588f5705254acfb
+index 0000000000000000000000000000000000000000..3d9a102b79ddcfb14988e207d2775076a1fbb6a6
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,57 @@
 +package net.kissenpvp.network.actor.operator;
 +
 +import net.kissenpvp.api.database.Repository;
@@ -102,7 +102,7 @@ index 0000000000000000000000000000000000000000..89cd7dc5d06b8f9c609ab5c0b588f570
 +
 +    @Override
 +    public void load() throws IOException {
-+        Collection<PulvinarOperatorInfo> operators = repository.findAll().join();
++        Collection<PulvinarOperatorInfo> operators = repository().findAll().join();
 +
 +        for(PulvinarOperatorInfo operator : operators)
 +        {
@@ -123,25 +123,32 @@ index 0000000000000000000000000000000000000000..89cd7dc5d06b8f9c609ab5c0b588f570
 +        Collection<? extends PulvinarOperatorInfo> ops = getMap().values();
 +
 +        //noinspection unchecked
-+        repository.saveAll((Iterable<PulvinarOperatorInfo>) ops); // look. I know this is stupid. But just accept that this is java
++        repository().saveAll((Iterable<PulvinarOperatorInfo>) ops); // look. I know this is stupid. But just accept that this is java
++    }
++
++    public @NonNull Repository<UUID, PulvinarOperatorInfo> repository() {
++        return repository;
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..9b2cca05b39b940395c8e8019fe62d0c3dd26109
+index 0000000000000000000000000000000000000000..be889e986aeb13a101310d95f7774cfcae00e82f
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
-@@ -0,0 +1,134 @@
+@@ -0,0 +1,165 @@
 +package net.kissenpvp.network.actor.operator;
 +
 +import com.google.common.base.Preconditions;
++import net.kissenpvp.api.database.DeletableRepository;
 +import net.kissenpvp.api.database.KissenRepository;
 +import net.kissenpvp.base.PulvinarCore;
++import net.kissenpvp.database.AsyncDatabaseQueue;
 +import net.minecraft.server.permissions.LevelBasedPermissionSet;
 +import net.minecraft.server.permissions.PermissionLevel;
 +import net.minecraft.server.players.NameAndId;
 +import net.minecraft.server.players.ServerOpListEntry;
 +import org.bukkit.Bukkit;
++import org.intellij.lang.annotations.Language;
 +import org.jspecify.annotations.NonNull;
 +
 +import javax.sql.DataSource;
@@ -151,7 +158,7 @@ index 0000000000000000000000000000000000000000..9b2cca05b39b940395c8e8019fe62d0c
 +import java.util.*;
 +import java.util.concurrent.CompletableFuture;
 +
-+public class PulvinarOperatorRepository extends KissenRepository<UUID, PulvinarOperatorInfo> {
++public class PulvinarOperatorRepository extends KissenRepository<UUID, PulvinarOperatorInfo> implements DeletableRepository<UUID> {
 +    public PulvinarOperatorRepository(@NonNull DataSource dataSource) throws NullPointerException {
 +        super(dataSource);
 +    }
@@ -195,7 +202,7 @@ index 0000000000000000000000000000000000000000..9b2cca05b39b940395c8e8019fe62d0c
 +        Preconditions.checkNotNull(id, "Id cannot be null.");
 +
 +        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN %s.ksvp_player p ON o.id = p.id WHERE o.id = ?;";
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(this.query(String.format(sql, globalDatabase()), (statement) -> {
++        return AsyncDatabaseQueue.submitTask(() -> assumeNotNull(this.query(String.format(sql, globalDatabase()), (statement) -> {
 +            statement.setString(1, String.valueOf(id));
 +            try (ResultSet resultSet = statement.executeQuery()) {
 +                if (!resultSet.next()) {
@@ -214,7 +221,7 @@ index 0000000000000000000000000000000000000000..9b2cca05b39b940395c8e8019fe62d0c
 +
 +        String placeHolders = String.join(", ", Collections.nCopies(this.computeIterableSize(id), "?"));
 +        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN %s.ksvp_player p ON o.id = p.id WHERE o.id IN (" + placeHolders + ");";
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) -> {
++        return AsyncDatabaseQueue.submitTask(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) -> {
 +            int index = 1;
 +
 +            for (UUID current : id) {
@@ -228,7 +235,7 @@ index 0000000000000000000000000000000000000000..9b2cca05b39b940395c8e8019fe62d0c
 +    @Override
 +    public @NonNull CompletableFuture<@NonNull Collection<PulvinarOperatorInfo>> findAll() {
 +        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN %s.ksvp_player p ON o.id = p.id;";
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(String.format(sql, globalDatabase()), PulvinarOperatorRepository::collectResults)));
++        return AsyncDatabaseQueue.submitTask(() -> assumeNotNull(query(String.format(sql, globalDatabase()), PulvinarOperatorRepository::collectResults)));
 +    }
 +
 +    @Override
@@ -236,7 +243,7 @@ index 0000000000000000000000000000000000000000..9b2cca05b39b940395c8e8019fe62d0c
 +        Preconditions.checkNotNull(id, "id must not be null.");
 +
 +        String sql = "SELECT id FROM ksvp_operators WHERE id = ?;";
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
++        return AsyncDatabaseQueue.submitTask(() -> assumeNotNull(query(sql, (statement) -> {
 +            statement.setString(1, String.valueOf(id));
 +            try (ResultSet resultSet = statement.executeQuery()) {
 +                return resultSet.next();
@@ -248,19 +255,47 @@ index 0000000000000000000000000000000000000000..9b2cca05b39b940395c8e8019fe62d0c
 +    public @NonNull CompletableFuture<Void> saveAll(@NonNull Iterable<PulvinarOperatorInfo> id) throws NullPointerException {
 +        Preconditions.checkNotNull(id, "Iterable must not be null.");
 +
-+        String sql = "INSERT INTO ksvp_operators (id, operator_level, can_bypass_player_limit) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE operator_level = ?, can_bypass_player_limit = ?;";
-+        return CompletableFuture.supplyAsync(() -> query(sql, (statement) -> {
-+            for (PulvinarOperatorInfo pulvinarOperatorInfo : id) {
-+                statement.setString(1, String.valueOf(pulvinarOperatorInfo.id()));
++        return AsyncDatabaseQueue.submitTask(() -> {
 +
-+                statement.setInt(2, pulvinarOperatorInfo.getLevel());
-+                statement.setInt(4, pulvinarOperatorInfo.getLevel());
++            // as the operators are saved at once, we must clear the list so that removed entries will not remain in the database
++            // operators will likely never exceed a low number in terms of computers, so this does not tank performance all to much
++            //noinspection SqlWithoutWhere
++            query("DELETE FROM ksvp_operators;", PreparedStatement::executeUpdate);
 +
-+                statement.setBoolean(3, pulvinarOperatorInfo.getBypassesPlayerLimit());
-+                statement.setBoolean(5, pulvinarOperatorInfo.getBypassesPlayerLimit());
++            String sql = "INSERT INTO ksvp_operators (id, operator_level, can_bypass_player_limit) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE operator_level = ?, can_bypass_player_limit = ?;";
++            return query(sql, (statement) -> {
++
++                for (PulvinarOperatorInfo pulvinarOperatorInfo : id) {
++                    statement.setString(1, String.valueOf(pulvinarOperatorInfo.id()));
++
++                    statement.setInt(2, pulvinarOperatorInfo.getLevel());
++                    statement.setInt(4, pulvinarOperatorInfo.getLevel());
++
++                    statement.setBoolean(3, pulvinarOperatorInfo.getBypassesPlayerLimit());
++                    statement.setBoolean(5, pulvinarOperatorInfo.getBypassesPlayerLimit());
++                    statement.addBatch();
++                }
++
++                statement.executeBatch();
++                return null;
++            });
++        });
++    }
++
++    @Override
++    public @NonNull CompletableFuture<Void> delete(@NonNull UUID uuid) {
++        return deleteAll(Collections.singleton(uuid));
++    }
++
++    @Override
++    public @NonNull CompletableFuture<Void> deleteAll(@NonNull Iterable<UUID> iterable) {
++        String sql = "DELETE FROM ksvp_operators WHERE id = ?;";
++        return AsyncDatabaseQueue.submitTask(() -> query(sql, (statement) -> {
++            for(UUID id : iterable)
++            {
++                statement.setString(1, String.valueOf(id));
 +                statement.addBatch();
 +            }
-+
 +            statement.executeBatch();
 +            return null;
 +        }));

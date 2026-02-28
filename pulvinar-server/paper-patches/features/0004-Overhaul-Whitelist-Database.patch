@@ -43,15 +43,16 @@ index 0a49568ddd0f94d62a891a5b8769d4f1b79a1da8..83221ff75544acaaf8301d5ae8bc00bc
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteList.java b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteList.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..869f450f693ec6b73084d25b6954f38dad38f3cf
+index 0000000000000000000000000000000000000000..b954322c855575c139a9fb99bf361cab837bf186
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteList.java
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,54 @@
 +package net.kissenpvp.network.actor.whitelist;
 +
 +import net.minecraft.server.notifications.NotificationService;
 +import net.minecraft.server.players.UserWhiteList;
 +import net.minecraft.server.players.UserWhiteListEntry;
++import org.jspecify.annotations.NonNull;
 +import org.slf4j.Logger;
 +import org.slf4j.LoggerFactory;
 +
@@ -93,7 +94,11 @@ index 0000000000000000000000000000000000000000..869f450f693ec6b73084d25b6954f38d
 +        Collection<? extends PulvinarWhiteListEntry> ops = getMap().values();
 +
 +        //noinspection unchecked
-+        repository.saveAll((Iterable<PulvinarWhiteListEntry>) ops);
++        repository().saveAll((Iterable<PulvinarWhiteListEntry>) ops);
++    }
++
++    protected @NonNull PulvinarWhiteListRepository repository() {
++        return repository;
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListEntry.java b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListEntry.java
@@ -111,27 +116,30 @@ index 0000000000000000000000000000000000000000..a93d0eb776b177dd3bf3c3e7b17a12a8
 +public interface PulvinarWhiteListEntry extends PersistableEntity<UUID> { }
 diff --git a/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListRepository.java b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..7ad867e08ba9657cda809c718b89ab36535328a3
+index 0000000000000000000000000000000000000000..b09d9aefb4a1afe578363a962ce0ec3f35a94376
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/whitelist/PulvinarWhiteListRepository.java
-@@ -0,0 +1,130 @@
+@@ -0,0 +1,160 @@
 +package net.kissenpvp.network.actor.whitelist;
 +
 +import com.google.common.base.Preconditions;
++import net.kissenpvp.api.database.DeletableRepository;
 +import net.kissenpvp.api.database.KissenRepository;
 +import net.kissenpvp.base.PulvinarCore;
++import net.kissenpvp.database.AsyncDatabaseQueue;
 +import net.minecraft.server.players.NameAndId;
 +import net.minecraft.server.players.UserWhiteListEntry;
 +import org.bukkit.Bukkit;
 +import org.jspecify.annotations.NonNull;
 +
 +import javax.sql.DataSource;
++import java.sql.PreparedStatement;
 +import java.sql.ResultSet;
 +import java.sql.SQLException;
 +import java.util.*;
 +import java.util.concurrent.CompletableFuture;
 +
-+public class PulvinarWhiteListRepository extends KissenRepository<UUID, PulvinarWhiteListEntry> {
++public class PulvinarWhiteListRepository extends KissenRepository<UUID, PulvinarWhiteListEntry> implements DeletableRepository<UUID> {
 +
 +    public PulvinarWhiteListRepository(@NonNull DataSource dataSource) throws NullPointerException {
 +        super(dataSource);
@@ -165,7 +173,7 @@ index 0000000000000000000000000000000000000000..7ad867e08ba9657cda809c718b89ab36
 +    public @NonNull CompletableFuture<@NonNull Optional<PulvinarWhiteListEntry>> find(@NonNull UUID uuid) throws NullPointerException {
 +        String sql = "SELECT p.username AS username FROM ksvp_whitelist w JOIN %s.ksvp_player p ON w.id = p.id WHERE w.id = ?;";
 +
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) -> {
++        return AsyncDatabaseQueue.submitTask(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) -> {
 +            statement.setString(1, String.valueOf(uuid));
 +            try (ResultSet resultSet = statement.executeQuery()) {
 +
@@ -190,7 +198,7 @@ index 0000000000000000000000000000000000000000..7ad867e08ba9657cda809c718b89ab36
 +        String placeholders = String.join(", ", Collections.nCopies(size, "?"));
 +        String sql = "SELECT w.id, p.username AS username FROM ksvp_whitelist w JOIN %s.ksvp_player p ON w.id = p.id WHERE w.id IN (" + placeholders + ")";
 +
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) ->
++        return AsyncDatabaseQueue.submitTask(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) ->
 +        {
 +            int index = 1;
 +
@@ -207,7 +215,7 @@ index 0000000000000000000000000000000000000000..7ad867e08ba9657cda809c718b89ab36
 +    @Override
 +    public @NonNull CompletableFuture<@NonNull Collection<PulvinarWhiteListEntry>> findAll() {
 +        String sql = "SELECT w.id, p.username AS username FROM ksvp_whitelist w JOIN %s.ksvp_player p ON w.id = p.id";
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) -> {
++        return AsyncDatabaseQueue.submitTask(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) -> {
 +            try (ResultSet resultSet = statement.executeQuery()) {
 +                return collectResults(resultSet);
 +            }
@@ -219,7 +227,7 @@ index 0000000000000000000000000000000000000000..7ad867e08ba9657cda809c718b89ab36
 +        Preconditions.checkNotNull(uuid, "Uuid must not be null.");
 +
 +        String sql = "SELECT id FROM ksvp_whitelist WHERE id = ?;";
-+        return CompletableFuture.supplyAsync(() -> assumeNotNull(query(sql, (statement) -> {
++        return AsyncDatabaseQueue.submitTask(() -> assumeNotNull(query(sql, (statement) -> {
 +            statement.setString(1, String.valueOf(uuid));
 +
 +            try (ResultSet resultSet = statement.executeQuery()) {
@@ -230,16 +238,43 @@ index 0000000000000000000000000000000000000000..7ad867e08ba9657cda809c718b89ab36
 +
 +    @Override
 +    public @NonNull CompletableFuture<Void> saveAll(@NonNull Iterable<PulvinarWhiteListEntry> iterable) throws NullPointerException {
-+        String sql = "INSERT INTO ksvp_whitelist (id) VALUES (?) ON DUPLICATE KEY UPDATE id = ?;";
-+        return CompletableFuture.supplyAsync(() -> query(sql, (statement) -> {
-+            for(PulvinarWhiteListEntry entry : iterable)
++        return AsyncDatabaseQueue.submitTask(() -> {
++
++            // as the operators are saved at once, we must clear the list so that removed entries will not remain in the database
++            // operators will likely never exceed a low number in terms of computers, so this does not tank performance all to much
++            //noinspection SqlWithoutWhere
++            query("DELETE FROM ksvp_whitelist;", PreparedStatement::executeUpdate);
++
++            String sql = "INSERT INTO ksvp_whitelist (id) VALUES (?) ON DUPLICATE KEY UPDATE id = ?;";
++            return query(sql, (statement) -> {
++                for(PulvinarWhiteListEntry entry : iterable)
++                {
++                    String uuid = String.valueOf(entry.id());
++                    statement.setString(1, uuid);
++                    statement.setString(2, uuid);
++                    statement.addBatch();
++                }
++
++                statement.executeBatch();
++                return null;
++            });
++        });
++    }
++
++    @Override
++    public @NonNull CompletableFuture<Void> delete(@NonNull UUID uuid) {
++        return deleteAll(Collections.singleton(uuid));
++    }
++
++    @Override
++    public @NonNull CompletableFuture<Void> deleteAll(@NonNull Iterable<UUID> iterable) {
++        String sql = "DELETE FROM ksvp_whitelist WHERE id = ?;";
++        return AsyncDatabaseQueue.submitTask(() -> query(sql, (statement) -> {
++            for(UUID id : iterable)
 +            {
-+                String uuid = String.valueOf(entry.id());
-+                statement.setString(1, uuid);
-+                statement.setString(2, uuid);
++                statement.setString(1, String.valueOf(id));
 +                statement.addBatch();
 +            }
-+
 +            statement.executeBatch();
 +            return null;
 +        }));
