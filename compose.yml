@@ -1,0 +1,11 @@
+services:
+  kissendb:
+    image: docker.io/library/mariadb:latest
+    container_name: kissendb
+    ports:
+      - "3306:3306"
+    environment:
+      - MARIADB_ROOT_PASSWORD=root
+      - MARIADB_USER=kissenpvp
+      - MARIADB_PASSWORD=kissenpvp
+      - MARIADB_DATABASE=kissenpvp
