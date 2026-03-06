@@ -66,3 +66,65 @@ index 6d3f496881492ac67465746984d6ef8302750305..c660c565984525003ead4dbaf53a1683
 +    }
 +    // Pulvinar end - overhaul player data
  }
+diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
+index b8ef50bc3d07890c9da2c98d5f009a3adc52f4b0..8535a1c93dc246027c5e4bcac48438b33cb8c91b 100644
+--- a/net/minecraft/world/level/storage/PlayerDataStorage.java
++++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
+@@ -35,6 +35,20 @@ public class PlayerDataStorage {
+         try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), LOGGER)) {
+             TagValueOutput tagValueOutput = TagValueOutput.createWithContext(scopedCollector, player.registryAccess());
+             player.saveWithoutId(tagValueOutput);
++
++            // Pulvinar start - overhaul player database
++            net.kissenpvp.network.actor.PulvinarPlayerRepository playerRepository = ((net.kissenpvp.network.actor.PulvinarPlayerRepository) org.bukkit.Bukkit.getPulvinar().playerRepository());
++            CompoundTag tag = tagValueOutput.buildResult();
++
++            try (java.io.ByteArrayOutputStream byteArrayOutputStream = new java.io.ByteArrayOutputStream()) {
++                net.minecraft.nbt.NbtIo.writeCompressed(tag, byteArrayOutputStream);
++                byte[] data = byteArrayOutputStream.toByteArray();
++                playerRepository.saveProperties(player.getUUID(), data);
++            }
++
++            if(true) { return; } // TODO: add option to toggle file saving (for backwards compactibility)
++            // Pulvinar end - overhaul player database
++
+             Path path = this.playerDir.toPath();
+             Path path1 = Files.createTempFile(path, player.getStringUUID() + "-", ".dat");
+             CompoundTag compoundTag = tagValueOutput.buildResult();
+@@ -48,6 +62,11 @@ public class PlayerDataStorage {
+     }
+ 
+     private void backup(NameAndId nameAndId, String suffix) {
++
++        // Pulvinar start - store userdata in a database instead of a world
++        if (true) { return; } // we don't do that here // TODO: add option to toggle file saving (for backwards compactibility)
++        // Pulvinar end - store userdata in a database instead of a world
++
+         Path path = this.playerDir.toPath();
+         String string = nameAndId.id().toString();
+         Path path1 = path.resolve(string + suffix);
+@@ -62,6 +81,24 @@ public class PlayerDataStorage {
+     }
+ 
+     private Optional<CompoundTag> load(NameAndId nameAndId, String suffix) {
++        // Pulvinar start - overhaul player database
++        if(true)
++        {
++            net.kissenpvp.network.actor.PulvinarPlayerRepository playerRepository = ((net.kissenpvp.network.actor.PulvinarPlayerRepository) org.bukkit.Bukkit.getPulvinar().playerRepository());
++            Optional<java.sql.Blob> data = playerRepository.findProperties(nameAndId.id()).join();
++            return data.map(blob -> {
++                try
++                {
++                    return NbtIo.readCompressed(blob.getBinaryStream(), NbtAccounter.unlimitedHeap());
++                }
++                catch (java.sql.SQLException | java.io.IOException exception)
++                {
++                    LOGGER.warn("Failed to load player data for {}", nameAndId.name());
++                    return null;
++                }
++            });
++        }
++        // Pulvinar end - overhaul player database // TODO: add option to toggle file saving (for backwards compactibility)
+         File file = new File(this.playerDir, nameAndId.id() + suffix);
+         // Spigot start
+         boolean usingWrongFile = false;

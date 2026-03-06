@@ -89,19 +89,24 @@ index 83221ff75544acaaf8301d5ae8bc00bc4f1119ee..26d70ba4c6fad6de2b752f9b49a83a13
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..2cd70f7de4b255ca59a2e454d6f1e89d70188060
+index 0000000000000000000000000000000000000000..fac0a4c4659b79c490b348ffc9fdfa1815dc1275
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-@@ -0,0 +1,130 @@
+@@ -0,0 +1,179 @@
 +package net.kissenpvp.network.actor;
 +
++import com.google.common.base.Preconditions;
 +import net.kissenpvp.api.network.actor.PlayerClient;
++import net.kissenpvp.base.KissenCore;
 +import net.kissenpvp.base.PulvinarCore;
++import net.kissenpvp.database.AsyncDatabaseQueue;
 +import net.minecraft.server.players.NameAndId;
 +import org.bukkit.Bukkit;
 +import org.jspecify.annotations.NonNull;
 +
 +import javax.sql.DataSource;
++import javax.sql.rowset.serial.SerialBlob;
++import java.sql.Blob;
 +import java.sql.ResultSet;
 +import java.util.*;
 +import java.util.concurrent.CompletableFuture;
@@ -221,6 +226,50 @@ index 0000000000000000000000000000000000000000..2cd70f7de4b255ca59a2e454d6f1e89d
 +
 +            return null;
 +        });
++    }
++
++    /**
++     * Saves a byte array as a blob inside the database.
++     * This is done in the private part of the database.
++     *
++     * @param player the player the properties are attached to
++     * @param data the actual data
++     * @return a completable future when the task is done
++     */
++    public @NonNull CompletableFuture<Void> saveProperties(@NonNull UUID player, byte[] data)
++    {
++        Preconditions.checkNotNull(player);
++
++        String privateDatabase = ((PulvinarCore)PulvinarCore.getInstance()).config().databasePrivate();
++        String sql = "INSERT INTO " + privateDatabase + ".ksvp_player_properties (id, content) VALUES (?, ?) ON DUPLICATE KEY UPDATE content = ?;";
++        return AsyncDatabaseQueue.submitTask(() -> query(sql, statement ->
++        {
++            Blob blob = new SerialBlob(data);
++            statement.setString(1, String.valueOf(player));
++            statement.setBlob(2, blob);
++            statement.setBlob(3, blob);
++            statement.executeUpdate();
++            return null;
++        }));
++    }
++
++    public @NonNull CompletableFuture<Optional<Blob>> findProperties(@NonNull UUID uuid) {
++        Preconditions.checkNotNull(uuid, "The uuid cannot be null!");
++        String privateDatabase = ((PulvinarCore)PulvinarCore.getInstance()).config().databasePrivate();
++
++        String sql = "SELECT content FROM " + privateDatabase + ".ksvp_player_properties WHERE id = ?;";
++        return AsyncDatabaseQueue.submitTask(() -> this.query(sql, (statement) -> {
++            statement.setString(1, String.valueOf(uuid));
++
++            try (ResultSet resultSet = statement.executeQuery()) {
++                if (!resultSet.next())
++                {
++                    return Optional.empty();
++                }
++
++                return Optional.of(resultSet.getBlob("content"));
++            }
++        }));
 +    }
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java b/src/main/java/net/kissenpvp/network/actor/PulvinarProfileCache.java
@@ -484,3 +533,22 @@ index 225a88c6976de91b9115471e7942e5585e392ec4..c6ff47f28f2aad21cba455b1fafc941b
 +    }
 +    // Pulvinar end - overhaul player database
  }
+diff --git a/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
+index 08088126c0f12f0eab8e3e812d537e71a07c397f..c4cd047ad5de279779efd3e7b219a406af728ddd 100644
+--- a/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
++++ b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
+@@ -10,4 +10,11 @@ CREATE TABLE IF NOT EXISTS ksvp_whitelist (
+     id UUID NOT NULL,
+     PRIMARY KEY (id),
+     FOREIGN KEY (id) REFERENCES ${global_database}.ksvp_player(id) ON DELETE CASCADE
+-) COMMENT = "This table stores who is on the whitelist.";
+\ No newline at end of file
++) COMMENT = "This table stores who is on the whitelist.";
++
++CREATE TABLE IF NOT EXISTS ksvp_player_properties (
++    id UUID NOT NULL,
++    content BLOB NOT NULL,
++    PRIMARY KEY (id),
++    FOREIGN KEY (id) REFERENCES ${global_database}.ksvp_player(id) ON DELETE CASCADE
++);
+\ No newline at end of file
