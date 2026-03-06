@@ -547,7 +547,7 @@ index 08088126c0f12f0eab8e3e812d537e71a07c397f..c4cd047ad5de279779efd3e7b219a406
 +
 +CREATE TABLE IF NOT EXISTS ksvp_player_properties (
 +    id UUID NOT NULL,
-+    content BLOB NOT NULL,
++    content MEDIUMBLOB NOT NULL,
 +    PRIMARY KEY (id),
 +    FOREIGN KEY (id) REFERENCES ${global_database}.ksvp_player(id) ON DELETE CASCADE
 +);
