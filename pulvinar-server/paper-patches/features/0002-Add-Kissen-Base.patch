@@ -255,10 +255,10 @@ index 0000000000000000000000000000000000000000..8fceefa7bd4b536c972fc20241e1610a
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
-index d665dc3fbd0989eb399c55d0717bc6fd79a0db17..4615114f380d1881001efb2f9c7b42cbeb7b1adc 100644
+index e6ea34b18c6db63efa77bb67d3484e4d66315ed6..4a92de169451eb91717a00a70b6a7161ede3fbe4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/Main.java
 +++ b/src/main/java/org/bukkit/craftbukkit/Main.java
-@@ -177,6 +177,14 @@ public class Main {
+@@ -147,6 +147,14 @@ public class Main {
                      .describedAs("Yml file");
                  // Purpur end - Purpur config files
  
