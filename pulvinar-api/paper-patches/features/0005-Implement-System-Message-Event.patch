@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ivo Quiring <falk.quiring@gmail.com>
 Date: Fri, 24 Oct 2025 22:04:16 +0200
-Subject: [PATCH] Add System Message Event
+Subject: [PATCH] Implement System-Message Event
 
 
 diff --git a/src/main/java/net/kissenpvp/api/event/SystemMessageEvent.java b/src/main/java/net/kissenpvp/api/event/SystemMessageEvent.java
