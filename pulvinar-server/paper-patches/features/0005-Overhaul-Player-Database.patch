@@ -47,6 +47,54 @@ index 58c1ff58e58e969a88b929663dfff785843dc1b2..f7a056fee14ed797eb284e68d1387089
 +    protected Set<String> databaseLookup(Set<String> unfound, ProfileLookupCallback callback) { return unfound; }
 +    // Pulvinar end - overhaul player database
  }
+diff --git a/src/main/java/net/kissenpvp/base/PulvinarConfig.java b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
+index f334b84cb4b5576b51ef65ceb6e9d1b711d652fe..9b2191cdb5edc5d34231a84737ed8b897bb094dd 100644
+--- a/src/main/java/net/kissenpvp/base/PulvinarConfig.java
++++ b/src/main/java/net/kissenpvp/base/PulvinarConfig.java
+@@ -36,6 +36,8 @@ public class PulvinarConfig {
+     private String databaseUser;
+     private String databasePassword;
+ 
++    private boolean disableDatabaseStorage;
++
+     public void init(@NonNull File configFile) throws IOException, InvalidConfigurationException {
+         file = configFile;
+         config = new YamlConfiguration();
+@@ -59,12 +61,15 @@ public class PulvinarConfig {
+         config.addDefault("database.user", "user");
+         config.addDefault("database.password", "password");
+ 
++        config.addDefault("database.player.storage.disable-database", false);
++
+         databaseConfigured = config.getBoolean("database.configured");
+         databaseAddress = config.getString("database.url");
+         databaseGlobal = config.getString("database.global.database");
+         databasePrivate = config.getString("database.private.database");
+         databaseUser = config.getString("database.user");
+         databasePassword = config.getString("database.password");
++        disableDatabaseStorage = config.getBoolean("database.player.storage.disable-database");
+ 
+         config.save(file);
+     }
+@@ -97,6 +102,8 @@ public class PulvinarConfig {
+         return databasePassword;
+     }
+ 
++    public boolean disableDatabaseStorage() { return disableDatabaseStorage; }
++
+     public void databaseConfigured(boolean configured) throws IOException {
+         databaseConfigured = configured;
+         config.save(file);
+@@ -132,4 +139,9 @@ public class PulvinarConfig {
+         databasePassword = password;
+         config.save(file);
+     }
++
++    public void disableDatabaseStorage(boolean use) throws IOException, NullPointerException {
++        disableDatabaseStorage = use;
++        config.save(file);
++    }
+ }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 index 83221ff75544acaaf8301d5ae8bc00bc4f1119ee..26d70ba4c6fad6de2b752f9b49a83a1309a9829c 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
@@ -89,7 +137,7 @@ index 83221ff75544acaaf8301d5ae8bc00bc4f1119ee..26d70ba4c6fad6de2b752f9b49a83a13
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..fac0a4c4659b79c490b348ffc9fdfa1815dc1275
+index 0000000000000000000000000000000000000000..b49d11ae503250aa8ffb4249b833d7fddd282861
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 @@ -0,0 +1,179 @@
@@ -534,7 +582,7 @@ index 225a88c6976de91b9115471e7942e5585e392ec4..c6ff47f28f2aad21cba455b1fafc941b
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
-index 08088126c0f12f0eab8e3e812d537e71a07c397f..c4cd047ad5de279779efd3e7b219a406af728ddd 100644
+index 08088126c0f12f0eab8e3e812d537e71a07c397f..a07384ea92cc1ebe15454868bc02c5c30166e206 100644
 --- a/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
 +++ b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
 @@ -10,4 +10,11 @@ CREATE TABLE IF NOT EXISTS ksvp_whitelist (
