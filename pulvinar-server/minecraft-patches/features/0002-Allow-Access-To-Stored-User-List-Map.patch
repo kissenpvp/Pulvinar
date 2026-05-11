@@ -1,14 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ivo Quiring <falk.quiring@gmail.com>
-Date: Sun, 2 Nov 2025 15:32:43 +0100
+Date: Mon, 11 May 2026 17:09:47 +0200
 Subject: [PATCH] Allow Access To Stored User List Map
 
 
 diff --git a/net/minecraft/server/players/StoredUserList.java b/net/minecraft/server/players/StoredUserList.java
-index 9ee855c0d1a30b3c83e0e9e93f1a561ac462bc49..dc2c85db9cdfc1202b4c7772001783680ebfe2b5 100644
+index d97d79e65c672e31e408f7627189ab65f5aedc2c..1ba6feae4309df3ce19b5bb53ba716e1e073b7d1 100644
 --- a/net/minecraft/server/players/StoredUserList.java
 +++ b/net/minecraft/server/players/StoredUserList.java
-@@ -158,4 +158,11 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
+@@ -160,4 +160,11 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
              // Spigot end
          }
      }

@@ -1,16 +1,16 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ivo Quiring <falk.quiring@gmail.com>
-Date: Sun, 8 Mar 2026 00:37:20 +0100
+Date: Mon, 11 May 2026 17:21:00 +0200
 Subject: [PATCH] Implement System-Message Event
 
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 1a6da393cf83c86d24085ecf6aa4c523fde1c3b7..69d2ebfcf11fcbfaf8bd0cb3a378e802edd51ddd 100644
+index a41e8e61df1f3d7a861cd1b4060bc3ec424d45bd..1112f88dd14dc38c11c77affc7a789dd08cda9b7 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -2439,14 +2439,24 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2501,14 +2501,26 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
  
-     public void sendSystemMessage(Component message, boolean overlay) {
+     public void sendSystemMessage(final Component message, final boolean overlay) {
          if (this.acceptsSystemMessages(overlay)) {
 +
 +            // Pulvinar start - implement system message event
@@ -18,20 +18,22 @@ index 1a6da393cf83c86d24085ecf6aa4c523fde1c3b7..69d2ebfcf11fcbfaf8bd0cb3a378e802
 +            net.kissenpvp.api.event.SystemMessageEvent messageEvent = new net.kissenpvp.api.event.SystemMessageEvent(adventure);
 +            org.bukkit.Bukkit.getPluginManager().callEvent(messageEvent);
 +
-+            if(messageEvent.isCancelled()) { return; }
++            if (messageEvent.isCancelled()) {
++                return;
++            }
 +            Component outputMessage = io.papermc.paper.adventure.PaperAdventure.asVanilla(messageEvent.getMessage());
 +            // Pulvinar end - implement system message event
 +
              this.connection
                  .send(
 -                    new ClientboundSystemChatPacket(message, overlay),
-+                    new ClientboundSystemChatPacket(/*message*/ outputMessage, overlay), // Pulvinar - implement system message event
++                        new ClientboundSystemChatPacket(/*message*/ outputMessage, overlay), // Pulvinar - implement system message event,
                      PacketSendListener.exceptionallySend(
                          () -> {
                              if (this.acceptsSystemMessages(false)) {
-                                 int i = 256;
--                                String string = message.getString(256);
-+                                String string = /*message*/outputMessage.getString(256); // Pulvinar - implement system message event
-                                 Component component = Component.literal(string).withStyle(ChatFormatting.YELLOW);
+                                 int truncatedMessageSize = 256;
+-                                String contents = message.getString(256);
++                                String contents = /*message*/outputMessage.getString(256); // Pulvinar - implement system message event
+                                 Component contentsMsg = Component.literal(contents).withStyle(ChatFormatting.YELLOW);
                                  return new ClientboundSystemChatPacket(
-                                     Component.translatable("multiplayer.message_not_delivered", component).withStyle(ChatFormatting.RED), false
+                                     Component.translatable("multiplayer.message_not_delivered", contentsMsg).withStyle(ChatFormatting.RED), false

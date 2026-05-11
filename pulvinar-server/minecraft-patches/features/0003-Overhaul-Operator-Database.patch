@@ -1,14 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ivo Quiring <falk.quiring@gmail.com>
-Date: Sun, 2 Nov 2025 15:56:26 +0100
+Date: Mon, 11 May 2026 17:11:44 +0200
 Subject: [PATCH] Overhaul Operator Database
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 3ad9b41704349838cc9d672b4ae6ac1b3a7cfa7f..fe2f58b43d0feac3b0f0b287994104dc603ae3a6 100644
+index 341021c3952b89b6e234ce777aa37856eea58ff8..fcaf3663309c5d1fa67480fed5707e1772945ce3 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -146,7 +146,7 @@ public abstract class PlayerList {
+@@ -149,7 +149,7 @@ public abstract class PlayerList {
          this.registries = registries;
          this.playerIo = playerIo;
          this.whitelist = new UserWhiteList(WHITELIST_FILE, notificationService);
@@ -18,7 +18,7 @@ index 3ad9b41704349838cc9d672b4ae6ac1b3a7cfa7f..fe2f58b43d0feac3b0f0b287994104dc
          this.ipBans = new IpBanList(IPBANLIST_FILE, notificationService);
      }
 diff --git a/net/minecraft/server/players/ServerOpListEntry.java b/net/minecraft/server/players/ServerOpListEntry.java
-index fc82ed9132c684434df44a6bb0683d86486abc56..ec63e2e9df6461253bb502d142bde78b840d9a4b 100644
+index d0339c00b362ce4e5ad1c4c6c23d388905a1b75d..c83e11a7d515f41dca197d17fffbb04a5e745fdb 100644
 --- a/net/minecraft/server/players/ServerOpListEntry.java
 +++ b/net/minecraft/server/players/ServerOpListEntry.java
 @@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
@@ -31,7 +31,7 @@ index fc82ed9132c684434df44a6bb0683d86486abc56..ec63e2e9df6461253bb502d142bde78b
      private final boolean bypassesPlayerLimit;
  
 @@ -37,4 +37,24 @@ public class ServerOpListEntry extends StoredUserEntry<NameAndId> {
-             data.addProperty("bypassesPlayerLimit", this.bypassesPlayerLimit);
+             object.addProperty("bypassesPlayerLimit", this.bypassesPlayerLimit);
          }
      }
 +

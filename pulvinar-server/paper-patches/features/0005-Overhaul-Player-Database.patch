@@ -137,10 +137,10 @@ index 83221ff75544acaaf8301d5ae8bc00bc4f1119ee..26d70ba4c6fad6de2b752f9b49a83a13
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..b49d11ae503250aa8ffb4249b833d7fddd282861
+index 0000000000000000000000000000000000000000..a5409d8516ce867bd51b963c83ed0c2ddd7a61eb
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-@@ -0,0 +1,179 @@
+@@ -0,0 +1,184 @@
 +package net.kissenpvp.network.actor;
 +
 +import com.google.common.base.Preconditions;
@@ -200,6 +200,11 @@ index 0000000000000000000000000000000000000000..b49d11ae503250aa8ffb4249b833d7fd
 +            }
 +            undiscovered.remove(cachedPlayerClient.username());
 +            discovered.add(new NameAndId(cachedPlayerClient.id(), cachedPlayerClient.username()));
++        }
++
++        if(undiscovered.isEmpty())
++        {
++            return discovered;
 +        }
 +
 +        String placeholders = String.join(", ", Collections.nCopies(undiscovered.size(), "?"));
@@ -515,10 +520,10 @@ index 15ae2653c1809041b7ab7cb67015e82c226e9f77..1f26e86d5d2ce8f46bd09ce70b4d3de1
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
-index e24eb67ad0742ac6116e7a5b84998db61dc0fc93..bbffe713655b4c5c941fefa1a78afa9ab581467b 100644
+index ca1e754120ed9c0e7d1c4b8a539bbe2f0b6cd287..438fbb016da4927bc74388e847dcef5ae654b9d4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
-@@ -919,4 +919,16 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+@@ -921,4 +921,16 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
      public org.bukkit.entity.Entity copy(Location location) {
          throw new UnsupportedOperationException("Cannot copy human entities");
      }
@@ -536,12 +541,12 @@ index e24eb67ad0742ac6116e7a5b84998db61dc0fc93..bbffe713655b4c5c941fefa1a78afa9a
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 225a88c6976de91b9115471e7942e5585e392ec4..c6ff47f28f2aad21cba455b1fafc941b411dd3ed 100644
+index 7631293a1fa35e0b4e7cdccac771f10115dabc7c..f9bc039c1db4e35f99d00af136c788a043209305 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -3461,4 +3461,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
-             entity.remove();
-         }
+@@ -3468,4 +3468,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+         super.knockback(strength, directionX, directionZ);
+         this.entity.hurtMarked = true;
      }
 +
 +    // Pulvinar start - overhaul player database

@@ -1,56 +1,56 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ivo Quiring <falk.quiring@gmail.com>
-Date: Mon, 17 Nov 2025 15:50:46 +0100
+Date: Mon, 11 May 2026 17:19:20 +0200
 Subject: [PATCH] Overhaul Player Database
 
 
 diff --git a/net/minecraft/server/Services.java b/net/minecraft/server/Services.java
-index db4ad03b30e1e7dc8856ce759b610402acb076e0..9e842751f5f5f74ddd96c895d3667feea966dd3d 100644
+index c3c23a152c098e4dddfe0d0d10676fc20a35f0e0..7d782af71352e094d9e9b7a002045327433dd99f 100644
 --- a/net/minecraft/server/Services.java
 +++ b/net/minecraft/server/Services.java
 @@ -41,7 +41,7 @@ public record Services(
-     public static Services create(YggdrasilAuthenticationService authenticationService, File profileRepository, File userCacheFile, joptsimple.OptionSet optionSet) throws Exception { // Paper - add optionset to load paper config files; add userCacheFile parameter
-         MinecraftSessionService minecraftSessionService = authenticationService.createMinecraftSessionService();
-         GameProfileRepository gameProfileRepository = authenticationService.createProfileRepository();
--        UserNameToIdResolver userNameToIdResolver = new CachedUserNameToIdResolver(gameProfileRepository, userCacheFile); // Paper
-+        UserNameToIdResolver userNameToIdResolver = new net.kissenpvp.network.actor.PulvinarProfileCache(gameProfileRepository, userCacheFile); // new CachedUserNameToIdResolver(gameProfileRepository, userCacheFile); // Paper // Pulvinar - overhaul player database
+     public static Services create(final YggdrasilAuthenticationService serviceAccess, final File nameCacheDir, final File userCacheFile, final joptsimple.OptionSet options) throws Exception { // Paper - add options to load paper config files; add userCacheFile parameter
+         MinecraftSessionService sessionService = serviceAccess.createMinecraftSessionService();
+         GameProfileRepository profileRepository = serviceAccess.createProfileRepository();
+-        UserNameToIdResolver profileCache = new CachedUserNameToIdResolver(profileRepository, userCacheFile); // Paper
++        UserNameToIdResolver profileCache = new net.kissenpvp.network.actor.PulvinarProfileCache(profileRepository, userCacheFile); // new CachedUserNameToIdResolver(gameProfileRepository, userCacheFile); // Paper // Pulvinar - overhaul player database
          // Paper start - load paper config files from cli options
-         final java.nio.file.Path legacyConfigPath = ((File) optionSet.valueOf("paper-settings")).toPath();
-         final java.nio.file.Path configDirPath = ((File) optionSet.valueOf("paper-settings-directory")).toPath();
+         final java.nio.file.Path legacyConfigPath = ((File) options.valueOf("paper-settings")).toPath();
+         final java.nio.file.Path configDirPath = ((File) options.valueOf("paper-settings-directory")).toPath();
 diff --git a/net/minecraft/server/players/CachedUserNameToIdResolver.java b/net/minecraft/server/players/CachedUserNameToIdResolver.java
-index 6d3f496881492ac67465746984d6ef8302750305..c660c565984525003ead4dbaf53a16832347b669 100644
+index aecbdddf4cf3ab627477156cd314f2872e7a5dbb..5b97aa4f13bdc70e51f8f67b5024d301a9775fb4 100644
 --- a/net/minecraft/server/players/CachedUserNameToIdResolver.java
 +++ b/net/minecraft/server/players/CachedUserNameToIdResolver.java
 @@ -91,7 +91,7 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
          this.addInternal(nameAndId);
      }
  
--    private CachedUserNameToIdResolver.GameProfileInfo addInternal(NameAndId nameAndId) {
-+    protected CachedUserNameToIdResolver.GameProfileInfo addInternal(NameAndId nameAndId) { // Pulvinar - Overhaul Player Database
-         Calendar instance = Calendar.getInstance(TimeZone.getDefault(), Locale.ROOT);
-         instance.setTime(new Date());
-         instance.add(2, 1);
+-    private CachedUserNameToIdResolver.GameProfileInfo addInternal(final NameAndId profile) {
++    protected CachedUserNameToIdResolver.GameProfileInfo addInternal(final NameAndId profile) { // Pulvinar - Overhaul Player Database  - allow to override
+         Calendar c = Calendar.getInstance(TimeZone.getDefault(), Locale.ROOT);
+         c.setTime(new Date());
+         c.add(2, 1);
 @@ -177,7 +177,7 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
          return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", Locale.ROOT);
      }
  
 -    private List<CachedUserNameToIdResolver.GameProfileInfo> load() {
-+    protected List<CachedUserNameToIdResolver.GameProfileInfo> load() { // Pulvinar - overhaul player database - allow to override
-         List<CachedUserNameToIdResolver.GameProfileInfo> list = Lists.newArrayList();
++    protected List<CachedUserNameToIdResolver.GameProfileInfo> load() { // Pulvinar - Overhaul Player Database - allow to override
+         List<CachedUserNameToIdResolver.GameProfileInfo> result = Lists.newArrayList();
  
          try {
 @@ -284,12 +284,12 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
          return Optional.empty();
      }
  
--    static class GameProfileInfo {
+-    private static class GameProfileInfo {
 +    protected static class GameProfileInfo { // Pulvinar - overhaul player database - allow children to access
          private final NameAndId nameAndId;
-         final Date expirationDate;
+         private final Date expirationDate;
          private volatile long lastAccess;
  
--        GameProfileInfo(NameAndId nameAndId, Date expirationDate) {
-+        public GameProfileInfo(NameAndId nameAndId, Date expirationDate) { // Pulvinar - overhaul player database - allow children to access
+-        private GameProfileInfo(final NameAndId nameAndId, final Date expirationDate) {
++        public GameProfileInfo(final NameAndId nameAndId, final Date expirationDate) { // Pulvinar - overhaul player database - allow children to access
              this.nameAndId = nameAndId;
              this.expirationDate = expirationDate;
          }
@@ -67,62 +67,59 @@ index 6d3f496881492ac67465746984d6ef8302750305..c660c565984525003ead4dbaf53a1683
 +    // Pulvinar end - overhaul player data
  }
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index b8ef50bc3d07890c9da2c98d5f009a3adc52f4b0..f1852ae621a4c06f5ce41cbdde2226c51ed24193 100644
+index c5898bfb8b4f075b08090cba2e9f980174e0a326..0a3c29b359d8fb332531486840e41f6bff214c4d 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
-@@ -35,9 +35,26 @@ public class PlayerDataStorage {
-         try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), LOGGER)) {
-             TagValueOutput tagValueOutput = TagValueOutput.createWithContext(scopedCollector, player.registryAccess());
-             player.saveWithoutId(tagValueOutput);
+@@ -35,9 +35,25 @@ public class PlayerDataStorage {
+         try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(player.problemPath(), LOGGER)) {
+             TagValueOutput output = TagValueOutput.createWithContext(reporter, player.registryAccess());
+             player.saveWithoutId(output);
 +
 +            // Pulvinar start - overhaul player database
-+
 +            boolean disableDatabaseStorage = ((net.kissenpvp.base.PulvinarCore) org.bukkit.Bukkit.getPulvinar()).config().disableDatabaseStorage();
-+            CompoundTag compoundTag = tagValueOutput.buildResult();
-+            if(!disableDatabaseStorage)
-+            {
-+                net.kissenpvp.network.actor.PulvinarPlayerRepository playerRepository = ((net.kissenpvp.network.actor.PulvinarPlayerRepository) org.bukkit.Bukkit.getPulvinar().playerRepository());
++            CompoundTag dataToStore = output.buildResult();
++            if (!disableDatabaseStorage) {
++                net.kissenpvp.network.actor.PulvinarPlayerRepository
++                playerRepository = ((net.kissenpvp.network.actor.PulvinarPlayerRepository) org.bukkit.Bukkit.getPulvinar().playerRepository());
 +
 +                try (java.io.ByteArrayOutputStream byteArrayOutputStream = new java.io.ByteArrayOutputStream()) {
-+                    net.minecraft.nbt.NbtIo.writeCompressed(compoundTag, byteArrayOutputStream);
++                    net.minecraft.nbt.NbtIo.writeCompressed(dataToStore, byteArrayOutputStream);
 +                    byte[] data = byteArrayOutputStream.toByteArray();
 +                    playerRepository.saveProperties(player.getUUID(), data);
 +                }
 +            }
 +            // Pulvinar end - overhaul player database
 +
-             Path path = this.playerDir.toPath();
-             Path path1 = Files.createTempFile(path, player.getStringUUID() + "-", ".dat");
--            CompoundTag compoundTag = tagValueOutput.buildResult();
-+            // CompoundTag compoundTag = tagValueOutput.buildResult(); // Pulvinar - overhaul player database
-             NbtIo.writeCompressed(compoundTag, path1);
-             Path path2 = path.resolve(player.getStringUUID() + ".dat");
-             Path path3 = path.resolve(player.getStringUUID() + ".dat_old");
-@@ -62,6 +79,27 @@ public class PlayerDataStorage {
+             Path playerDirPath = this.playerDir.toPath();
+             Path tmpFile = Files.createTempFile(playerDirPath, player.getStringUUID() + "-", ".dat");
+-            CompoundTag dataToStore = output.buildResult();
++            //CompoundTag dataToStore = output.buildResult(); // Pulvinar - overhaul player database
+             NbtIo.writeCompressed(dataToStore, tmpFile);
+             Path realFile = playerDirPath.resolve(player.getStringUUID() + ".dat");
+             Path oldFile = playerDirPath.resolve(player.getStringUUID() + ".dat_old");
+@@ -62,6 +78,25 @@ public class PlayerDataStorage {
      }
  
-     private Optional<CompoundTag> load(NameAndId nameAndId, String suffix) {
+     private Optional<CompoundTag> load(final NameAndId nameAndId, final String suffix) {
++
 +        // Pulvinar start - overhaul player database
 +        boolean disableDatabaseStorage = ((net.kissenpvp.base.PulvinarCore) org.bukkit.Bukkit.getPulvinar()).config().disableDatabaseStorage();
-+        if(!disableDatabaseStorage)
-+        {
++        if (!disableDatabaseStorage) {
 +            net.kissenpvp.network.actor.PulvinarPlayerRepository playerRepository = ((net.kissenpvp.network.actor.PulvinarPlayerRepository) org.bukkit.Bukkit.getPulvinar().playerRepository());
 +            Optional<java.sql.Blob> data = playerRepository.findProperties(nameAndId.id()).join();
 +
-+            if(data.isPresent())
-+            {
++            if (data.isPresent()) {
 +                java.sql.Blob blob = data.get();
 +                try {
 +                    return Optional.of(NbtIo.readCompressed(blob.getBinaryStream(), NbtAccounter.unlimitedHeap()));
-+                }
-+                catch (java.sql.SQLException | java.io.IOException exception)
-+                {
++                } catch (java.sql.SQLException | java.io.IOException exception) {
 +                    LOGGER.warn("Failed to load player data from database for player {}.", nameAndId.name());
 +                }
 +            }
 +            LOGGER.info("Fall back to file system for player {}.", nameAndId.name());
 +        }
 +        // Pulvinar end - overhaul player database
-         File file = new File(this.playerDir, nameAndId.id() + suffix);
++
+         File realFile = new File(this.playerDir, nameAndId.id() + suffix);
          // Spigot start
          boolean usingWrongFile = false;

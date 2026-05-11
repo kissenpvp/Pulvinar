@@ -1,14 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ivo Quiring <falk.quiring@gmail.com>
-Date: Sun, 16 Nov 2025 19:01:56 +0100
+Date: Mon, 11 May 2026 17:13:14 +0200
 Subject: [PATCH] Overhaul Whitelist Database
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index fe2f58b43d0feac3b0f0b287994104dc603ae3a6..53f9c2c1b547e34c4d32c399887d0eb7d2767dcc 100644
+index fcaf3663309c5d1fa67480fed5707e1772945ce3..277763aa3514dbdd8ca03742c13fb4ad06f80200 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -145,7 +145,7 @@ public abstract class PlayerList {
+@@ -148,7 +148,7 @@ public abstract class PlayerList {
          this.server = server;
          this.registries = registries;
          this.playerIo = playerIo;
@@ -18,22 +18,20 @@ index fe2f58b43d0feac3b0f0b287994104dc603ae3a6..53f9c2c1b547e34c4d32c399887d0eb7
          this.bans = new UserBanList(USERBANLIST_FILE, notificationService);
          this.ipBans = new IpBanList(IPBANLIST_FILE, notificationService);
 diff --git a/net/minecraft/server/players/UserWhiteListEntry.java b/net/minecraft/server/players/UserWhiteListEntry.java
-index 7fd16aa326324e787182637141af28f8bb1ac354..b3679541bf22fa400b862ce37a45694af2559450 100644
+index 87041546a5ad36c4b6aafbf2826873df41eb16e8..8e85f3404bf32a7c459227815760512e68b6956a 100644
 --- a/net/minecraft/server/players/UserWhiteListEntry.java
 +++ b/net/minecraft/server/players/UserWhiteListEntry.java
-@@ -1,8 +1,9 @@
- package net.minecraft.server.players;
+@@ -2,7 +2,7 @@ package net.minecraft.server.players;
  
  import com.google.gson.JsonObject;
-+import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListEntry;
  
 -public class UserWhiteListEntry extends StoredUserEntry<NameAndId> {
-+public class UserWhiteListEntry extends StoredUserEntry<NameAndId> implements PulvinarWhiteListEntry { // Pulvinar - Overhaul Whitelist Database
-     public UserWhiteListEntry(NameAndId user) {
++public class UserWhiteListEntry extends StoredUserEntry<NameAndId> implements net.kissenpvp.network.actor.whitelist.PulvinarWhiteListEntry { // Pulvinar - Overhaul Whitelist Database
+     public UserWhiteListEntry(final NameAndId user) {
          super(user);
      }
-@@ -17,4 +18,13 @@ public class UserWhiteListEntry extends StoredUserEntry<NameAndId> {
-             this.getUser().appendTo(data);
+@@ -17,4 +17,13 @@ public class UserWhiteListEntry extends StoredUserEntry<NameAndId> {
+             this.getUser().appendTo(object);
          }
      }
 +
