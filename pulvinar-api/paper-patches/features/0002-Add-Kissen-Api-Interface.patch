@@ -6,14 +6,15 @@ Subject: [PATCH] Add Kissen Api Interface
 
 diff --git a/src/main/java/net/kissenpvp/api/base/Pulvinar.java b/src/main/java/net/kissenpvp/api/base/Pulvinar.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..3569ff451c2b5e59b29a6c3949cf5bbf677c11a7
+index 0000000000000000000000000000000000000000..cf64189c9135e54c5ab15f60a087f6c63d925291
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/api/base/Pulvinar.java
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,25 @@
 +package net.kissenpvp.api.base;
 +
 +
 +import net.kissenpvp.api.database.ConnectionProvider;
++import org.jetbrains.annotations.NotNull;
 +import org.jspecify.annotations.NonNull;
 +
 +/**
@@ -31,7 +32,7 @@ index 0000000000000000000000000000000000000000..3569ff451c2b5e59b29a6c3949cf5bbf
 +     *
 +     * @return the private {@link ConnectionProvider} for this server instance
 +     */
-+    @NonNull ConnectionProvider privateConnectionProvider();
++    @NonNull @NotNull ConnectionProvider privateConnectionProvider();
 +
 +}
 \ No newline at end of file
