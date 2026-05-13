@@ -5,7 +5,7 @@ Subject: [PATCH] Overhaul Ban Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 5eaa45298b37d9a2135152ab16b9328075c2f656..5ebcb92ce1ff4a7a310ed0fa36bdcb201ad7636d 100644
+index a600cf7e58e42eabe21eba5ce48fcb7fb9fc94bf..0defde14097ebe9af6b9a7ea467133db351ab4b6 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -6,11 +6,15 @@ import net.kissenpvp.api.database.Repository;
@@ -42,7 +42,7 @@ index 5eaa45298b37d9a2135152ab16b9328075c2f656..5ebcb92ce1ff4a7a310ed0fa36bdcb20
      }
  
      public void shutdown()
-@@ -133,4 +141,14 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -134,4 +142,14 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull Repository<String, Rank> rankRepository() {
          return rankRepository;
      }

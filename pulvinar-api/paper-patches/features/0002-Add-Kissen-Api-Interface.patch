@@ -6,18 +6,37 @@ Subject: [PATCH] Add Kissen Api Interface
 
 diff --git a/src/main/java/net/kissenpvp/api/base/Pulvinar.java b/src/main/java/net/kissenpvp/api/base/Pulvinar.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..2c3610673d85edd51df86611e5938b3d079e3caa
+index 0000000000000000000000000000000000000000..3569ff451c2b5e59b29a6c3949cf5bbf677c11a7
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/api/base/Pulvinar.java
-@@ -0,0 +1,6 @@
+@@ -0,0 +1,24 @@
 +package net.kissenpvp.api.base;
++
++
++import net.kissenpvp.api.database.ConnectionProvider;
++import org.jspecify.annotations.NonNull;
 +
 +/**
 + * Represents Pulvinar which provides access to the kissen functions.
 + */
-+public interface Pulvinar extends Kissen {}
++public interface Pulvinar extends Kissen {
++
++    /**
++     * Provides access to the server's private database connection provider.
++     * <p>
++     * The returned provider exposes the JDBC connection used exclusively by this
++     * server instance. This is primarily intended for server-specific operations and
++     * is especially important in proxy-based environments where each server
++     * requires its own isolated database connection.
++     *
++     * @return the private {@link ConnectionProvider} for this server instance
++     */
++    @NonNull ConnectionProvider privateConnectionProvider();
++
++}
+\ No newline at end of file
 diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
-index aceb1c1fe9992c1cafd1a66644f8a6992474602f..88028ed7c3ad4c16bbafa12e839056c8bfd9d761 100644
+index cc57cbe8cd3d2fe1d7e9709d03579f45cf6d78ed..2036cfdbfa47514a548b072a774469c11ac5143a 100644
 --- a/src/main/java/org/bukkit/Bukkit.java
 +++ b/src/main/java/org/bukkit/Bukkit.java
 @@ -70,6 +70,23 @@ import org.jetbrains.annotations.Nullable;

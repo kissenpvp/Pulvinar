@@ -5,7 +5,7 @@ Subject: [PATCH] Overhaul Operator Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 8fceefa7bd4b536c972fc20241e1610aa6d9a2c6..0a49568ddd0f94d62a891a5b8769d4f1b79a1da8 100644
+index 46f99816f4f5e8b4d79b270a70505f8567f3f15c..34239e09ff6785eaa13607164e21d10bf2a4b153 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -4,6 +4,7 @@ import net.kissenpvp.api.base.Pulvinar;
@@ -34,7 +34,7 @@ index 8fceefa7bd4b536c972fc20241e1610aa6d9a2c6..0a49568ddd0f94d62a891a5b8769d4f1
      }
  
      public void shutdown()
-@@ -100,4 +103,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -101,4 +104,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull ConnectionProvider privateConnectionProvider() {
          return privateProvider;
      }

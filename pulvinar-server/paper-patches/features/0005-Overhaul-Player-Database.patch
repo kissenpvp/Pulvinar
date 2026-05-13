@@ -96,7 +96,7 @@ index f334b84cb4b5576b51ef65ceb6e9d1b711d652fe..9b2191cdb5edc5d34231a84737ed8b89
 +    }
  }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 83221ff75544acaaf8301d5ae8bc00bc4f1119ee..26d70ba4c6fad6de2b752f9b49a83a1309a9829c 100644
+index 4d70249480919071bd7b4173b53f201a4feda42d..14c06ebc5a24acfcdb3e93d8f6d13ea6b3a681c5 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -3,7 +3,9 @@ package net.kissenpvp.base;
@@ -125,7 +125,7 @@ index 83221ff75544acaaf8301d5ae8bc00bc4f1119ee..26d70ba4c6fad6de2b752f9b49a83a13
      }
  
      public void shutdown()
-@@ -114,4 +118,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -115,4 +119,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull PulvinarWhiteListRepository whiteListRepository() {
          return whiteListRepository;
      }

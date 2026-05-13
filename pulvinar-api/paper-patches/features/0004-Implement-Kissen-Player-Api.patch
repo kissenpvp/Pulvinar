@@ -42,10 +42,10 @@ index f2a1693a1ef03dafa33442d61f73f91bd6202370..be05e7de7769b2b7c1f47f67d21b7cd9
      // Paper start
      @Override
 diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
-index 7efe22484451a756f0a5b85db5ca86aae1fd4b03..e03dad3d861af75c407f721244df249cd96f0f74 100644
+index e0dec5c94dbb90d2a5d9b229a454fc43e4c7b7c6..58dea5de2297ec3afd995de2ab4dc101f9461674 100644
 --- a/src/main/java/org/bukkit/entity/Player.java
 +++ b/src/main/java/org/bukkit/entity/Player.java
-@@ -66,7 +66,7 @@ import org.jspecify.annotations.Nullable;
+@@ -68,7 +68,7 @@ import org.jspecify.annotations.Nullable;
   * Represents a player, connected or not
   */
  @NullMarked

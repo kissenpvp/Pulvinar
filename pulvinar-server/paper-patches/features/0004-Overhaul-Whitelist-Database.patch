@@ -5,7 +5,7 @@ Subject: [PATCH] Overhaul Whitelist Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 0a49568ddd0f94d62a891a5b8769d4f1b79a1da8..83221ff75544acaaf8301d5ae8bc00bc4f1119ee 100644
+index 34239e09ff6785eaa13607164e21d10bf2a4b153..4d70249480919071bd7b4173b53f201a4feda42d 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -5,6 +5,7 @@ import net.kissenpvp.api.database.ConnectionProvider;
@@ -32,7 +32,7 @@ index 0a49568ddd0f94d62a891a5b8769d4f1b79a1da8..83221ff75544acaaf8301d5ae8bc00bc
      }
  
      public void shutdown()
-@@ -107,4 +110,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -108,4 +111,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull PulvinarOperatorRepository operatorRepository() {
          return operatorRepository;
      }

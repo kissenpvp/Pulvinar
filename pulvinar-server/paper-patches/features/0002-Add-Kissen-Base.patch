@@ -147,10 +147,10 @@ index 0000000000000000000000000000000000000000..f334b84cb4b5576b51ef65ceb6e9d1b7
 +}
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..8fceefa7bd4b536c972fc20241e1610aa6d9a2c6
+index 0000000000000000000000000000000000000000..46f99816f4f5e8b4d79b270a70505f8567f3f15c
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,103 @@
+@@ -0,0 +1,104 @@
 +package net.kissenpvp.base;
 +
 +import net.kissenpvp.api.base.Pulvinar;
@@ -250,6 +250,7 @@ index 0000000000000000000000000000000000000000..8fceefa7bd4b536c972fc20241e1610a
 +        return provider;
 +    }
 +
++    @Override
 +    public @NonNull ConnectionProvider privateConnectionProvider() {
 +        return privateProvider;
 +    }
