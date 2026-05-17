@@ -520,10 +520,10 @@ index 15ae2653c1809041b7ab7cb67015e82c226e9f77..1f26e86d5d2ce8f46bd09ce70b4d3de1
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
-index ca1e754120ed9c0e7d1c4b8a539bbe2f0b6cd287..438fbb016da4927bc74388e847dcef5ae654b9d4 100644
+index b9b4114bfa8db1cac63a43b979a0a58f872ab018..33556af01e28df2ceb6e7a16408adda02bcfe4ac 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
-@@ -921,4 +921,16 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+@@ -920,4 +920,16 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
      public org.bukkit.entity.Entity copy(Location location) {
          throw new UnsupportedOperationException("Cannot copy human entities");
      }

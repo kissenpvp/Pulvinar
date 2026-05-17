@@ -29,10 +29,10 @@ index f309c2ed39bcc700e5b491ff549bf0608a07aab8..b5e3caddd7cd4dc9ecacf5495940980f
 +public interface ConsoleCommandSender extends CommandSender, Conversable, net.kissenpvp.api.network.actor.ConsoleClient { // Pulvinar - implement player api
  }
 diff --git a/src/main/java/org/bukkit/entity/HumanEntity.java b/src/main/java/org/bukkit/entity/HumanEntity.java
-index f2a1693a1ef03dafa33442d61f73f91bd6202370..be05e7de7769b2b7c1f47f67d21b7cd9ac1cb8e9 100644
+index 2be5f6ba8eebc7823fab5f1245d33ab43f8004f7..fca6ca61cea8738c4ce6139e08cb4f7d5b7683d3 100644
 --- a/src/main/java/org/bukkit/entity/HumanEntity.java
 +++ b/src/main/java/org/bukkit/entity/HumanEntity.java
-@@ -29,7 +29,7 @@ import org.jspecify.annotations.Nullable;
+@@ -30,7 +30,7 @@ import org.jspecify.annotations.Nullable;
   * Represents a human entity, such as an NPC or a player
   */
  @NullMarked
@@ -42,10 +42,10 @@ index f2a1693a1ef03dafa33442d61f73f91bd6202370..be05e7de7769b2b7c1f47f67d21b7cd9
      // Paper start
      @Override
 diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
-index e0dec5c94dbb90d2a5d9b229a454fc43e4c7b7c6..58dea5de2297ec3afd995de2ab4dc101f9461674 100644
+index fe1b54ea314d9f3ec2f970d0f4a55af6c06d1ec4..dd7d2dcefc1d8795914f5428afb480eaf3715e62 100644
 --- a/src/main/java/org/bukkit/entity/Player.java
 +++ b/src/main/java/org/bukkit/entity/Player.java
-@@ -68,7 +68,7 @@ import org.jspecify.annotations.Nullable;
+@@ -69,7 +69,7 @@ import org.jspecify.annotations.Nullable;
   * Represents a player, connected or not
   */
  @NullMarked
