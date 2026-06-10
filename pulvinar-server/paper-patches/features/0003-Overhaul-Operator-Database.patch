@@ -157,10 +157,10 @@ index 0000000000000000000000000000000000000000..3d9a102b79ddcfb14988e207d2775076
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..79d4b3015276c9c986c65d3a52b4ba7953b3e48c
+index 0000000000000000000000000000000000000000..44a9b6a7e187f7bc27f25b909cbdbca86bf4f563
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
-@@ -0,0 +1,166 @@
+@@ -0,0 +1,201 @@
 +package net.kissenpvp.network.actor.operator;
 +
 +import com.google.common.base.Preconditions;
@@ -182,16 +182,44 @@ index 0000000000000000000000000000000000000000..79d4b3015276c9c986c65d3a52b4ba79
 +import java.util.*;
 +import java.util.concurrent.CompletableFuture;
 +
++/**
++ * Repository implementation responsible for persisting and retrieving
++ * {@link PulvinarOperatorInfo} entities.
++ *
++ * <p>
++ * Provides access to operator records stored in the database and supports creation, lookup, update, and deletion operations.
++ *
++ * @author Ivo Quiring
++ */
 +public class PulvinarOperatorRepository extends KissenRepository<UUID, PulvinarOperatorInfo> implements DeletableRepository<UUID> {
 +
++    /**
++     * Creates a new repository using the specified data source.
++     *
++     * @param dataSource the data source used for database access
++     * @throws NullPointerException if {@code dataSource} is {@code null}
++     */
 +    public PulvinarOperatorRepository(@NonNull DataSource dataSource) throws NullPointerException {
 +        super(dataSource);
 +    }
 +
++    /**
++     * Returns the name of the global database configured for Pulvinar.
++     *
++     * @return the configured global database name
++     */
 +    private static @NonNull String globalDatabase() {
 +        return ((PulvinarCore) Bukkit.getPulvinar()).config().databaseGlobal();
 +    }
 +
++    /**
++     * Creates a {@link PulvinarOperatorInfo} instance from the current row of the given result set.
++     *
++     * @param id the unique identifier of the operator
++     * @param resultSet the result set positioned at the row to map
++     * @return the mapped operator entity
++     * @throws SQLException if an error occurs while reading values from the result set
++     */
 +    private static @NonNull PulvinarOperatorInfo toEntity(@NonNull UUID id, @NonNull ResultSet resultSet) throws SQLException {
 +        Preconditions.checkNotNull(id, "Id must not be null.");
 +        Preconditions.checkNotNull(resultSet, "Resultset must not be null.");
@@ -206,7 +234,13 @@ index 0000000000000000000000000000000000000000..79d4b3015276c9c986c65d3a52b4ba79
 +        return new ServerOpListEntry(identify, permissionSet, canBypassPlayerLimit);
 +    }
 +
-+
++    /**
++     * Executes the given statement and collects all resulting operator records.
++     *
++     * @param statement the prepared statement to execute
++     * @return an unmodifiable collection containing all retrieved operator entities
++     * @throws SQLException if an error occurs while executing the query or processing the result set
++     */
 +    private static @NonNull Collection<PulvinarOperatorInfo> collectResults(@NonNull PreparedStatement statement) throws SQLException {
 +        Preconditions.checkNotNull(statement, "statement must not be null.");
 +
@@ -297,8 +331,9 @@ index 0000000000000000000000000000000000000000..79d4b3015276c9c986c65d3a52b4ba79
 +                    statement.setInt(2, levelId);
 +                    statement.setInt(4, levelId);
 +
-+                    statement.setBoolean(3, pulvinarOperatorInfo.getBypassesPlayerLimit());
-+                    statement.setBoolean(5, pulvinarOperatorInfo.getBypassesPlayerLimit());
++                    boolean bypassesPlayerLimit = pulvinarOperatorInfo.getBypassesPlayerLimit();
++                    statement.setBoolean(3, bypassesPlayerLimit);
++                    statement.setBoolean(5, bypassesPlayerLimit);
 +                    statement.addBatch();
 +                }
 +
