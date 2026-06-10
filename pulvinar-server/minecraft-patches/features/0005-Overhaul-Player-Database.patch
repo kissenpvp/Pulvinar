@@ -18,7 +18,7 @@ index c3c23a152c098e4dddfe0d0d10676fc20a35f0e0..7d782af71352e094d9e9b7a002045327
          final java.nio.file.Path legacyConfigPath = ((File) options.valueOf("paper-settings")).toPath();
          final java.nio.file.Path configDirPath = ((File) options.valueOf("paper-settings-directory")).toPath();
 diff --git a/net/minecraft/server/players/CachedUserNameToIdResolver.java b/net/minecraft/server/players/CachedUserNameToIdResolver.java
-index aecbdddf4cf3ab627477156cd314f2872e7a5dbb..5b97aa4f13bdc70e51f8f67b5024d301a9775fb4 100644
+index ce26768b951a5cd3e3337ef5347ce1537d593486..6f205b1e7f44ea725ae10dda6d2b713fc722d06c 100644
 --- a/net/minecraft/server/players/CachedUserNameToIdResolver.java
 +++ b/net/minecraft/server/players/CachedUserNameToIdResolver.java
 @@ -91,7 +91,7 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
@@ -38,8 +38,8 @@ index aecbdddf4cf3ab627477156cd314f2872e7a5dbb..5b97aa4f13bdc70e51f8f67b5024d301
 +    protected List<CachedUserNameToIdResolver.GameProfileInfo> load() { // Pulvinar - Overhaul Player Database - allow to override
          List<CachedUserNameToIdResolver.GameProfileInfo> result = Lists.newArrayList();
  
-         try {
-@@ -284,12 +284,12 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
+         try (Reader reader = Files.newReader(this.file, StandardCharsets.UTF_8)) {
+@@ -278,12 +278,12 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
          return Optional.empty();
      }
  
@@ -54,7 +54,7 @@ index aecbdddf4cf3ab627477156cd314f2872e7a5dbb..5b97aa4f13bdc70e51f8f67b5024d301
              this.nameAndId = nameAndId;
              this.expirationDate = expirationDate;
          }
-@@ -310,4 +310,11 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
+@@ -304,4 +304,11 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
              return this.lastAccess;
          }
      }
@@ -67,7 +67,7 @@ index aecbdddf4cf3ab627477156cd314f2872e7a5dbb..5b97aa4f13bdc70e51f8f67b5024d301
 +    // Pulvinar end - overhaul player data
  }
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index c5898bfb8b4f075b08090cba2e9f980174e0a326..0a3c29b359d8fb332531486840e41f6bff214c4d 100644
+index eddb6ebe3fa50a818e54079b73ba117be0abd195..2e9db95e4bbdb09a5dae445df8c700bc4a03ff92 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
 @@ -35,9 +35,25 @@ public class PlayerDataStorage {

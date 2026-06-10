@@ -5,10 +5,10 @@ Subject: [PATCH] Overhaul Operator Database
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 341021c3952b89b6e234ce777aa37856eea58ff8..fcaf3663309c5d1fa67480fed5707e1772945ce3 100644
+index e33f57caf9640e891b87a0e9bdcd5a44911bec73..c8af9c0535982a443f3ebb73683bf611c561ae75 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -149,7 +149,7 @@ public abstract class PlayerList {
+@@ -148,7 +148,7 @@ public abstract class PlayerList {
          this.registries = registries;
          this.playerIo = playerIo;
          this.whitelist = new UserWhiteList(WHITELIST_FILE, notificationService);
