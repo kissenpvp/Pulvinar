@@ -52,3 +52,15 @@ fun optionalInclude(name: String, op: (ProjectDescriptor.() -> Unit)? = null) {
         )
     }
 }
+
+gradle.lifecycle.beforeProject {
+    val mcVersion = providers.gradleProperty("mcVersion").get().trim()
+    val pulvinarChannel = providers.gradleProperty("channel").get().trim()
+    val pulvinarBuildNumber = providers.environmentVariable("BUILD_NUMBER").orNull?.trim()?.toInt()
+    val versionString = if (pulvinarBuildNumber == null) {
+        "$mcVersion.local-SNAPSHOT"
+    } else {
+        "$mcVersion.build.$pulvinarBuildNumber-${pulvinarChannel.lowercase()}"
+    }
+    version = versionString
+}
