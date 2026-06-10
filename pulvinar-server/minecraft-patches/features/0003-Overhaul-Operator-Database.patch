@@ -18,7 +18,7 @@ index e33f57caf9640e891b87a0e9bdcd5a44911bec73..c8af9c0535982a443f3ebb73683bf611
          this.ipBans = new IpBanList(IPBANLIST_FILE, notificationService);
      }
 diff --git a/net/minecraft/server/players/ServerOpListEntry.java b/net/minecraft/server/players/ServerOpListEntry.java
-index d0339c00b362ce4e5ad1c4c6c23d388905a1b75d..4a5e13adf29c1b681b5821643fe8605699c4bcb5 100644
+index d0339c00b362ce4e5ad1c4c6c23d388905a1b75d..b13518bdafc148f95b01a60e749049920031194e 100644
 --- a/net/minecraft/server/players/ServerOpListEntry.java
 +++ b/net/minecraft/server/players/ServerOpListEntry.java
 @@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
@@ -30,7 +30,7 @@ index d0339c00b362ce4e5ad1c4c6c23d388905a1b75d..4a5e13adf29c1b681b5821643fe86056
      private final LevelBasedPermissionSet permissions;
      private final boolean bypassesPlayerLimit;
  
-@@ -37,4 +37,18 @@ public class ServerOpListEntry extends StoredUserEntry<NameAndId> {
+@@ -37,4 +37,12 @@ public class ServerOpListEntry extends StoredUserEntry<NameAndId> {
              object.addProperty("bypassesPlayerLimit", this.bypassesPlayerLimit);
          }
      }
@@ -40,12 +40,6 @@ index d0339c00b362ce4e5ad1c4c6c23d388905a1b75d..4a5e13adf29c1b681b5821643fe86056
 +    public java.util.UUID id() {
 +        com.google.common.base.Preconditions.checkNotNull(getUser());
 +        return getUser().id();
-+    }
-+
-+    @Override
-+    public String name() {
-+        com.google.common.base.Preconditions.checkNotNull(getUser());
-+        return getUser().name();
 +    }
 +    // Pulvinar end - overhaul operator database
  }

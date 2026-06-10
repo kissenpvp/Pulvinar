@@ -45,27 +45,52 @@ index 46f99816f4f5e8b4d79b270a70505f8567f3f15c..34239e09ff6785eaa13607164e21d10b
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorInfo.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorInfo.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..e1686de9702b07475edfa2b2c794ff216a298b63
+index 0000000000000000000000000000000000000000..4477a475d7270438e3b8e3d9711f850aa349a148
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorInfo.java
-@@ -0,0 +1,18 @@
+@@ -0,0 +1,43 @@
 +package net.kissenpvp.network.actor.operator;
 +
 +import net.kissenpvp.api.database.PersistableEntity;
++import net.minecraft.server.permissions.LevelBasedPermissionSet;
++import net.minecraft.server.players.NameAndId;
 +import org.jspecify.annotations.NonNull;
++import org.jspecify.annotations.Nullable;
 +
 +import java.util.UUID;
 +
++/**
++ * Represents operator information stored in and retrieved from the database.
++ *
++ * <p>
++ * This interface defines the persistent data associated with an operator and
++ * serves as a bridge between the persistence layer and the operator entries.
++ *
++ * @author Ivo Quiring
++ */
 +public interface PulvinarOperatorInfo extends PersistableEntity<UUID> {
 +
-+    @NonNull UUID id();
++    /**
++     * Returns the user that may be acting as an operator in the current context.
++     *
++     * @return the operator user, can be {@code null}
++     */
++    @Nullable NameAndId getUser();
 +
-+    @NonNull String name();
++    /**
++     * Returns the permission set associated with this operator.
++     *
++     * @return the configured permission set; never {@code null}
++     */
++    @NonNull LevelBasedPermissionSet permissions();
 +
-+    int getLevel();
-+
++    /**
++     * Determines whether the configured player limit should be ignored by this operator.
++     *
++     * @return {@code true} if players are allowed to join regardless of the player limit;
++     *         {@code false} if the limit is enforced
++     */
 +    boolean getBypassesPlayerLimit();
-+
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorList.java
 new file mode 100644
@@ -132,10 +157,10 @@ index 0000000000000000000000000000000000000000..3d9a102b79ddcfb14988e207d2775076
 +}
 diff --git a/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..be889e986aeb13a101310d95f7774cfcae00e82f
+index 0000000000000000000000000000000000000000..79d4b3015276c9c986c65d3a52b4ba7953b3e48c
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/operator/PulvinarOperatorRepository.java
-@@ -0,0 +1,165 @@
+@@ -0,0 +1,166 @@
 +package net.kissenpvp.network.actor.operator;
 +
 +import com.google.common.base.Preconditions;
@@ -148,7 +173,6 @@ index 0000000000000000000000000000000000000000..be889e986aeb13a101310d95f7774cfc
 +import net.minecraft.server.players.NameAndId;
 +import net.minecraft.server.players.ServerOpListEntry;
 +import org.bukkit.Bukkit;
-+import org.intellij.lang.annotations.Language;
 +import org.jspecify.annotations.NonNull;
 +
 +import javax.sql.DataSource;
@@ -159,6 +183,7 @@ index 0000000000000000000000000000000000000000..be889e986aeb13a101310d95f7774cfc
 +import java.util.concurrent.CompletableFuture;
 +
 +public class PulvinarOperatorRepository extends KissenRepository<UUID, PulvinarOperatorInfo> implements DeletableRepository<UUID> {
++
 +    public PulvinarOperatorRepository(@NonNull DataSource dataSource) throws NullPointerException {
 +        super(dataSource);
 +    }
@@ -174,7 +199,7 @@ index 0000000000000000000000000000000000000000..be889e986aeb13a101310d95f7774cfc
 +        String username = resultSet.getString("username");
 +
 +        NameAndId identify = new NameAndId(id, username);
-+        int level = resultSet.getInt("operator_level");
++        int level = resultSet.getInt("operator_level_id");
 +        boolean canBypassPlayerLimit = resultSet.getBoolean("can_bypass_player_limit");
 +
 +        LevelBasedPermissionSet permissionSet = LevelBasedPermissionSet.forLevel(PermissionLevel.byId(level));
@@ -198,7 +223,7 @@ index 0000000000000000000000000000000000000000..be889e986aeb13a101310d95f7774cfc
 +    }
 +
 +    @Override
-+    public @NonNull CompletableFuture<@NonNull Optional<PulvinarOperatorInfo>> find(@NonNull UUID id) throws NullPointerException {
++    public @NonNull CompletableFuture<@NonNull Optional<PulvinarOperatorInfo>> find(@NonNull UUID id) {
 +        Preconditions.checkNotNull(id, "Id cannot be null.");
 +
 +        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN %s.ksvp_player p ON o.id = p.id WHERE o.id = ?;";
@@ -216,11 +241,11 @@ index 0000000000000000000000000000000000000000..be889e986aeb13a101310d95f7774cfc
 +    }
 +
 +    @Override
-+    public @NonNull CompletableFuture<@NonNull Collection<PulvinarOperatorInfo>> findAll(@NonNull Iterable<UUID> id) throws NullPointerException {
++    public @NonNull CompletableFuture<@NonNull Collection<PulvinarOperatorInfo>> findAll(@NonNull Iterable<UUID> id) {
 +        Preconditions.checkNotNull(id, "Iterable cannot be null.");
 +
 +        String placeHolders = String.join(", ", Collections.nCopies(this.computeIterableSize(id), "?"));
-+        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN %s.ksvp_player p ON o.id = p.id WHERE o.id IN (" + placeHolders + ");";
++        String sql = "SELECT o.id, p.username AS username, o.operator_level_id, o.can_bypass_player_limit FROM ksvp_operators o JOIN %s.ksvp_player p ON o.id = p.id WHERE o.id IN (" + placeHolders + ");";
 +        return AsyncDatabaseQueue.submitTask(() -> assumeNotNull(query(String.format(sql, globalDatabase()), (statement) -> {
 +            int index = 1;
 +
@@ -234,7 +259,7 @@ index 0000000000000000000000000000000000000000..be889e986aeb13a101310d95f7774cfc
 +
 +    @Override
 +    public @NonNull CompletableFuture<@NonNull Collection<PulvinarOperatorInfo>> findAll() {
-+        String sql = "SELECT o.id, p.username AS username, o.operator_level, o.can_bypass_player_limit FROM ksvp_operators o JOIN %s.ksvp_player p ON o.id = p.id;";
++        String sql = "SELECT o.id, p.username AS username, o.operator_level_id, o.can_bypass_player_limit FROM ksvp_operators o JOIN %s.ksvp_player p ON o.id = p.id;";
 +        return AsyncDatabaseQueue.submitTask(() -> assumeNotNull(query(String.format(sql, globalDatabase()), PulvinarOperatorRepository::collectResults)));
 +    }
 +
@@ -262,14 +287,15 @@ index 0000000000000000000000000000000000000000..be889e986aeb13a101310d95f7774cfc
 +            //noinspection SqlWithoutWhere
 +            query("DELETE FROM ksvp_operators;", PreparedStatement::executeUpdate);
 +
-+            String sql = "INSERT INTO ksvp_operators (id, operator_level, can_bypass_player_limit) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE operator_level = ?, can_bypass_player_limit = ?;";
++            String sql = "INSERT INTO ksvp_operators (id, operator_level_id, can_bypass_player_limit) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE operator_level_id = ?, can_bypass_player_limit = ?;";
 +            return query(sql, (statement) -> {
 +
 +                for (PulvinarOperatorInfo pulvinarOperatorInfo : id) {
 +                    statement.setString(1, String.valueOf(pulvinarOperatorInfo.id()));
 +
-+                    statement.setInt(2, pulvinarOperatorInfo.getLevel());
-+                    statement.setInt(4, pulvinarOperatorInfo.getLevel());
++                    int levelId = pulvinarOperatorInfo.permissions().level().id();
++                    statement.setInt(2, levelId);
++                    statement.setInt(4, levelId);
 +
 +                    statement.setBoolean(3, pulvinarOperatorInfo.getBypassesPlayerLimit());
 +                    statement.setBoolean(5, pulvinarOperatorInfo.getBypassesPlayerLimit());
@@ -303,13 +329,13 @@ index 0000000000000000000000000000000000000000..be889e986aeb13a101310d95f7774cfc
 +}
 diff --git a/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
 new file mode 100644
-index 0000000000000000000000000000000000000000..2ccc7c0adb50c56458f4f5d529d040719f814534
+index 0000000000000000000000000000000000000000..e19bbcd9ad4950297f0a3ef02e7e229a39661b0c
 --- /dev/null
 +++ b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
 @@ -0,0 +1,7 @@
 +CREATE TABLE IF NOT EXISTS ksvp_operators (
 +    id UUID NOT NULL,
-+    operator_level INT NOT NULL,
++    operator_level_id INT NOT NULL,
 +    can_bypass_player_limit BOOLEAN NOT NULL,
 +    PRIMARY KEY (id),
 +    FOREIGN KEY (id) REFERENCES ${global_database}.ksvp_player(id) ON DELETE CASCADE
