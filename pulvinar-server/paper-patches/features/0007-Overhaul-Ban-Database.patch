@@ -5,7 +5,7 @@ Subject: [PATCH] Overhaul Ban Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index a600cf7e58e42eabe21eba5ce48fcb7fb9fc94bf..0defde14097ebe9af6b9a7ea467133db351ab4b6 100644
+index 9a0a4d6d166a2d85ea539cd5d2b8c18f372e4289..9db8b4fadf42bd8cfe2e14a2fa17e8b63e2458cf 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -6,11 +6,15 @@ import net.kissenpvp.api.database.Repository;
@@ -14,13 +14,13 @@ index a600cf7e58e42eabe21eba5ce48fcb7fb9fc94bf..0defde14097ebe9af6b9a7ea467133db
  import net.kissenpvp.api.network.actor.rank.Rank;
 +import net.kissenpvp.api.punishment.Punishment;
 +import net.kissenpvp.api.punishment.PunishmentSubscriptionRepository;
- import net.kissenpvp.database.mariadb.InternalConnectionProvider;
+ import net.kissenpvp.database.mariadb.MariaDBConnectionProvider;
  import net.kissenpvp.network.actor.PulvinarPlayerRepository;
  import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
- import net.kissenpvp.network.actor.rank.repository.InternalRankRepository;
+ import net.kissenpvp.network.actor.rank.repository.MariaDBRankRepository;
  import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
-+import net.kissenpvp.punishment.repository.InternalPunishmentRepository;
-+import net.kissenpvp.punishment.repository.InternalPunishmentSubscriptionRepository;
++import net.kissenpvp.punishment.repository.MariaDBPunishmentRepository;
++import net.kissenpvp.punishment.repository.MariaDBPunishmentSubscriptionRepository;
  import org.bukkit.Bukkit;
  import org.bukkit.configuration.InvalidConfigurationException;
  import org.flywaydb.core.Flyway;
@@ -36,9 +36,9 @@ index a600cf7e58e42eabe21eba5ce48fcb7fb9fc94bf..0defde14097ebe9af6b9a7ea467133db
 @@ -91,6 +97,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
          whiteListRepository = new PulvinarWhiteListRepository(privateDatasource);
          playerRepository = new PulvinarPlayerRepository(globalDatasource);
-         rankRepository = new InternalRankRepository(globalDatasource);
-+        punishmentRepository = new InternalPunishmentRepository(globalDatasource);
-+        punishmentSubscriptionRepository = new InternalPunishmentSubscriptionRepository(globalDatasource);
+         rankRepository = new MariaDBRankRepository(globalDatasource);
++        punishmentRepository = new MariaDBPunishmentRepository(globalDatasource);
++        punishmentSubscriptionRepository = new MariaDBPunishmentSubscriptionRepository(globalDatasource);
      }
  
      public void shutdown()

@@ -96,7 +96,7 @@ index f334b84cb4b5576b51ef65ceb6e9d1b711d652fe..9b2191cdb5edc5d34231a84737ed8b89
 +    }
  }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 4d70249480919071bd7b4173b53f201a4feda42d..14c06ebc5a24acfcdb3e93d8f6d13ea6b3a681c5 100644
+index 3ebbb2b41362e4fccf577c144dba23722591a364..ccd45b754ba2768437a80f5cbab19d093b0404d3 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -3,7 +3,9 @@ package net.kissenpvp.base;
@@ -104,7 +104,7 @@ index 4d70249480919071bd7b4173b53f201a4feda42d..14c06ebc5a24acfcdb3e93d8f6d13ea6
  import net.kissenpvp.api.database.ConnectionProvider;
  import net.kissenpvp.api.network.actor.ConsoleClient;
 +import net.kissenpvp.api.network.actor.PlayerRepository;
- import net.kissenpvp.database.mariadb.InternalConnectionProvider;
+ import net.kissenpvp.database.mariadb.MariaDBConnectionProvider;
 +import net.kissenpvp.network.actor.PulvinarPlayerRepository;
  import net.kissenpvp.network.actor.operator.PulvinarOperatorRepository;
  import net.kissenpvp.network.actor.whitelist.PulvinarWhiteListRepository;
@@ -137,15 +137,14 @@ index 4d70249480919071bd7b4173b53f201a4feda42d..14c06ebc5a24acfcdb3e93d8f6d13ea6
  }
 diff --git a/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..a5409d8516ce867bd51b963c83ed0c2ddd7a61eb
+index 0000000000000000000000000000000000000000..9dda5813fe822b2374ad49cb6afaa963b010b284
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/network/actor/PulvinarPlayerRepository.java
-@@ -0,0 +1,184 @@
+@@ -0,0 +1,183 @@
 +package net.kissenpvp.network.actor;
 +
 +import com.google.common.base.Preconditions;
 +import net.kissenpvp.api.network.actor.PlayerClient;
-+import net.kissenpvp.base.KissenCore;
 +import net.kissenpvp.base.PulvinarCore;
 +import net.kissenpvp.database.AsyncDatabaseQueue;
 +import net.minecraft.server.players.NameAndId;
@@ -159,7 +158,7 @@ index 0000000000000000000000000000000000000000..a5409d8516ce867bd51b963c83ed0c2d
 +import java.util.*;
 +import java.util.concurrent.CompletableFuture;
 +
-+public class PulvinarPlayerRepository extends InternalPlayerRepository {
++public class PulvinarPlayerRepository extends MariaDBPlayerRepository {
 +
 +    public PulvinarPlayerRepository(@NonNull DataSource dataSource) throws NullPointerException {
 +        super(dataSource);
@@ -541,7 +540,7 @@ index b9b4114bfa8db1cac63a43b979a0a58f872ab018..33556af01e28df2ceb6e7a16408adda0
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 7631293a1fa35e0b4e7cdccac771f10115dabc7c..f9bc039c1db4e35f99d00af136c788a043209305 100644
+index cc273d30cbec5cf9ae861d18be4d14073a052d06..800c0fa06fa9edec7322f5fe8fef0f69bb37267f 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -3468,4 +3468,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
@@ -587,7 +586,7 @@ index 7631293a1fa35e0b4e7cdccac771f10115dabc7c..f9bc039c1db4e35f99d00af136c788a0
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
-index 08088126c0f12f0eab8e3e812d537e71a07c397f..a07384ea92cc1ebe15454868bc02c5c30166e206 100644
+index 85931a5ef70790bb8e81df43014947a605344c48..ef2d58765f1ac5ee62426273d3f77ce492fbca72 100644
 --- a/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
 +++ b/src/main/resources/migrations/private/mariadb/V1_0__Intial_migration.sql
 @@ -10,4 +10,11 @@ CREATE TABLE IF NOT EXISTS ksvp_whitelist (

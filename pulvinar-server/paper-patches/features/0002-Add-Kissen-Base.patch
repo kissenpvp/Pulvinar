@@ -147,7 +147,7 @@ index 0000000000000000000000000000000000000000..f334b84cb4b5576b51ef65ceb6e9d1b7
 +}
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..46f99816f4f5e8b4d79b270a70505f8567f3f15c
+index 0000000000000000000000000000000000000000..4ce566e84416daf23581f854b32f80bfbc8ca90d
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -0,0 +1,104 @@
@@ -156,7 +156,7 @@ index 0000000000000000000000000000000000000000..46f99816f4f5e8b4d79b270a70505f85
 +import net.kissenpvp.api.base.Pulvinar;
 +import net.kissenpvp.api.database.ConnectionProvider;
 +import net.kissenpvp.api.network.actor.ConsoleClient;
-+import net.kissenpvp.database.mariadb.InternalConnectionProvider;
++import net.kissenpvp.database.mariadb.MariaDBConnectionProvider;
 +import org.bukkit.Bukkit;
 +import org.bukkit.configuration.InvalidConfigurationException;
 +import org.flywaydb.core.Flyway;
@@ -197,8 +197,8 @@ index 0000000000000000000000000000000000000000..46f99816f4f5e8b4d79b270a70505f85
 +            throw new IllegalStateException("Could not connect to database, please check your configuration.");
 +        }
 +
-+        provider = new InternalConnectionProvider();
-+        privateProvider = new InternalConnectionProvider();
++        provider = new MariaDBConnectionProvider();
++        privateProvider = new MariaDBConnectionProvider();
 +
 +        String globalDatabase = config.databaseGlobal();
 +        DataSource dataSource = connect(provider, config.databaseGlobal(), "classpath:migrations/mariadb", Collections.emptyMap());
