@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Taubsie <taubsie@dungeon-hub.net>
+Date: Thu, 11 Jun 2026 23:36:36 +0200
+Subject: [PATCH] Add item ID
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
+index ad0754b239b62f2377ab55f142b76f9ed14c3d59..e94ec4bc4f87a9c42ca9d2603154ef2eade8d856 100644
+--- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
++++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
+@@ -962,4 +962,28 @@ public final class CraftItemStack extends ItemStack {
+         return random.nextInt(unbreaking + 1) > 0;
+     }
+     // Purpur end - ItemStack convenience methods
++    // Pulvinar start - add item ID
++    public @NotNull java.util.Optional<String> getItemId() {
++        return java.util.Optional.ofNullable(this.handle).map(handle ->
++                handle.getComponents().get(DataComponents.CUSTOM_DATA)
++        ).map(CustomData::copyTag).flatMap(tag ->
++                tag.getString("pulvinar/item_id")
++        );
++    }
++
++    public void setItemId(@NotNull String itemId) {
++        if (this.handle == null) return;
++
++        DataComponentMap components = this.handle.getComponents();
++
++        CompoundTag compoundTag = java.util.Optional.ofNullable(
++                components.get(DataComponents.CUSTOM_DATA)).map(CustomData::copyTag).orElse(new CompoundTag()
++        );
++        compoundTag.putString("pulvinar/item_id", itemId);
++
++        this.handle.applyComponents(
++                DataComponentPatch.builder().set(DataComponents.CUSTOM_DATA, CustomData.of(compoundTag)).build()
++        );
++    }
++    // Pulvinar end - add item ID
+ }
