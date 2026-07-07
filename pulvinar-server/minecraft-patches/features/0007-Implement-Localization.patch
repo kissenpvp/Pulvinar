@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Ivo Quiring <falk.quiring@gmail.com>
+Date: Tue, 7 Jul 2026 19:14:26 +0200
+Subject: [PATCH] Implement Localization
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index ece422ef99fbb30365b53599e985c1ff005b7477..0d26389d877484fda416cb43379db906b5f53a5d 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -186,6 +186,7 @@ import net.minecraft.world.level.timers.TimerQueue;
+ import net.minecraft.world.phys.Vec2;
+ import net.minecraft.world.phys.Vec3;
+ import net.minecraft.world.scores.ScoreboardSaveData;
++import org.bukkit.Bukkit;
+ import org.jspecify.annotations.Nullable;
+ import org.slf4j.Logger;
+ 
+@@ -1283,6 +1284,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+                 throw new IllegalStateException("Failed to initialize server");
+             }
+ 
++            //Pulvinar start - implement localization
++            LOGGER.info("Initialize localization");
++            net.kissenpvp.localization.InternalGlobalLocaleRegistry globalLocaleRegistry = (net.kissenpvp.localization.InternalGlobalLocaleRegistry) Bukkit.getPulvinar().localeRegistry();
++            globalLocaleRegistry.initialize();
++            //Pulvinar end - implement localization
+             this.nextTickTimeNanos = Util.getNanos();
+             this.initTickSchedule(); // Paper - improve tick loop
+             this.statusIcon = this.loadStatusIcon().orElse(null);

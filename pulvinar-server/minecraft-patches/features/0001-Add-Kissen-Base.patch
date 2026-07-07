@@ -5,10 +5,10 @@ Subject: [PATCH] Add Kissen Base
 
 
 diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
-index bcbb780c82fdb3283925359a04d8706087f86501..b1488c3bb21e51bc7d297d3eac00c562e5dabe14 100644
+index 1862df44a3319e459b547cebffb16972674856d6..a890268c784ae50992dcbff9b0773dfacbbd0aa3 100644
 --- a/net/minecraft/server/Main.java
 +++ b/net/minecraft/server/Main.java
-@@ -175,6 +175,13 @@ public class Main {
+@@ -178,6 +178,13 @@ public class Main {
  
              org.spigotmc.SpigotConfig.disabledAdvancements = spigotConfiguration.getStringList("advancements.disabled"); // Paper - fix SPIGOT-5885, must be set early in init
  

@@ -18,7 +18,7 @@ index c3c23a152c098e4dddfe0d0d10676fc20a35f0e0..7d782af71352e094d9e9b7a002045327
          final java.nio.file.Path legacyConfigPath = ((File) options.valueOf("paper-settings")).toPath();
          final java.nio.file.Path configDirPath = ((File) options.valueOf("paper-settings-directory")).toPath();
 diff --git a/net/minecraft/server/players/CachedUserNameToIdResolver.java b/net/minecraft/server/players/CachedUserNameToIdResolver.java
-index ce26768b951a5cd3e3337ef5347ce1537d593486..6f205b1e7f44ea725ae10dda6d2b713fc722d06c 100644
+index 7443744e3f256983e52a1cefcaf66082e4a46a7b..b464253b09fd3b123773714a845babb9e3e991a0 100644
 --- a/net/minecraft/server/players/CachedUserNameToIdResolver.java
 +++ b/net/minecraft/server/players/CachedUserNameToIdResolver.java
 @@ -91,7 +91,7 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
@@ -29,7 +29,7 @@ index ce26768b951a5cd3e3337ef5347ce1537d593486..6f205b1e7f44ea725ae10dda6d2b713f
 +    protected CachedUserNameToIdResolver.GameProfileInfo addInternal(final NameAndId profile) { // Pulvinar - Overhaul Player Database  - allow to override
          Calendar c = Calendar.getInstance(TimeZone.getDefault(), Locale.ROOT);
          c.setTime(new Date());
-         c.add(2, 1);
+         c.add(Calendar.MONTH, 1);
 @@ -177,7 +177,7 @@ public class CachedUserNameToIdResolver implements UserNameToIdResolver {
          return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", Locale.ROOT);
      }

@@ -5,10 +5,10 @@ Subject: [PATCH] Implement System-Message Event
 
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 88aad415396d1e74da8b7544b566844e30761219..d3b05ae1850242f75094100b7167c26d90ee2498 100644
+index 2eb8df8c91ea3e2cd96ea8ba87b514a1cae8962c..224391c8fcfe0a5d4bf5a6e2c0c000a2f7db124d 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -2470,14 +2470,26 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2480,14 +2480,26 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
  
      public void sendSystemMessage(final Component message, final boolean overlay) {
          if (this.acceptsSystemMessages(overlay)) {
