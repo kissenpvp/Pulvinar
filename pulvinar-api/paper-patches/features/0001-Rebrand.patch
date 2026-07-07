@@ -23,10 +23,10 @@ index fb1fe2651e53a9bf46b3632c638e13eea9dcda93..02fd4f0cae73f3f22aa52d38241e58b8
       * Gets the {@code ServerBuildInfo}.
       *
 diff --git a/src/main/java/org/bukkit/command/defaults/VersionCommand.java b/src/main/java/org/bukkit/command/defaults/VersionCommand.java
-index 424b01d6fc013148f19b039ca7ade9ff484796ee..164ff2a17af490767975c0a486c6454ed43c1c19 100644
+index bb169b16792ba234147096bacbf1a81a6bc0c663..c338da678983127559488f05302cab7d298698ea 100644
 --- a/src/main/java/org/bukkit/command/defaults/VersionCommand.java
 +++ b/src/main/java/org/bukkit/command/defaults/VersionCommand.java
-@@ -258,7 +258,7 @@ public class VersionCommand extends BukkitCommand {
+@@ -259,7 +259,7 @@ public class VersionCommand extends BukkitCommand {
          // Purpur start
          int distance = getVersionFetcher().distance();
          final Component message = Component.join(net.kyori.adventure.text.JoinConfiguration.separator(Component.newline()),

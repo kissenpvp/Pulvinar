@@ -29,7 +29,7 @@ index f309c2ed39bcc700e5b491ff549bf0608a07aab8..b5e3caddd7cd4dc9ecacf5495940980f
 +public interface ConsoleCommandSender extends CommandSender, Conversable, net.kissenpvp.api.network.actor.ConsoleClient { // Pulvinar - implement player api
  }
 diff --git a/src/main/java/org/bukkit/entity/HumanEntity.java b/src/main/java/org/bukkit/entity/HumanEntity.java
-index 2be5f6ba8eebc7823fab5f1245d33ab43f8004f7..fca6ca61cea8738c4ce6139e08cb4f7d5b7683d3 100644
+index ef089ad40e1b994bc4bee52717899937acbd1e27..8966457bfe248b17cb49d91fc45f47c2c0852378 100644
 --- a/src/main/java/org/bukkit/entity/HumanEntity.java
 +++ b/src/main/java/org/bukkit/entity/HumanEntity.java
 @@ -30,7 +30,7 @@ import org.jspecify.annotations.Nullable;
@@ -42,15 +42,15 @@ index 2be5f6ba8eebc7823fab5f1245d33ab43f8004f7..fca6ca61cea8738c4ce6139e08cb4f7d
      // Paper start
      @Override
 diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
-index fe1b54ea314d9f3ec2f970d0f4a55af6c06d1ec4..dd7d2dcefc1d8795914f5428afb480eaf3715e62 100644
+index ec1b786f3a19ceb2b6d31810e2bb8f544eb12ac3..394d04e83deeb7e02f66758ce914d79b1d8029b2 100644
 --- a/src/main/java/org/bukkit/entity/Player.java
 +++ b/src/main/java/org/bukkit/entity/Player.java
-@@ -69,7 +69,7 @@ import org.jspecify.annotations.Nullable;
+@@ -71,7 +71,7 @@ import org.jspecify.annotations.Nullable;
   * Represents a player, connected or not
   */
  @NullMarked
--public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginMessageRecipient, net.kyori.adventure.identity.Identified, net.kyori.adventure.bossbar.BossBarViewer, com.destroystokyo.paper.network.NetworkClient { // Paper
-+public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginMessageRecipient, net.kyori.adventure.identity.Identified, net.kyori.adventure.bossbar.BossBarViewer, com.destroystokyo.paper.network.NetworkClient, net.kissenpvp.api.network.actor.ReachablePlayerClient { // Paper // Pulvinar - implement kissen player api
+-public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginMessageRecipient, net.kyori.adventure.identity.Identified, net.kyori.adventure.bossbar.BossBarViewer, com.destroystokyo.paper.network.NetworkClient, ObjectContentsLike { // Paper
++public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginMessageRecipient, net.kyori.adventure.identity.Identified, net.kyori.adventure.bossbar.BossBarViewer, com.destroystokyo.paper.network.NetworkClient, ObjectContentsLike, net.kissenpvp.api.network.actor.ReachablePlayerClient { // Paper // Pulvinar - implement kissen player api
  
      // Paper start
      @Override
