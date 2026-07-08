@@ -22,7 +22,7 @@ index ece422ef99fbb30365b53599e985c1ff005b7477..0d26389d877484fda416cb43379db906
  
 +            //Pulvinar start - implement localization
 +            LOGGER.info("Initialize localization");
-+            net.kissenpvp.localization.InternalGlobalLocaleRegistry globalLocaleRegistry = (net.kissenpvp.localization.InternalGlobalLocaleRegistry) Bukkit.getPulvinar().localeRegistry();
++            net.kissenpvp.localization.GlobalLocaleRegistryImpl globalLocaleRegistry = (net.kissenpvp.localization.GlobalLocaleRegistryImpl) Bukkit.getPulvinar().localeRegistry();
 +            globalLocaleRegistry.initialize();
 +            //Pulvinar end - implement localization
              this.nextTickTimeNanos = Util.getNanos();
