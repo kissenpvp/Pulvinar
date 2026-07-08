@@ -5,10 +5,10 @@ Subject: [PATCH] Add item ID
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
-index ad0754b239b62f2377ab55f142b76f9ed14c3d59..e94ec4bc4f87a9c42ca9d2603154ef2eade8d856 100644
+index efbfee8248bd820f1c8dbe4b59e5b4eb21514d67..6d8a1c494a18e2e3f15d2064f392b46ae727548f 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
 +++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftItemStack.java
-@@ -962,4 +962,28 @@ public final class CraftItemStack extends ItemStack {
+@@ -1072,4 +1072,28 @@ public final class CraftItemStack extends ItemStack {
          return random.nextInt(unbreaking + 1) > 0;
      }
      // Purpur end - ItemStack convenience methods

@@ -5,7 +5,7 @@ Subject: [PATCH] Overhaul Player Database
 
 
 diff --git a/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java b/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
-index 48e774677edf17d4a99ae9ed23d1b371dab41abb..8b002f246d17c0e00f9b8ca1405e6f1254b9ba54 100644
+index 52a8786082712bb735fdc768a228169829fb814b..628daa17c8541bde0517f54dd8502fa8f71c5eef 100644
 --- a/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
 +++ b/src/main/java/com/destroystokyo/paper/profile/PaperAuthenticationService.java
 @@ -25,6 +25,13 @@ public class PaperAuthenticationService extends YggdrasilAuthenticationService {
@@ -441,7 +441,7 @@ index 0000000000000000000000000000000000000000..b4301a1e85a9cbd9def40a872adcf2af
 +    }
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
-index 7283eb950a0d1c92c451a0379d7a409d147bb84c..c644d284a93d229f2e25e0b7b49cb8102146e69c 100644
+index de552ee1b59e8dd5b3d7c9ba5c578f28039d5ca5..66859ef55f9a39c4208e7c4cdc3db01035de6ac4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftOfflinePlayer.java
 @@ -764,4 +764,47 @@ public class CraftOfflinePlayer implements OfflinePlayer, ConfigurationSerializa
@@ -493,7 +493,7 @@ index 7283eb950a0d1c92c451a0379d7a409d147bb84c..c644d284a93d229f2e25e0b7b49cb810
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
-index 15ae2653c1809041b7ab7cb67015e82c226e9f77..1f26e86d5d2ce8f46bd09ce70b4d3de1078af104 100644
+index 79c7c105f8d267eaca587917541a500b4cf3930e..705b0ac711638b91766b2801219ef61786078d94 100644
 --- a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
 +++ b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
 @@ -105,4 +105,21 @@ public class CraftConsoleCommandSender extends ServerCommandSender implements Co
@@ -519,10 +519,10 @@ index 15ae2653c1809041b7ab7cb67015e82c226e9f77..1f26e86d5d2ce8f46bd09ce70b4d3de1
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
-index b9b4114bfa8db1cac63a43b979a0a58f872ab018..33556af01e28df2ceb6e7a16408adda02bcfe4ac 100644
+index b5fb354481ac9682e963411ef0530a12118eb0b9..de4b2bade2a437d86c3f9148ade3b7172f69745e 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftHumanEntity.java
-@@ -920,4 +920,16 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
+@@ -914,4 +914,16 @@ public class CraftHumanEntity extends CraftLivingEntity implements HumanEntity {
      public org.bukkit.entity.Entity copy(Location location) {
          throw new UnsupportedOperationException("Cannot copy human entities");
      }
@@ -540,10 +540,10 @@ index b9b4114bfa8db1cac63a43b979a0a58f872ab018..33556af01e28df2ceb6e7a16408adda0
 +    // Pulvinar end - overhaul player database
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index cc273d30cbec5cf9ae861d18be4d14073a052d06..800c0fa06fa9edec7322f5fe8fef0f69bb37267f 100644
+index 2ff61c3be2bfe1fd714d0f86d0c51049a1169ce9..5021d23d36c1e8984bdfa1518c10135e65345293 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -3468,4 +3468,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3465,4 +3465,41 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
          super.knockback(strength, directionX, directionZ);
          this.entity.hurtMarked = true;
      }
