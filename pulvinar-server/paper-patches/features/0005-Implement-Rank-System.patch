@@ -5,7 +5,7 @@ Subject: [PATCH] Implement Rank System
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index ccd45b754ba2768437a80f5cbab19d093b0404d3..9a0a4d6d166a2d85ea539cd5d2b8c18f372e4289 100644
+index 3900d93fb3827dcb66df61b6bc64a881a509951c..681697b4dff7302be81572d104d466dd90e53980 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -2,11 +2,14 @@ package net.kissenpvp.base;
@@ -31,7 +31,7 @@ index ccd45b754ba2768437a80f5cbab19d093b0404d3..9a0a4d6d166a2d85ea539cd5d2b8c18f
  
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -86,6 +90,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -88,6 +92,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
          operatorRepository = new PulvinarOperatorRepository(privateDatasource);
          whiteListRepository = new PulvinarWhiteListRepository(privateDatasource);
          playerRepository = new PulvinarPlayerRepository(globalDatasource);
@@ -39,7 +39,7 @@ index ccd45b754ba2768437a80f5cbab19d093b0404d3..9a0a4d6d166a2d85ea539cd5d2b8c18f
      }
  
      public void shutdown()
-@@ -124,4 +129,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -126,4 +131,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull PlayerRepository playerRepository() {
          return playerRepository;
      }

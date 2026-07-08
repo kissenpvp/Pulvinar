@@ -5,7 +5,7 @@ Subject: [PATCH] Overhaul Ban Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 9a0a4d6d166a2d85ea539cd5d2b8c18f372e4289..9db8b4fadf42bd8cfe2e14a2fa17e8b63e2458cf 100644
+index 681697b4dff7302be81572d104d466dd90e53980..54e14c5a75d764b51c9986cca70f37bb28ebb9b1 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -6,11 +6,15 @@ import net.kissenpvp.api.database.Repository;
@@ -33,7 +33,7 @@ index 9a0a4d6d166a2d85ea539cd5d2b8c18f372e4289..9db8b4fadf42bd8cfe2e14a2fa17e8b6
  
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -91,6 +97,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -93,6 +99,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
          whiteListRepository = new PulvinarWhiteListRepository(privateDatasource);
          playerRepository = new PulvinarPlayerRepository(globalDatasource);
          rankRepository = new MariaDBRankRepository(globalDatasource);
@@ -42,7 +42,7 @@ index 9a0a4d6d166a2d85ea539cd5d2b8c18f372e4289..9db8b4fadf42bd8cfe2e14a2fa17e8b6
      }
  
      public void shutdown()
-@@ -134,4 +142,14 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -136,4 +144,14 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull Repository<String, Rank> rankRepository() {
          return rankRepository;
      }

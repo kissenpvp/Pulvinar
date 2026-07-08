@@ -96,7 +96,7 @@ index f334b84cb4b5576b51ef65ceb6e9d1b711d652fe..9b2191cdb5edc5d34231a84737ed8b89
 +    }
  }
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 3ebbb2b41362e4fccf577c144dba23722591a364..ccd45b754ba2768437a80f5cbab19d093b0404d3 100644
+index 5fdf95b2d90195d4fa29dba9b5ef13d643d93e5b..3900d93fb3827dcb66df61b6bc64a881a509951c 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -3,7 +3,9 @@ package net.kissenpvp.base;
@@ -117,7 +117,7 @@ index 3ebbb2b41362e4fccf577c144dba23722591a364..ccd45b754ba2768437a80f5cbab19d09
  
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
-@@ -82,6 +85,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -84,6 +87,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      {
          operatorRepository = new PulvinarOperatorRepository(privateDatasource);
          whiteListRepository = new PulvinarWhiteListRepository(privateDatasource);
@@ -125,7 +125,7 @@ index 3ebbb2b41362e4fccf577c144dba23722591a364..ccd45b754ba2768437a80f5cbab19d09
      }
  
      public void shutdown()
-@@ -115,4 +119,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -117,4 +121,9 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull PulvinarWhiteListRepository whiteListRepository() {
          return whiteListRepository;
      }

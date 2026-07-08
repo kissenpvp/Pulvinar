@@ -5,7 +5,7 @@ Subject: [PATCH] Overhaul Operator Database
 
 
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-index 4ce566e84416daf23581f854b32f80bfbc8ca90d..e284420b0c8306a7243ab241764a4608e7e4ba69 100644
+index 8baa959ce64730c0dcde73afd22394252f30f414..bd0764f094cf52f33a3e7c26d44dff13d851dc55 100644
 --- a/src/main/java/net/kissenpvp/base/PulvinarCore.java
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 @@ -4,6 +4,7 @@ import net.kissenpvp.api.base.Pulvinar;
@@ -25,7 +25,7 @@ index 4ce566e84416daf23581f854b32f80bfbc8ca90d..e284420b0c8306a7243ab241764a4608
      public PulvinarCore(@NonNull File optionsFile) throws IOException, InvalidConfigurationException, SQLException {
          config = new PulvinarConfig();
          config.init(optionsFile);
-@@ -75,7 +78,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -77,7 +80,7 @@ public class PulvinarCore extends KissenCore implements Pulvinar
  
      private void createRepositories(@NonNull DataSource globalDatasource, @NonNull DataSource privateDatasource)
      {
@@ -34,7 +34,7 @@ index 4ce566e84416daf23581f854b32f80bfbc8ca90d..e284420b0c8306a7243ab241764a4608
      }
  
      public void shutdown()
-@@ -101,4 +104,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
+@@ -103,4 +106,8 @@ public class PulvinarCore extends KissenCore implements Pulvinar
      public @NonNull ConnectionProvider privateConnectionProvider() {
          return privateProvider;
      }

@@ -147,10 +147,10 @@ index 0000000000000000000000000000000000000000..f334b84cb4b5576b51ef65ceb6e9d1b7
 +}
 diff --git a/src/main/java/net/kissenpvp/base/PulvinarCore.java b/src/main/java/net/kissenpvp/base/PulvinarCore.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..4ce566e84416daf23581f854b32f80bfbc8ca90d
+index 0000000000000000000000000000000000000000..8baa959ce64730c0dcde73afd22394252f30f414
 --- /dev/null
 +++ b/src/main/java/net/kissenpvp/base/PulvinarCore.java
-@@ -0,0 +1,104 @@
+@@ -0,0 +1,106 @@
 +package net.kissenpvp.base;
 +
 +import net.kissenpvp.api.base.Pulvinar;
@@ -200,6 +200,9 @@ index 0000000000000000000000000000000000000000..4ce566e84416daf23581f854b32f80bf
 +        provider = new MariaDBConnectionProvider();
 +        privateProvider = new MariaDBConnectionProvider();
 +
++        // need to start kissen before establishing the connection as it requires the core instance initialized
++        init();
++
 +        String globalDatabase = config.databaseGlobal();
 +        DataSource dataSource = connect(provider, config.databaseGlobal(), "classpath:migrations/mariadb", Collections.emptyMap());
 +
@@ -207,7 +210,6 @@ index 0000000000000000000000000000000000000000..4ce566e84416daf23581f854b32f80bf
 +        DataSource privateDatasource = connect(privateProvider, config.databasePrivate(), "classpath:migrations/private/mariadb", placeholders);
 +
 +        createRepositories(dataSource, privateDatasource);
-+        init();
 +    }
 +
 +    private @NonNull DataSource connect(@NonNull ConnectionProvider provider, @NonNull String database, @NonNull String location, @NonNull Map<String, String> placeholders) throws SQLException {
